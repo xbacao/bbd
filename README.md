@@ -1,0 +1,4 @@
+# bbd
+
+#server packages
+libmysqlclient
