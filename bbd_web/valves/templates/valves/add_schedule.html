@@ -1,0 +1,69 @@
+{% extends 'valves/base.html' %}
+{% load staticfiles %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+{% block content %}
+<ul>
+
+<h1>New schedule</h1>
+{% if valve_id_list %}
+<form action="#" method="POST">
+{% csrf_token %}
+
+	<table border="0" class="table">
+		<tr>
+			<td class="col-md-6"></td>
+			<td class="col-md-6"></td>
+		</tr>
+		<tr>
+			<td class="col-md-6">Valve ID</td>
+			<td class="col-md-6">
+				<select name="item_id">
+					{% for valve_id in valve_id_list %}
+						<option value="{{valve_id}}">{{valve_id}}</option>
+					{% endfor %}
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td>Description</td>
+			<td><input type="text" value="" name="sche_description"></td>
+		</tr>
+		{% if cicle_form_set %}
+		{{ cicle_form_set.management_form }}
+		{% for form in cicle_form_set %}
+		<div id="form_set">
+			<tr>
+				<td>{{form.start_hour}}</td><td>{{form.start_min}}</td>
+				<td>{{form.stop_hour}}</td><td>{{form.stop_min}}</td>
+			</tr>
+		</div>
+		{% endfor %}
+		{% endif %}
+		<div id="empty_form" style="display:none">
+	        {{ cicle_form_set.empty_form.start_hour }}
+		</div>
+		<tr>
+			<td class="col-md-12">
+				
+			</td>
+		</tr>
+	</table>
+</form>
+<input type="button" class="btn" value="add cicle" id="add_cicle">
+
+{% endif %}
+{% endblock %}
+
+<!-- Include formset plugin - including jQuery dependency -->
+<script src="ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+    $('#add_cicle').click(function() {
+        var form_idx = $('#id_form-TOTAL_FORMS').val();
+        $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+        $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+        alert('WHO');
+    });
+</script>

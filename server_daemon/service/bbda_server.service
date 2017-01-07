@@ -1,0 +1,14 @@
+[Unit]
+Description=Start bbda socket server
+After=network.target
+
+[Service]
+User=f0lk
+Group=f0lk
+Type=simple
+ExecStart=/opt/bbda_server start
+ExecStop=/opt/bbda_server stop
+
+[Install]
+WantedBy=default.target
+Alias=bbda_server

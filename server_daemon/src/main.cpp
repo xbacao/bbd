@@ -6,18 +6,18 @@
 #include <iostream>
 #include "daemon.h"
 #include "socket_data.h"
+#include "db.h"
+#include "log.h"
 
 #define PID_FILE        "/var/run/bbda_server.pid"
-#define LOG_DIR_PATH    "/opt/bbda_server/logs/"
 
 #define SERVER_PORT     6666
+#define N_VALVES        5     //ESTATICO, POSSIVEL MUDAR PRA DB
 
 using namespace std;
 
 static bool stop_flag=false;
 static int sockfd;
-
-static ofstream log_file;
 
 static void _signal_callback_handler(int signum){
    log_file << time(nullptr) <<": "<<"Caught signal " << signum<<endl;
@@ -48,16 +48,10 @@ static int _run_server(){
   int newsockfd,n;
   socklen_t clilen;
   struct sockaddr_in cli_addr;
-  uint trans_size, trans_type, rasp_id;
-  char rsp[1];
-
-
-  stringstream ss_log;
-  time_t curr_ts = time(nullptr);
-  ss_log << LOG_DIR_PATH << "log" << curr_ts;
-  log_file.open(ss_log.str());
+  uint msg_size, msg_type, arduino_id;
 
   //init_db_handler();
+  init_log();
 
 
   do{
@@ -80,14 +74,41 @@ static int _run_server(){
       log_file << time(nullptr) <<": "<<"New connection accepted from "<< inet_ntoa(cli_addr.sin_addr)<<endl;
     }
 
-    n=recv_socket_header(newsockfd, &rasp_id, &trans_type, &trans_size);
+    n=recv_socket_header(newsockfd, &arduino_id, &msg_type, &msg_size);
     if(n==0){
-      switch()
-      
+      switch(msg_type){
+        default:
+          break;
+        case(CHECKIN_MSG):
+        {
+          int n;
+          schedule_data t_data;
+          for(int i=0;i<N_VALVES;i++){
+            n=get_new_schedule(i,&t_data);
+            if(n==0){
+              n=send_schedule(newsockfd, t_data);
+              if(n!=0){
+                log_file << time(nullptr)<<": MAIN : Error sending schedule"<<endl;
+                break;
+              }
+              n=wait_schedule_reply(sockfd, t_data.schedule_id);
+              if(n!=0){
+                log_file<<time(nullptr)<<": MAIN : Error waiting schedule reply"<<endl;
+              }
+              n=set_schedule_sent(t_data.schedule_id);
+              if(n!=0){
+                log_file<<time(nullptr)<<": MAIN : Error setting schedule sent flag in db"<<endl;
+              }
+            }
+          }
+          break;
+        }
+      }
     }
     close(newsockfd);
   }
   close(sockfd);
+  stop_log();
   return 0;
 }
 
@@ -112,7 +133,7 @@ int main(int argc, char *argv[]){
       return 0;
       break;
     case 1:
-      daemonize(PID_FILE, _signal_callback_handler);
+      //daemonize(PID_FILE, _signal_callback_handler);
       return _run_server();
       break;
     case 2:

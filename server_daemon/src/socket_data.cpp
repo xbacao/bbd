@@ -76,30 +76,54 @@ int recv_socket_header(int sock_fd, uint* arduino_id, uint* trans_type, uint* tr
   return 0;
 }
 
-int send_schedule_data(int sock_fd, schedule_data data){
-	int n,i;
-	n=_send_16(&(data.valve_id), sock_fd);
-	if(n<0){
-    	return -1;
-  	}
+int send_schedule(int sock_fd, schedule_data data){
+  int n,i;
+  n=_send_16(&(data.valve_id), sock_fd);
+  if(n<0){
+    return -1;
+  }
 
-	n=_send_16(&(data.n_cicles), sock_fd);
-	if(n<0){
-    	return -2;
-  	}
+  n=_send_16(&(data.schedule_id), sock_fd);
+  if(n<0){
+    return -2;
+  }
 
-  	for(i=0;i<data.n_cicles;i++){
-  		n=_send_16(data.cicle_starts+i,sock_fd);
-  		if(n<0){
-  			return -3;
-  		}
+  n=_send_16(&(data.n_cicles), sock_fd);
+  if(n<0){
+    return -3;
+  }
 
-  		n=_send_16(data.cicle_stops+i,sock_fd);
-  		if(n<0){
-  			return -4;
-  		}
-  	}
-  	return 0;
+  for(i=0;i<data.n_cicles;i++){
+    n=_send_16(data.cicle_starts+i,sock_fd);
+    if(n<0){
+    	return -4;
+    }
+
+    n=_send_16(data.cicle_stops+i,sock_fd);
+    if(n<0){
+    	return -5;
+    }
+  }
+  return 0;
+}
+
+std::ostream& operator<<(std::ostream& os, schedule_data &data){
+  os << "{valve_id:"<<data.valve_id<<", schedule_id:"<<data.schedule_id<<", n_cicles:"<<data.n_cicles<<" cicle_starts:[";
+  for(uint16_t i =0;i<data.n_cicles;i++){
+    if(i!=0){
+      os << ",";
+    }
+    os << data.cicle_starts[i];
+  }
+  os << "], cicle_stops:[";
+  for(uint16_t i =0;i<data.n_cicles;i++){
+    if(i!=0){
+      os << ",";
+    }
+    os << data.cicle_stops[i];
+  }
+  os << "]}";
+  return os;
 }
 
 /*
@@ -153,3 +177,13 @@ int recv_schedule_data(int sock_fd, schedule_data* data){
   	*data={.n_cicles=n_cicles, .cicle_starts=cicle_starts, .cicle_stops=cicle_stops};
   	return 0;
 }*/
+
+int wait_schedule_reply(int sock_fd, int schedule_id){
+  int n;
+  char rsp;
+  n=read(sock_fd, &rsp, sizeof(char));
+  if(n!=0){
+    return -1;
+  }
+  return !(rsp==(char)schedule_id);
+}

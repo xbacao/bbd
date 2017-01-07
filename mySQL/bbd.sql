@@ -1,4 +1,8 @@
+/*
 
+
+
+*/
 DROP SCHEMA IF EXISTS bbd;
 CREATE SCHEMA IF NOT EXISTS bbd;
 USE bbd ;
@@ -34,7 +38,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS get_valve_schedule;
 CREATE PROCEDURE get_valve_schedule(IN valveID INT)
 BEGIN
-  SELECT *
+  SELECT scheduleID, start_time, stop_time
   FROM bbd.schedule_entry INNER JOIN (
     SELECT scheduleID
     FROM bbd.schedule INNER JOIN (
@@ -45,8 +49,38 @@ BEGIN
 END $$
 DELIMITER ;
 
-/*
---TEST PROC--
+DELIMITER $$
+DROP PROCEDURE IF EXISTS set_schedule_sent;
+CREATE PROCEDURE set_schedule_sent(IN scheID INT)
+BEGIN
+  UPDATE bbd.schedule SET sent=1 WHERE scheduleID=scheID;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS new_valve_schedule;
+CREATE PROCEDURE new_valve_schedule(IN scheID INT, IN descr VARCHAR(100))
+BEGIN
+  INSERT INTO bbd.schedule(valveID_f, description) VALUES (scheID, descr);
+  SELECT LAST_INSERT_ID() as scheduleID;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+DROP PROCEDURE IF EXISTS new_schedule_entry;
+CREATE PROCEDURE new_schedule_entry(IN scheID INT, IN start_time TIME, IN stop_time TIME)
+BEGIN
+  INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES (scheID, start_time, stop_time);
+END $$
+DELIMITER ;
+
+DROP USER 'bbduser'@'localhost';
+CREATE USER 'bbduser'@'localhost' IDENTIFIED BY 'morcao123';
+GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX ON bbd.* TO 'bbduser'@'localhost';
+GRANT EXECUTE ON PROCEDURE bbd.get_valve_schedule TO 'bbduser'@'localhost';
+
+
+/*TEST PROC*/
 INSERT INTO bbd.valve VALUES(1,"asdf");
 INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
@@ -54,7 +88,15 @@ INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CU
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
 
+/*
 CALL get_valve_schedule(1);
+
+CALL set_schedule_sent(1);
+
+
+CALL new_valve_schedule(1, "WTFFF");
+
+CALL new_schedule_entry(2, CURTIME(), CURTIME());
+CALL new_schedule_entry(2, CURTIME(), CURTIME());
+
 */
-
-

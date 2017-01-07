@@ -1,0 +1,58 @@
+{% extends 'valves/base.html' %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+{% block content %}
+<ul>
+
+<h1>Schedule Manager</h1>
+
+<div class="col-md-4">
+	<h3>Valves</h3>
+	{% if valve_list %}
+	<ul>
+	<table border="0" class="table">
+	{% for valve in valve_list %}
+		<tr><td>
+			<form action="#" method="post">
+	        {% csrf_token %}
+	        	<input type="submit" class="btn" value="{{valve.valveid}}" name="select_valve">
+	    	</form>
+		</td></tr>
+	{% endfor %}
+	</table>
+	{% endif %}
+	
+</div>
+<div class="col-md-8">
+	<h3>Schedules</h3>
+	{% if schedule_list %}
+	<ul>
+	<table border="0" class="table">
+		<tr>
+			<td>ID</td>
+			<td>Description</td>
+			<td>Created on</td>
+			<td>Sent</td>
+		</tr>
+	{% for sche in schedule_list %}
+		<tr>
+			<td>{{sche.scheduleid}}</td>
+			<td>{{sche.description}}</td>
+			<td>{{sche.created_on}}</td>
+			<td>{{sche.sent}}</td>
+		</tr>
+	{% endfor %}
+	</table>
+	{% else %}
+	<a>No schedules to display</a>
+	{% endif %}
+	<a href="/valves/add_schedule">add new</a>
+
+</div>
+<ul>
+
+{% if output_msg %}
+<a>{{output_msg}}</a>
+{% endif %}
+{% endblock %}
