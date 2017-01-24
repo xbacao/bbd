@@ -1,8 +1,3 @@
-/*
-
-
-
-*/
 DROP SCHEMA IF EXISTS bbd;
 CREATE SCHEMA IF NOT EXISTS bbd;
 USE bbd ;
@@ -18,7 +13,7 @@ CREATE TABLE IF NOT EXISTS bbd.schedule (
   valveID_f INT NOT NULL,
   description VARCHAR(100),
   sent BIT(1) NOT NULL DEFAULT 0,
-  created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+  created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (scheduleID)
 );
 ALTER TABLE bbd.schedule ADD FOREIGN KEY fk_valve(valveID_f) REFERENCES bbd.valve(valveID)
@@ -42,8 +37,8 @@ BEGIN
   FROM bbd.schedule_entry INNER JOIN (
     SELECT scheduleID
     FROM bbd.schedule INNER JOIN (
-      SELECT @sche_id := MAX(scheduleID) 
-      FROM bbd.schedule 
+      SELECT @sche_id := MAX(scheduleID)
+      FROM bbd.schedule
       WHERE valveID_f=valveID) AS T1 ON scheduleID=@sche_id
     WHERE sent=0) AS T2 ON scheduleID_f=scheduleID;
 END $$

@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from .models import Valve, Schedule
+from django.shortcuts import render, redirect
+from .models import Valve, Schedule, ScheduleEntry
 from django.forms.formsets import formset_factory
 from .forms import CicleForm, BaseCicleFormSet
 import datetime
@@ -34,7 +34,7 @@ def valves_index(request):
 			valve_obj.save()
 			output_msg="Valve created succesfully"
 		context.update({'output_msg':output_msg})
-	return render(request, 'valves/valves_index.html',context)	
+	return render(request, 'valves/valves_index.html',context)
 
 def schedules_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
@@ -45,36 +45,43 @@ def schedules_index(request):
 		output_msg=""
 		keys = request.POST.keys()
 		if 'select_valve' in keys:
-			schedules = Schedule.objects.filter(valveid_f=request.POST.get('select_valve'))
-			context.update({'schedule_list':schedules})
+			valve_id=request.POST.get('select_valve')
+			schedules = Schedule.objects.filter(valveid_f=valve_id)
+			context.update({'schedule_list':schedules, 'valve_id':valve_id})
+		elif 'add_new' in keys:
+			request.session['valve_id']=request.POST.get('valve_id')
+			return redirect('add_schedule')
 		context.update({'output_msg':output_msg})
-	return render(request, 'valves/schedules_index.html',context)	
+	return render(request, 'valves/schedules_index.html',context)
 
 def add_schedule(request):
 	context = {}
 	cicleFormSet = formset_factory(CicleForm, formset=BaseCicleFormSet)
-	valve_id_list = [x.valveid for x in Valve.objects.all()]
+	valve_id=request.session.get('valve_id','')
 
-	cicle_data=[]
-	
 	if request.method == 'POST':
 		output_msg=""
-		keys = request.POST.keys()
-		cicle_form_set=cicleFormSet(request.POST)
+		keys=request.POST.keys()
 
-		if cicle_form_set.is_valid():
+		if 'submit_sche' in keys:
+			cicle_form_set_o = cicleFormSet(request.POST)
+			if cicle_form_set_o.is_valid():
 
-			for cicle_form in cicle_form_set:
-				start_hour=cicle_form.cleaned_data.get('start_hour')
-				start_min=cicle_form.cleaned_data.get('start_min')
-				stop_hour=cicle_form.cleaned_data.get('stop_hour')
-				stop_min=cicle_form.cleaned_data.get('stop_min')
+				#create sche
+				valve_obj = Valve.objects.get(valveid=valve_id)
+				schedule_obj=Schedule(valveid_f=valve_obj, description=request.POST.get('description'))
 
-				cicle_data.append({'start_hour':start_hour, 'start_min':start_min, 'stop_hour':stop_hour, 'stop_min':stop_min})
-		if 'add_cicle' in keys:
-			cicle_data.append([])
+				schedule_obj.save()
+
+				for cicle_form in cicle_form_set_o:
+					start_time = str(cicle_form.cleaned_data.get('start_hour'))+':'+str(cicle_form.cleaned_data.get('start_min'))+':00'
+					stop_time = str(cicle_form.cleaned_data.get('stop_hour'))+':'+str(cicle_form.cleaned_data.get('stop_min'))+':00'
+					sche_entry_obj = ScheduleEntry(scheduleid_f=schedule_obj, start_time=start_time, stop_time=stop_time)
+					sche_entry_obj.save()
+
+
+
 		context.update({'output_msg':output_msg})
-	else:
-		cicle_form_set=cicleFormSet(initial=cicle_data)
-	context.update({'valve_id_list':valve_id_list,'cicle_form_set':cicle_form_set})
+	cicle_form_set=cicleFormSet(initial=[])
+	context.update({'valve_id':valve_id,'cicle_form_set':cicle_form_set})
 	return render(request, 'valves/add_schedule.html',context)

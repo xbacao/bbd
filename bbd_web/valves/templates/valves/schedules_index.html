@@ -22,7 +22,7 @@
 	{% endfor %}
 	</table>
 	{% endif %}
-	
+
 </div>
 <div class="col-md-8">
 	<h3>Schedules</h3>
@@ -47,7 +47,14 @@
 	{% else %}
 	<a>No schedules to display</a>
 	{% endif %}
-	<a href="/valves/add_schedule">add new</a>
+
+	{% if valve_id %}
+	<form action="#" method="post">
+			{% csrf_token %}
+				<input type="submit" class="btn" value="add_sche" name="add_new">
+				<input type="hidden" value="{{valve_id}}" name="valve_id">
+	</form>
+	{% endif %}
 
 </div>
 <ul>
