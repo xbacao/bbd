@@ -1,0 +1,52 @@
+{% extends 'valves/base.html' %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+{% block content %}
+<ul>
+
+<h1>Schedule Viewer</h1>
+{% if sche %}
+<table border="0" class="table">
+  <tr>
+    <td>ID</td><td>{{sche.scheduleid}}</td>
+  </tr>
+  <tr>
+    <td>Valve</td><td>{{sche.valveid_f.valveid}}</td>
+  </tr>
+  <tr>
+    <td>Description</td><td>{{sche.description}}</td>
+  </tr>
+  <tr>
+    <td>Sent</td>
+    <td>
+      {% if sche.sent == 0 %}
+        <span class="glyphicon glyphicon-ok"></span>
+      {% else %}
+        <span class="glyphicon glyphicon-remove"></span>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td>Created On</td><td>{{sche.created_on}}</td>
+  </tr>
+</table>
+
+{% if entries %}
+<h2>Cycles</h2>
+<table border="0" class="table">
+  <tr>
+    <td>ID</td><td>Start Time</td><td>Stop Time</td>
+  </tr>
+{% for entry in entries %}
+  <tr>
+    <td>{{entry.entryid}}</td><td>{{entry.start_time}}</td><td>{{entry.stop_time}}</td>
+  </tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% endif %}
+
+
+{% endblock %}

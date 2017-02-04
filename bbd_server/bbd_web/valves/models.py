@@ -4,7 +4,7 @@ class Schedule(models.Model):
     scheduleid = models.AutoField(db_column='scheduleID', primary_key=True)  # Field name made lowercase.
     valveid_f = models.ForeignKey('Valve', models.DO_NOTHING, db_column='valveID_f')  # Field name made lowercase.
     description = models.CharField(max_length=100, blank=True, null=True)
-    sent = models.TextField()  # This field type is a guess.
+    sent = models.IntegerField()  # This field type is a guess.
     created_on = models.DateTimeField()
 
     class Meta:

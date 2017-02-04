@@ -51,6 +51,9 @@ def schedules_index(request):
 		elif 'add_new' in keys:
 			request.session['valve_id']=request.POST.get('valve_id')
 			return redirect('add_schedule')
+		elif 'view_sche_btn' in keys:
+			request.session['sche_id']=request.POST.get('sche_id')
+			return redirect('view_schedule')
 		context.update({'output_msg':output_msg})
 	return render(request, 'valves/schedules_index.html',context)
 
@@ -85,3 +88,11 @@ def add_schedule(request):
 	cicle_form_set=cicleFormSet(initial=[])
 	context.update({'valve_id':valve_id,'cicle_form_set':cicle_form_set})
 	return render(request, 'valves/add_schedule.html',context)
+
+def view_schedule(request):
+	sche_id = request.session.get('sche_id','')
+	sche_obj = Schedule.objects.get(scheduleid=sche_id)
+	entry_objs = ScheduleEntry.objects.filter(scheduleid_f=sche_obj)
+	context={'sche':sche_obj, 'entries':entry_objs}
+	print("WTF=",sche_obj.sent)
+	return render(request, 'valves/view_schedule.html',context)
