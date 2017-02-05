@@ -6,18 +6,12 @@
         <h1><a class="col-md-8" href="/valves/">MERTILIOS</a></h1>
         <a class="col-md-1" href="/valves/">Valves</a>
         <a class="col-md-3" href="/valves/schedules">Schedules</a>
-        <!-- 
+        <!--
         <a class="col-md-1" href="/tunnels/manage_peers/">peers</a>
         <a class="col-md-1" href="/accounts/profile/">profile</a>
-        <a class="col-md-1" href="/accounts/logout/">logout</a> 
+        <a class="col-md-1" href="/accounts/logout/">logout</a>
     	-->
     </div>
-    <div class="content container">
-        <div class="row">
-            <div class="col-md-12">
-            {% block content %}
-            {% endblock %}
-            </div>
-        </div>
-    </div>
+    {% block content %}
+    {% endblock %}
 </body>

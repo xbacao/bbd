@@ -4,7 +4,6 @@ from django.forms.formsets import formset_factory
 from .forms import CicleForm, BaseCicleFormSet
 import datetime
 
-# Create your views here.
 def valves_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
 	context = {
@@ -94,5 +93,4 @@ def view_schedule(request):
 	sche_obj = Schedule.objects.get(scheduleid=sche_id)
 	entry_objs = ScheduleEntry.objects.filter(scheduleid_f=sche_obj)
 	context={'sche':sche_obj, 'entries':entry_objs}
-	print("WTF=",sche_obj.sent)
 	return render(request, 'valves/view_schedule.html',context)

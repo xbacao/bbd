@@ -12,8 +12,10 @@ CREATE TABLE IF NOT EXISTS bbd.schedule (
   scheduleID INT NOT NULL AUTO_INCREMENT,
   valveID_f INT NOT NULL,
   description VARCHAR(100),
-  sent BIT(1) NOT NULL DEFAULT 0,
   created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  active BOOLEAN NOT NULL DEFAULT FALSE,
+  active_start TIMESTAMP NULL DEFAULT NULL,
+  active_end TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (scheduleID)
 );
 ALTER TABLE bbd.schedule ADD FOREIGN KEY fk_valve(valveID_f) REFERENCES bbd.valve(valveID)
@@ -46,9 +48,10 @@ DELIMITER ;
 
 DELIMITER $$
 DROP PROCEDURE IF EXISTS set_schedule_sent;
-CREATE PROCEDURE set_schedule_sent(IN scheID INT)
+CREATE PROCEDURE set_schedule_active(IN scheID INT)
 BEGIN
-  UPDATE bbd.schedule SET sent=1 WHERE scheduleID=scheID;
+  UPDATE bbd.schedule SET active=0,active_end=CURRENT_TIMESTAMP WHERE active=1;
+  UPDATE bbd.schedule SET active=1,active_start=CURRENT_TIMESTAMP WHERE scheduleID=scheID;
 END $$
 DELIMITER ;
 
@@ -83,12 +86,14 @@ INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CU
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
 
-INSERT INTO bbd.schedule(valveID_f, description, sent) VALUES (1, "TEST SENT", 1);
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "TEST SENT");
+INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
 
+CALL set_schedule_active(1);
+CALL set_schedule_active(2);
 /*
 CALL get_valve_schedule(1);
 

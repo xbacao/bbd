@@ -18,9 +18,9 @@
     <td>Description</td><td>{{sche.description}}</td>
   </tr>
   <tr>
-    <td>Sent</td>
+    <td>Active</td>
     <td>
-      {% if sche.sent == 0 %}
+      {% if sche.active == 1 %}
         <span class="glyphicon glyphicon-ok"></span>
       {% else %}
         <span class="glyphicon glyphicon-remove"></span>
@@ -29,6 +29,12 @@
   </tr>
   <tr>
     <td>Created On</td><td>{{sche.created_on}}</td>
+  </tr>
+  <tr>
+    <td>Activity Start</td><td>{{sche.active_start}}</td>
+  </tr>
+  <tr>
+    <td>Activity End</td><td>{{sche.active_end}}</td>
   </tr>
 </table>
 
