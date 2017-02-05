@@ -14,10 +14,11 @@
 <form action="#" method="POST">
 	{% csrf_token %}
 	{{ cicle_form_set.management_form }}
-	<div>
-		<div class="col-md-12">ValveID: {{valve_id}}</div>
-		<div class="col-md-1">Description: </div><div class="col-md-11"><input type="text" name="description"></div>
-	</div>
+	<table class='no_error'>
+		<tr><td>ValveID</td><td>{{valve_id}}</td></tr>
+		<tr><td>Description</td><td><input type="text" name="description"></td>
+	</table>
+
 	<h2>Cycles</h2>
 	<div class='table'>
 	{% for form in cicle_form_set.forms %}
