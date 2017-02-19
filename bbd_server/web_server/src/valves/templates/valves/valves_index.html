@@ -1,0 +1,65 @@
+{% extends 'valves/base.html' %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+{% block content %}
+<ul>
+
+<h1>Valve Manager</h1>
+{% if valve_list %}
+    <ul>
+
+    <h3><a class="col-md-10">Valve list</a></h3>
+    <form action="#" method="post">
+        {% csrf_token %}
+        <input type="submit" class="btn" value="add valve" name="add_valve_btn">
+    </form>
+	<table border="0" class="table">
+    	<tr>
+    		<td>Valve ID</td>
+    		<td>Description</td>
+            <td></td>
+            <td></td>
+    	</tr>
+        {% for valve in valve_list %}
+        	<tr>
+                <form action="#" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" value="{{valve.valveid}}" name="valve_id">
+                    {% if valve_edit and valve_edit == valve.valveid %}
+                        <td><input type="text" value="{{valve.valveid}}" name="valve_new_id"></td>
+                        <td><input type="text" value="{{valve.description}}" name="description"></td>
+                        <td><button name="commit" class="btn glyphicon glyphicon-ok"/></td>            
+                        <td><button name="cancel" class="btn glyphicon glyphicon-remove"/></td>
+                    {% else %}
+                        <td>{{valve.valveid}}</td>
+                        <td>{{valve.description}}</td>
+                        <td><button name="edit_valve" class="btn glyphicon glyphicon-edit"/></td>            
+                        <td><button name="remove_valve" class="btn glyphicon glyphicon-remove"/></td>
+                    {% endif %}      
+                </form>    		
+        	</tr>
+        {% endfor %}
+        {% if new_valve_flag %}
+            <tr>
+                <form action="#" method="post">
+                    {% csrf_token %}
+                    <td><input type="text" value="" name="new_valve_id"></td>
+                    <td><input type="text" value="" name="new_valve_description"></td>
+                    <td><button name="new_valve_commit" class="btn glyphicon glyphicon-ok"/></td>            
+                    <td><button name="new_valve_cancel" class="btn glyphicon glyphicon-remove"/></td>
+                </form>
+            </tr>
+        {% endif %}
+    </table>
+    </ul>
+{% else %}
+    <p>No valves available.</p>
+{% endif %}
+<ul>
+
+{% if output_msg %}
+    <a>{{output_msg}}</a>
+{% endif %}
+
+{% endblock %}
