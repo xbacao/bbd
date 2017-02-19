@@ -11,14 +11,6 @@ then
 	exit 1
 fi
 
-# cp -r $S_PATH/bbd_web $S_PATH/venv
-# if [ $? != 0 ]
-# then
-# 	echo "An error has occured copying web server!"
-# 	exit 1
-# fi
-
-
 source $V_ENV_PATH/venv/bin/activate
 if [ $? != 0 ]
 then
