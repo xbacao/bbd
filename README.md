@@ -7,7 +7,7 @@ make
 make upload
 
 to read input from arduino using serial(arch linux)
-busybox microcom -t 9600 /dev/ttyACM0
+busybox microcom -s 9600 /dev/ttyACM0
 (install busybox)
 
 mysql_config --cflags

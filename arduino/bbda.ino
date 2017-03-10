@@ -1,8 +1,6 @@
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 #include <stdio.h>
-// #include "SIM900.h"
-// #include "inetGSM.h"
 #include "gsm_ard.h"
 #include "network.h"
 #include "bbda.h"
@@ -17,18 +15,19 @@
 
 #define ATTACH_TIMEOUT  5
 
-bool debug_gsm = false;
-
 bool timeSynced = false;
+
+#define STATE_INIT      0x00
+#define STATE_GSM_ON    0x01
+#define STATE_GPRS_ON   0x02
+int STATE=STATE_INIT;
 
 //InetGSM inet;
 Gsm_Ard gsm;
 
 int result;
-char inSerial[50];
 int i=0;
 boolean started=false;
-char msg[MSG_SIZE];
 
 bool request_checked = false;
 
@@ -51,15 +50,11 @@ void setup()
   if(n){
     Serial.println("ERROR: init gsm module :"+String(n));
   }
-
-  /* wait for gsm */
-  // while(!gsm.begin(2400)){
-  //   Serial.println("\ngsm status=IDLE");
-  // }
-  // Serial.println("\ngsm status=READY");
+  STATE=STATE_GSM_ON;
 
   do{
     if(attachGPRS() == 1){
+      STATE=STATE_GPRS_ON;
       started=true;
       syncTimeWithServer();
       //dettachGPRS();
@@ -69,33 +64,37 @@ void setup()
     }
 
   } while(!started);
-  debug_gsm = true;
 
 }
 
 void loop()
 {
-  if(debug_gsm){
-    if(Serial.available()>0){
-      String str = Serial.readString();
-      Serial.println(str);
-      // gsm.SimpleWriteln(str);
-      // gsm.WaitResp(5000, 50, "DEBUG");
-    }
-  }
-
-  if(!request_checked && minute()%REQUEST_CHECK_MULT == 0){
-    Serial.println("iM CHEGKING REQUESTS");
-    attachGPRS();
-    checkRequests();
-    request_checked = true;
-    syncTimeWithServer();
-    //dettachGPRS();
-  }
-  else{
-    if(minute()%REQUEST_CHECK_MULT != 0 && request_checked){
-      request_checked = false;
-    }
+  // if(debug_gsm){
+  //   if(Serial.available()>0){
+  //     String str = Serial.readString();
+  //     Serial.println(str);
+  //     // gsm.SimpleWriteln(str);
+  //     // gsm.WaitResp(5000, 50, "DEBUG");
+  //   }
+  // }
+  switch(STATE){
+    default:
+      break;
+    case STATE_GSM_ON:
+      if(!request_checked && minute()%REQUEST_CHECK_MULT == 0){
+        Serial.println("CHECKING REQUESTS");
+        attachGPRS();
+        checkRequests();
+        request_checked = true;
+        syncTimeWithServer();
+        //dettachGPRS();
+      }
+      else{
+        if(minute()%REQUEST_CHECK_MULT != 0 && request_checked){
+          request_checked = false;
+        }
+      }
+      break;
   }
 }
 
@@ -293,67 +292,67 @@ int markRequestServed(int requestID){
   -1  msg not formated
   -2  not a time message
 */
-int decodeTime(uint64_t *time_64){
-  int i = 0;
-  int k = 0;
-  int indx[N_SEPARATORS];
-  for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
-    if(msg[i] == '|'){
-      indx[k] = i;
-      k++;
-    }
-  }
-
-  if(k != N_SEPARATORS){
-    Serial.println("DB:MSG NOT FORMATTED (TIME)");
-    return -1;
-  }
-
-  /*check if t is there */
-  if(indx[0] != 0 or indx[1] != 2 or msg[1] != 't'){
-    Serial.println("DB:MSG NOT A TIME MSG");
-    return -2;
-  }
-
-  uint64_t l_time = 0ULL;
-  for(int i = indx[1]+1; i < indx[2]; i++){
-    l_time |= (0x000000000000000fLL & ((uint64_t)msg[i])) << 4*(i-indx[1]-1);
-  }
-
-  *time_64 = l_time;
-
-  return 1;
-}
+// int decodeTime(uint64_t *time_64){
+//   int i = 0;
+//   int k = 0;
+//   int indx[N_SEPARATORS];
+//   for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
+//     if(msg[i] == '|'){
+//       indx[k] = i;
+//       k++;
+//     }
+//   }
+//
+//   if(k != N_SEPARATORS){
+//     Serial.println("DB:MSG NOT FORMATTED (TIME)");
+//     return -1;
+//   }
+//
+//   /*check if t is there */
+//   if(indx[0] != 0 or indx[1] != 2 or msg[1] != 't'){
+//     Serial.println("DB:MSG NOT A TIME MSG");
+//     return -2;
+//   }
+//
+//   uint64_t l_time = 0ULL;
+//   for(int i = indx[1]+1; i < indx[2]; i++){
+//     l_time |= (0x000000000000000fLL & ((uint64_t)msg[i])) << 4*(i-indx[1]-1);
+//   }
+//
+//   *time_64 = l_time;
+//
+//   return 1;
+// }
 
 /*
   return codes
   -1    message not formated
 */
-int decodeRequest(int *requestID, int *valveID, int *action){
-  int i = 0;
-  int k = 0;
-  int indx[N_SEPARATORS];
-  for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
-    if(msg[i] == '|'){
-      indx[k] = i;
-      k++;
-    }
-  }
-
-  if(k != N_SEPARATORS){
-    Serial.println("DB:MSG NOT FORMATTED");
-    return -1;
-  }
-
-  char* p_end;
-
-  *requestID = strtol(msg+indx[0], &p_end, 10);
-  *valveID = strtol(msg+indx[1], &p_end, 10);
-  *action = strtol(msg+indx[2], &p_end, 10);
-
-  return 1;
-
-}
+// int decodeRequest(int *requestID, int *valveID, int *action){
+//   int i = 0;
+//   int k = 0;
+//   int indx[N_SEPARATORS];
+//   for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
+//     if(msg[i] == '|'){
+//       indx[k] = i;
+//       k++;
+//     }
+//   }
+//
+//   if(k != N_SEPARATORS){
+//     Serial.println("DB:MSG NOT FORMATTED");
+//     return -1;
+//   }
+//
+//   char* p_end;
+//
+//   *requestID = strtol(msg+indx[0], &p_end, 10);
+//   *valveID = strtol(msg+indx[1], &p_end, 10);
+//   *action = strtol(msg+indx[2], &p_end, 10);
+//
+//   return 1;
+//
+// }
 
 /*
   return codes
