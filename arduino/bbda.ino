@@ -17,11 +17,6 @@
 
 bool timeSynced = false;
 
-#define STATE_INIT      0x00
-#define STATE_GSM_ON    0x01
-#define STATE_GPRS_ON   0x02
-int STATE=STATE_INIT;
-
 //InetGSM inet;
 Gsm_Ard gsm;
 
@@ -46,21 +41,34 @@ void setup()
   /* setup gsm */
   Serial.println("GSM Shield init");
 
-  n=gsm.init_gsm_module();
-  if(n){
-    Serial.println("ERROR: init gsm module :"+String(n));
-  }
-  STATE=STATE_GSM_ON;
+  do{
+    n=gsm.init_gsm_module();
+    if(n){
+      Serial.print("ERROR: COULD NOT INITIALIZE GSM MODULE ");
+      Serial.println(n);
+      delay(10000);
+    }
+  }while(n);
 
   do{
-    if(attachGPRS() == 1){
-      STATE=STATE_GPRS_ON;
+    if(!gsm.attachGPRS()){
+      //ARDUINO_STATE=ARDUINO_GPRS_ON_STATE;
       started=true;
       syncTimeWithServer();
-      //dettachGPRS();
-
-      Serial.println("CLOCK");
-      digitalClockDisplay();
+      n=gsm.dettachGPRS();
+      if(n){
+        Serial.print("ERROR: COULD NOT DETTACH GPRS ");
+        Serial.println(n);
+      }
+      else{
+        Serial.println("CLOCK");
+        digitalClockDisplay();
+        started=true;
+      }
+    }
+    else{
+      Serial.print("ERROR: COULD NOT ATTACH GPRS ");
+      Serial.println(n);
     }
 
   } while(!started);
@@ -77,25 +85,25 @@ void loop()
   //     // gsm.WaitResp(5000, 50, "DEBUG");
   //   }
   // }
-  switch(STATE){
-    default:
-      break;
-    case STATE_GSM_ON:
-      if(!request_checked && minute()%REQUEST_CHECK_MULT == 0){
-        Serial.println("CHECKING REQUESTS");
-        attachGPRS();
-        checkRequests();
-        request_checked = true;
-        syncTimeWithServer();
-        //dettachGPRS();
-      }
-      else{
-        if(minute()%REQUEST_CHECK_MULT != 0 && request_checked){
-          request_checked = false;
-        }
-      }
-      break;
-  }
+  // switch(ARDUINO_STATE){
+  //   default:
+  //     break;
+  //   case ARDUINO_GSM_ON_STATE:
+  //     if(!request_checked && minute()%REQUEST_CHECK_MULT == 0){
+  //       Serial.println("CHECKING REQUESTS");
+  //       gsm_ard.attachGPRS();
+  //       checkRequests();
+  //       request_checked = true;
+  //       syncTimeWithServer();
+  //       gsm_ard.dettachGPRS();
+  //     }
+  //     else{
+  //       if(minute()%REQUEST_CHECK_MULT != 0 && request_checked){
+  //         request_checked = false;
+  //       }
+  //     }
+  //     break;
+  // }
 }
 
 void requestSync(){
@@ -359,42 +367,42 @@ int markRequestServed(int requestID){
   -1  could not attach
 */
 
-int attachGPRS(){
-  // int i = 0;
-  // int n;
-  // for(;i < ATTACH_TIMEOUT; i++){
-  //   n = inet.configureGPRS(APN, "", "");
-  //   if (n == 1){
-  //     Serial.println("GPRS = attached");
-  //     return 1;
-  //   }
-  //   else
-  //   {
-  //     Serial.println("DB:ERROR ATTACHING GPRS!");
-  //     delay(5000);
-  //   }
-  // }
-  // return -1;
-  return 1;
-}
-
-int dettachGPRS(){
-  // int i = 0;
-  // int n;
-  // for(; i < ATTACH_TIMEOUT; i++){
-  //   n = inet.dettachGPRS();
-  //   if(n == 1){
-  //     Serial.println("GPRS = dettached");
-  //     return 1;
-  //   }
-  //   else{
-  //     Serial.println("DB:ERROR DETTACHING GPRS!");
-  //     delay(5000);
-  //   }
-  // }
-  // return n;
-  return 1;
-}
+// int attachGPRS(){
+//   // int i = 0;
+//   // int n;
+//   // for(;i < ATTACH_TIMEOUT; i++){
+//   //   n = inet.configureGPRS(APN, "", "");
+//   //   if (n == 1){
+//   //     Serial.println("GPRS = attached");
+//   //     return 1;
+//   //   }
+//   //   else
+//   //   {
+//   //     Serial.println("DB:ERROR ATTACHING GPRS!");
+//   //     delay(5000);
+//   //   }
+//   // }
+//   // return -1;
+//   return 1;
+// }
+//
+// int dettachGPRS(){
+//   // int i = 0;
+//   // int n;
+//   // for(; i < ATTACH_TIMEOUT; i++){
+//   //   n = inet.dettachGPRS();
+//   //   if(n == 1){
+//   //     Serial.println("GPRS = dettached");
+//   //     return 1;
+//   //   }
+//   //   else{
+//   //     Serial.println("DB:ERROR DETTACHING GPRS!");
+//   //     delay(5000);
+//   //   }
+//   // }
+//   // return n;
+//   return 1;
+// }
 
 /*
 int attachGPRS(){
