@@ -2,18 +2,41 @@
 
 using namespace std;
 
+/*******AT COMMANDS******/
+const char AT[] PROGMEM="AT";
+const char AT_CPIN_R[] PROGMEM="AT+CPIN?";
+const char AT_CPIN_READY[] PROGMEM="+CPIN: READY";
+const char AT_CPIN_SIM_PIN[] PROGMEM="+CPIN: SIM PIN";
+const char AT_CPIN_SET[] PROGMEM="AT+CPIN=0048";
+// const char* const AT_CPIN_RESPONSES_TABLE[] PROGMEM={AT_CPIN_READY, AT_CPIN_SIM_PIN};
+
+
+const PROGMEM char AT_CGATT_R[]="AT+CGATT?";
+const PROGMEM char AT_CGATT_0[]="+CGATT: 0";
+const PROGMEM char AT_CGATT_1[]="+CGATT: 1";
+
+const PROGMEM char AT_OK[] ="OK";
+
+/***************************/
+
+const unsigned long int _POSSIBLE_BRS[8] ={1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
+
+const PROGMEM char NETWORK_APN[] ="internet.vodafone.pt";
+const PROGMEM char NETWORK_USER[]="";
+const PROGMEM char NETWORK_PASS[]="";
+
 Gsm_Ard::Gsm_Ard(){
-  _buff_idx=0;
-  gsm_state=GSM_OFF_STATE;
+  _gsm_state=GSM_OFF_STATE;
+  _clear_recv_buff();
+  _clear_rsp_buff();
   #ifdef DEBUG_GSM
   Serial.println("DB: GSM_STATE=GSM_OFF_STATE");
   #endif
 }
 
 int Gsm_Ard::init_gsm_module(){
-  int i,n,rsp_len;
-  char* rsp;
-  gsm_state=GSM_OFF_STATE;
+  int i,n;
+  _gsm_state=GSM_OFF_STATE;
   #ifdef DEBUG_GSM
   Serial.println("DB: GSM_STATE=GSM_OFF_STATE");
   #endif
@@ -24,7 +47,13 @@ int Gsm_Ard::init_gsm_module(){
   Serial.println("DB: Trying  default baudrate "+String(DEFAULT_SS_BAUDRATE));
   #endif
   _ss.begin(DEFAULT_SS_BAUDRATE);
-  n=send_cmd_comp_rsp(AT,AT_OK,5000);
+  {
+    char at_cmd_buffer[3];
+    char at_rsp_buffer[6];
+    strcpy_P(at_cmd_buffer, AT);
+    strcpy_P(at_rsp_buffer, AT_OK);
+    n=send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
+  }
   if(n){
     #ifdef DEBUG_GSM
     Serial.print("DB: COULD NOT SET DEFAULT BAUDRATE, TRYING OTHERS :");
@@ -32,127 +61,159 @@ int Gsm_Ard::init_gsm_module(){
     #endif
   }
   else{
-    gsm_state=GSM_ON_STATE;
+    _gsm_state=GSM_ON_STATE;
     #ifdef DEBUG_GSM
     Serial.println("DB: GSM_STATE=GSM_ON_STATE");
     #endif
   }
-  for(i=0;i<8 && gsm_state!=GSM_ON_STATE;i++){
+  for(i=0;i<8 && _gsm_state!=GSM_ON_STATE;i++){
     #ifdef DEBUG_GSM
     Serial.println("DB: Trying baudrate "+String(_POSSIBLE_BRS[i]));
     #endif
     _ss.begin(_POSSIBLE_BRS[i]);
-    n=send_cmd_comp_rsp(AT, AT_OK,5000);
+    {
+      char at_cmd_buffer[3];
+      char at_rsp_buffer[6];
+      strcpy_P(at_cmd_buffer, AT);
+      strcpy_P(at_rsp_buffer, AT_OK);
+      n=send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
+    }
     if(!n){
-      gsm_state=GSM_ON_STATE;
+      _gsm_state=GSM_ON_STATE;
       #ifdef DEBUG_GSM
       Serial.println("DB: GSM_STATE=GSM_ON_STATE");
       #endif
     }
   }
 
-  if(gsm_state!=GSM_ON_STATE){
+  if(_gsm_state!=GSM_ON_STATE){
     #ifdef DEBUG_GSM
     Serial.println("DB: ERROR, COULD NOT CONNECT TO GSM");
     #endif
     return 1;
   }
 
-  n=send_cmd_get_rsp(AT_CPIN_R, 5000, &rsp, &rsp_len);
-  if(n){
-    #ifdef DEBUG_GSM
-    Serial.print("DB: ERROR CHECKING PIN STATE ");
-    Serial.println(n);
-    #endif
-    return 2;
-  }
+  {
+    char at_cmd_buffer[9];
+    strcpy_P(at_cmd_buffer, AT_CPIN_R);
 
-  if(!strncmp(rsp,AT_CPIN_READY,rsp_len)){
-    gsm_state=GSM_PIN_STATE;
-    #ifdef DEBUG_GSM
-    Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-    #endif
+    char rsp1[13];
+    char rsp2[15];
+    strcpy_P(rsp1, AT_CPIN_READY);
+    strcpy_P(rsp2, AT_CPIN_SIM_PIN);
+    char* rsps[]={rsp1, rsp2};
+    n=send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
   }
-  else if(!strncmp(rsp,AT_CPIN_SIM_PIN,rsp_len)){
-    char* temp_str=new char[0];
-    strcat(temp_str, "AT+CPIN=");
-    strcat(temp_str,SIM_PIN);
-    n=send_cmd_comp_rsp(temp_str, AT_OK, 5000);
-    if(!n){
+  switch(n){
+    default:
       #ifdef DEBUG_GSM
-      Serial.print("DB: ERROR SETTING SIM PIN ");
+      Serial.print("DB: ERROR CHECKING PIN STATE ");
       Serial.println(n);
       #endif
-      return 3;
-    }
-    gsm_state=GSM_PIN_STATE;
-    #ifdef DEBUG_GSM
-    Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-    #endif
-  }
-  else{
-    #ifdef DEBUG_GSM
-    Serial.print("DB: ERROR, PIN STATE RESPONSE=");
-    Serial.println(rsp_len);
-    #endif
-    return 3;
-  }
-
-  n=send_cmd_get_rsp(AT_CGATT_R, 5000, &rsp, &rsp_len);
-  if(n){
-    #ifdef DEBUG_GSM
-    Serial.print("DB: ERROR REQUEST GPRS STATE ");
-    Serial.println(n);
-    #endif
-    return 3;
-  }
-
-  if(!strncmp(rsp,AT_CGATT_1,rsp_len)){
-    gsm_state=GSM_GPRS_STATE;
-    #ifdef DEBUG_GSM
-    Serial.println("DB: GSM_STATE=GSM_GPRS_STATE");
-    #endif
-  }
-  else if(strncmp(rsp,AT_CGATT_0,rsp_len)!=0){
-    #ifdef DEBUG_GSM
-    Serial.println("DB: ERROR, REQUEST GPRS STATE BAD RESPONSE!");
-    #endif
-    return 4;
+      return 2;
+      break;
+    case 0:
+      _gsm_state=GSM_PIN_STATE;
+      #ifdef DEBUG_GSM
+      Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
+      #endif
+      break;
+    case 1:
+      {
+        char at_cmd_buffer[13];
+        char at_rsp_buffer[6];
+        strcpy_P(at_cmd_buffer, AT_CPIN_SET);
+        strcpy_P(at_rsp_buffer, AT_OK);
+        n=send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
+      }
+      if(n){
+        #ifdef DEBUG_GSM
+        Serial.print("DB: ERROR SETTING SIM PIN ");
+        Serial.println(n);
+        #endif
+        return 3;
+      }
+      _gsm_state=GSM_PIN_STATE;
+      #ifdef DEBUG_GSM
+      Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
+      #endif
+      break;
   }
 
+  {
+    char at_cmd_buffer[10];
+    strcpy_P(at_cmd_buffer, AT_CGATT_R);
+
+    char rsp1[10];
+    char rsp2[10];
+    strcpy_P(rsp1, AT_CGATT_0);
+    strcpy_P(rsp2, AT_CGATT_1);
+    char* rsps[]={rsp1, rsp2};
+    n=send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
+  }
+  // n=send_cmd_get_rsp(AT_CGATT_R, 5000, &rsp, &rsp_len);
+  // if(n<0){
+  //   #ifdef DEBUG_GSM
+  //   Serial.print("DB: ERROR REQUEST GPRS STATE ");
+  //   Serial.println(n);
+  //   #endif
+  //   return 3;
+  // }
+
+  switch(n){
+    default:
+      #ifdef DEBUG_GSM
+      Serial.print("DB: ERROR REQUEST GPRS STATE ");
+      Serial.println(n);
+      #endif
+      return 4;
+      break;
+    case 0:
+      #ifdef DEBUG_GSM
+      Serial.println("DB: ERROR, REQUEST GPRS STATE BAD RESPONSE!");
+      #endif
+      return 5;
+      break;
+    case 1:
+      _gsm_state=GSM_GPRS_STATE;
+      #ifdef DEBUG_GSM
+      Serial.println("DB: GSM_STATE=GSM_GPRS_STATE");
+      #endif
+      break;
+  }
   return 0;
 }
 
 int Gsm_Ard::attachGPRS(){
-  int n, rsp_len;
-  char* rsp;
-  n=send_cmd_get_rsp("AT+CIFSR", 5000, &rsp, &rsp_len);
-  if(strncmp(rsp, "ERROR", rsp_len)!=0){
-    #ifdef DEBUG_GSM
-    Serial.print("DB: IP ALREADY ASSIGNED: ");
-    for(int i=0;i<rsp_len;i++){
-      Serial.print(rsp[i]);
-    }
-    Serial.println("");
-    #endif
-    gsm_state=GSM_IP_STATE;
-    return 0;
-  }
-
-  n=send_cmd_get_rsp("AT+CIPSERVER?", 5000, &rsp, &rsp_len);
-  if(n){
-    #ifdef DEBUG_GSM
-    Serial.print("DB: ERROR SETTING CLIENT ONLY MODE ");
-    Serial.println(n);
-    #endif
-    return 1;
-  }
-
-  Serial.print("DB: CIPSERVER: ");
-  for(int i=0;i<rsp_len;i++){
-    Serial.print(rsp[i]);
-  }
-  Serial.println("");
+  // int n, rsp_len;
+  // char* rsp;
+  // n=send_cmd_get_rsp("AT+CIFSR", 5000, &rsp, &rsp_len);
+  // if(strncmp(rsp, "ERROR", rsp_len)!=0){
+  //   #ifdef DEBUG_GSM
+  //   Serial.print("DB: IP ALREADY ASSIGNED: ");
+  //   for(int i=0;i<rsp_len;i++){
+  //     Serial.print(rsp[i]);
+  //   }
+  //   Serial.println("");
+  //   #endif
+  //   _gsm_state=GSM_IP_STATE;
+  //   return 0;
+  // }
+  //
+  // n=send_cmd_get_rsp("AT+CIPSERVER?", 5000, &rsp, &rsp_len);
+  // if(n){
+  //   #ifdef DEBUG_GSM
+  //   Serial.print("DB: ERROR SETTING CLIENT ONLY MODE ");
+  //   Serial.println(n);
+  //   #endif
+  //   return 1;
+  // }
+  //
+  // Serial.print("DB: CIPSERVER: ");
+  // for(int i=0;i<rsp_len;i++){
+  //   Serial.print(rsp[i]);
+  // }
+  // Serial.println("");
 
   //
   // n=send_cmd_comp_rsp("AT+CIPSHUT", "SHUT OK", 5000);
@@ -234,10 +295,11 @@ int Gsm_Ard::dettachGPRS(){
   sends a command, fetches response, compares with desired output
 */
 int Gsm_Ard::send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wait_period){
-  int n, rsp_len,res_len;
+  int n;
   int cmd_size=strlen(cmd);
   char* rsp;
-  char* result;
+  unsigned int rsp_len;
+
   while(_ss.available()) _ss.read();
 
   #ifdef DEBUG_SS
@@ -245,11 +307,19 @@ int Gsm_Ard::send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wa
   Serial.println(cmd);
   #endif
   _write_cmd(cmd);
-  n=_recv_string(&rsp, &rsp_len,recv_wait_period);
+  n=_recv_string(recv_wait_period);
   if(!n){
-    n=_fetch_result_from_rsp(cmd, cmd_size, rsp, rsp_len, &result, &res_len);
+    n=_fetch_rsp_from_recv(cmd, cmd_size, &rsp_len);
     if(!n){
-      if(!strncmp(result, exp_rsp, res_len)) return 0;
+      rsp=new char[rsp_len];
+      n=_get_rsp(&rsp);
+      if(n){
+        // #ifdef DEBUG_GSM
+        // Serial.println("DB: ERROR GETTING RESPONSE");
+        // #endif
+        return 2;
+      }
+      if(!strncmp(rsp, exp_rsp, rsp_len)) return 0;
       else{
         #ifdef DEBUG_GSM
         Serial.println("DB: ERROR, RESULT AND EXPECTED DO NOT MATCH!");
@@ -262,7 +332,7 @@ int Gsm_Ard::send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wa
       Serial.print("DB: ERROR FETCHING RESULT ");
       Serial.println(n);
       #endif
-      return 2;
+      return 3;
     }
   }
   else{
@@ -270,42 +340,42 @@ int Gsm_Ard::send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wa
     Serial.print("DB: ERROR RECEIVING STRING ");
     Serial.println(n);
     #endif
-    return 3;
+    return 4;
   }
 }
 
-int Gsm_Ard::send_cmd_get_rsp(const char* cmd, int recv_wait_period, char** rsp_ret, int* rsp_ret_len){
-  int n, rsp_len,res_len;
+int Gsm_Ard::send_cmd_comp_several_rsp(const char* cmd, char** exp_rsps, unsigned int exp_rsps_len, int recv_wait_period){
+  int n;
   int cmd_size=strlen(cmd);
-  *rsp_ret_len=0;
   char* rsp;
-  char* result;
+  unsigned int rsp_len;
   while(_ss.available()) _ss.read();
   #ifdef DEBUG_SS
   Serial.print("DB-SND: ");
   Serial.println(cmd);
   #endif
   _write_cmd(cmd);
-  n=_recv_string(&rsp, &rsp_len,recv_wait_period);
+  n=_recv_string(recv_wait_period);
   if(!n){
-    n=_fetch_result_from_rsp(cmd, cmd_size, rsp, rsp_len, &result, &res_len);
-    #ifdef DEBUG_SS
-    Serial.print("RSP: [");
-    for(int j=0;j<res_len;j++){
-      Serial.print(result[j]);
-    }
-    Serial.println("]");
-    #endif
+    n=_fetch_rsp_from_recv(cmd, cmd_size, &rsp_len);
     if(!n){
-      *rsp_ret=result;
-      *rsp_ret_len=res_len;
-      return 0;
+      rsp=new char[rsp_len];
+      n=_get_rsp(&rsp);
+      if(n){
+        // #ifdef DEBUG_GSM
+        // Serial.println("DB: ERROR GETTING RESPONSE");
+        // #endif
+        return -2;
+      }
+      for(unsigned int j=0;j<exp_rsps_len;j++){
+        if(!strncmp(exp_rsps[j], rsp, strlen(exp_rsps[j]))) return j;
+      }
     }
     else{
-      return 2;
+      return -3;
     }
   }
-  return 1;
+  return -1;
 }
 
 /*
@@ -314,22 +384,24 @@ int Gsm_Ard::send_cmd_get_rsp(const char* cmd, int recv_wait_period, char** rsp_
   1 -> buffer full before transmission ends
   2 -> transmission not fully received
 */
-int Gsm_Ard::_recv_string(char** rsp, int* rsp_len, int wait_period){
-  char* rsp_temp;
-  *rsp_len=0;
+int Gsm_Ard::_recv_string(int wait_period){
+  // char* rsp_temp;
+  if(_recv_buff_state!=BUFF_READY){
+    #ifdef DEBUG_GSM
+    Serial.println("DB: ERROR, BUFFER NOT READY!");
+    #endif
+    return 1;
+  }
   int nl_counter=0;
-
-  _buff_idx=0;
-  memset(_recv_buff, 0, RECV_BUFF_LEN);
 
   for(int i=0;i<10;i++){
     if(!_ss.available()){
       delay(wait_period/10);
     }
     else{
-      while(_ss.available() && _buff_idx<RECV_BUFF_LEN && nl_counter<3){
-        _recv_buff[_buff_idx++]=_ss.read();
-        if(_buff_idx>1 && _recv_buff[_buff_idx-1]==NL_CHAR && _recv_buff[_buff_idx-2]==CR_CHAR){
+      while(_ss.available() && _recv_buff_idx<RECV_BUFF_LEN && nl_counter<3){
+        _recv_buff[_recv_buff_idx++]=_ss.read();
+        if(_recv_buff_idx>1 && _recv_buff[_recv_buff_idx-1]==NL_CHAR && _recv_buff[_recv_buff_idx-2]==CR_CHAR){
           nl_counter++;
         }
       }
@@ -338,94 +410,109 @@ int Gsm_Ard::_recv_string(char** rsp, int* rsp_len, int wait_period){
 
   #ifdef DEBUG_SS_RAW
   Serial.print("RECV: [");
-  for(unsigned int j=0;j<_buff_idx;j++){
+  for(unsigned int j=0;j<_recv_buff_idx;j++){
     Serial.print((unsigned int)_recv_buff[j]);
     Serial.print(" ");
   }
   Serial.println("]");
   #endif
 
-  if(_buff_idx==RECV_BUFF_LEN){
+  if(_recv_buff_idx==RECV_BUFF_LEN){
     #ifdef DEBUG_GSM
     Serial.println("DB: ERROR, RECV BUFFER FULL");
     #endif
-    return 1;
+    _clear_recv_buff();
+    return 2;
   }
-  else if(!_buff_idx){
+  else if(!_recv_buff_idx){
     #ifdef DEBUG_GSM
     Serial.println("DB: RESPONSE NOT RECEIVED!");
     #endif
-    return 2;
+    _clear_recv_buff();
+    return 3;
   }
   else if(nl_counter!=3){
     #ifdef DEBUG_GSM
     Serial.print("DB: ERROR, BAD RESPONSE FORMAT ");
     Serial.println(nl_counter);
     #endif
-    return 3;
+    _clear_recv_buff();
+    return 4;
   }
-
-  *rsp_len=_buff_idx;
-  rsp_temp=new char [*rsp_len];
-  strncpy(rsp_temp, _recv_buff,*rsp_len);
-  *rsp=rsp_temp;
-
+  _recv_buff_state=BUFF_USED;
   return 0;
 }
 
-int Gsm_Ard::_fetch_result_from_rsp(const char* cmd, int cmd_size, char* rsp, int rsp_size, char** result, int*res_len){
-  char* res_temp;
-  int i, start_idx;
+void Gsm_Ard::_clear_recv_buff(){
+  _recv_buff_idx=0;
+  memset(_recv_buff, 0, RECV_BUFF_LEN);
+  _recv_buff_state=BUFF_READY;
+}
 
-  *res_len=0;
-  i=0;
+void Gsm_Ard::_clear_rsp_buff(){
+  _rsp_buff_idx=0;
+  memset(_rsp_buff, 0, RSP_BUFF_LEN);
+  _rsp_buff_state=BUFF_READY;
+}
 
-  for(;i<cmd_size;i++){
-    if(cmd[i]!=rsp[i]){
+int Gsm_Ard::_fetch_rsp_from_recv(const char* cmd, unsigned int cmd_size, unsigned int* rsp_len){
+  unsigned int i, start_idx;
+  if(_rsp_buff_state!=BUFF_READY || _recv_buff_state!=BUFF_USED){
+    #ifdef DEBUG_GSM
+    Serial.println("DB: ERROR, RSP BUFF NOT READY, OR RECV BUFF NOT USED!");
+    #endif
+    return 1;
+  }
+  for(i=0;i<cmd_size;i++){
+    if(cmd[i]!=_recv_buff[i]){
       #ifdef DEBUG_GSM
       Serial.println("DB: ERROR CMD AND RSP DO NOT MATCH!");
       #endif
-      return 1;
+      return 2;
     }
   }
 
-  if(rsp[i]!=CR_CHAR || rsp[i+1]!=NL_CHAR || rsp[i+2]!=CR_CHAR || rsp[i+3]!=NL_CHAR){
+  if(_recv_buff[i]!=CR_CHAR || _recv_buff[i+1]!=NL_CHAR || _recv_buff[i+2]!=CR_CHAR || _recv_buff[i+3]!=NL_CHAR){
     #ifdef DEBUG_GSM
     Serial.println("DB: ERROR NL AND CR DO NOT MATCH!");
     #endif
-    return 2;
+    return 3;
   }
 
   i+=4;
   start_idx=i;
 
-  while(rsp[i]!=CR_CHAR && rsp[i+1]!=NL_CHAR){
+  while(_recv_buff[i]!=CR_CHAR && _recv_buff[i+1]!=NL_CHAR){
     i++;
   }
 
-  if(i!=rsp_size-2){
+  if(i!=_recv_buff_idx-2){
     #ifdef DEBUG_GSM
     Serial.println("DB: ERROR RSP AND CMD SIZES DO NOT MATCH!");
     #endif
-    return 3;
+    return 4;
   }
 
-  // #ifdef DEBUG_SS
-  // Serial.print("DB-RECV: [");
-  // for(int j=0;j<rsp_size;j++){
-  //   Serial.print((unsigned int)rsp[j]);
-  //   if(j!=rsp_size-1)  Serial.print(',');
-  // }
-  // Serial.println("]");
-  // #endif
+  _rsp_buff_idx=i-start_idx;
+  _rsp_buff_state=BUFF_USED;
 
-  *res_len=i-start_idx;
+  strncpy(_rsp_buff, _recv_buff+start_idx, _rsp_buff_idx);
 
-  res_temp=new char[*res_len];
+  _clear_recv_buff();
 
-  strncpy(res_temp, rsp+start_idx, *res_len);
-  *result=res_temp;
+  *rsp_len=_rsp_buff_idx;
+  return 0;
+}
 
+int Gsm_Ard::_get_rsp(char** rsp){
+  if(_rsp_buff_state!=BUFF_USED){
+    #ifdef DEBUG_GSM
+    Serial.println("DB: ERROR, RSP BUFF NOT USED!");
+    #endif
+    return 1;
+  }
+  strncpy(*rsp, _rsp_buff, _rsp_buff_idx);
+  _clear_rsp_buff();
   return 0;
 }
 

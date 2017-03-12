@@ -7,13 +7,13 @@
 #include "at.h"
 // #include "MemoryFree.h"
 
-
 #define _GSM_RXPIN_ 7
 #define _GSM_TXPIN_ 8
 #define DEFAULT_SS_BAUDRATE 2400
 #define DEFAULT_RECV_WAIT_PERIOD  100    //ms
 
 #define RECV_BUFF_LEN 128
+#define RSP_BUFF_LEN 128
 #define CR_CHAR   0x0d
 #define NL_CHAR   0x0a
 
@@ -21,21 +21,18 @@
 #define DEBUG_SS
 // #define DEBUG_SS_RAW
 
-const unsigned long int _POSSIBLE_BRS[8] ={1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
-
-const PROGMEM char NETWORK_APN[] ="internet.vodafone.pt";
-const PROGMEM char NETWORK_USER[]="";
-const PROGMEM char NETWORK_PASS[]="";
-
-const PROGMEM char SIM_PIN[]="0048";
-
 
 enum GSM_STATE{GSM_OFF_STATE, GSM_ON_STATE, GSM_PIN_STATE, GSM_GPRS_STATE, GSM_IP_STATE};
+enum BUFF_STATE{BUFF_READY, BUFF_USED};
 
 class Gsm_Ard{
   char _recv_buff[RECV_BUFF_LEN];
-  unsigned int _buff_idx;
-  GSM_STATE gsm_state=GSM_OFF_STATE;
+  char _rsp_buff[RSP_BUFF_LEN];
+  unsigned int _recv_buff_idx;
+  unsigned int _rsp_buff_idx;
+  GSM_STATE _gsm_state;
+  BUFF_STATE _recv_buff_state;
+  BUFF_STATE _rsp_buff_state;
   SoftwareSerial _ss = SoftwareSerial(_GSM_RXPIN_, _GSM_TXPIN_);
 public:
   Gsm_Ard();
@@ -44,10 +41,14 @@ public:
   int dettachGPRS();
 private:
   int send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wait_period);
-  int send_cmd_get_rsp(const char* cmd, int recv_wait_period, char** rsp_ret, int* rsp_ret_len);
+  int send_cmd_comp_several_rsp(const char* cmd, char** exp_rsps, unsigned int exp_rsps_len, int recv_wait_period);
 
-  int _recv_string(char** rsp, int* rsp_len, int wait_period);
-  int _fetch_result_from_rsp(const char* cmd, int cmd_size, char* rsp, int rsp_size, char** result, int*res_len);
+  void _clear_recv_buff();
+  void _clear_rsp_buff();
+  int _recv_string(int wait_period);
+  // int _get_recved_string(char** recved_str);
+  int _fetch_rsp_from_recv(const char* cmd, unsigned int cmd_size, unsigned int* rsp_len);
+  int _get_rsp(char** rsp);
   void _write_cmd(const char* cmd);
 
 };
