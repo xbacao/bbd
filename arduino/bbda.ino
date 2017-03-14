@@ -51,7 +51,8 @@ void setup()
   }while(n);
 
   do{
-    if(!gsm.attachGPRS()){
+    n=gsm.attachGPRS();
+    if(!n){
       //ARDUINO_STATE=ARDUINO_GPRS_ON_STATE;
       started=true;
       syncTimeWithServer();
@@ -142,7 +143,11 @@ int setNewTime(){
   -10   gprs module not active
 */
 int syncTimeWithServer(){
-  // int n;
+  int n;
+
+  if(gsm.get_gsm_state()!=GSM_IP_STATE || !started){
+    return 1;
+  }
   //
   // Serial.println("SYNCTIMEWITHSERVER");
   // if(started){

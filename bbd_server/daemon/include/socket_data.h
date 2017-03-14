@@ -13,9 +13,10 @@
 
 #define SOCKET_HEADER 	102674321
 
-#define CHECKIN_MSG		0x1
-#define SCHEDULE_MSG	0x2
-#define END_MSG			0x3
+#define SYNC_TIME_MSG	0x1
+#define CHECKIN_MSG		0x2
+#define SCHEDULE_MSG	0x3
+#define END_MSG				0x4
 
 
 typedef struct _schedule_data_{
@@ -29,6 +30,8 @@ typedef struct _schedule_data_{
 int recv_socket_header(int sock_fd, uint* arduino_id, uint* trans_type, uint* trans_size);
 
 int send_schedule(int sock_fd, schedule_data data);
+
+int send_time(int sock_fd);
 
 int wait_schedule_reply(int sock_fd, int schedule_id);
 

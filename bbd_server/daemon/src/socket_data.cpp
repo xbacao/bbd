@@ -15,6 +15,25 @@ static int _send_16(void* data, int sock_fd){
 	return 0;
 }
 
+static int _send_64(void* data, int sock_fd){
+  uint32_t temp_32;
+  char buffer_64[BUFFER_SIZE_64];
+  char buffer_32[BUFFER_SIZE_32];
+  int n;
+  memcpy(buffer_64, data, BUFFER_SIZE_64);
+
+  for(uint i=0;i<(BUFFER_SIZE_64/BUFFER_SIZE_32);i++){
+    memcpy(&temp_32, buffer_64+i*BUFFER_SIZE_32, BUFFER_SIZE_32);
+    temp_32 = htonl(temp_32);
+    memcpy(buffer_32, &temp_32, BUFFER_SIZE_32);
+    n=write(sock_fd, buffer_32, BUFFER_SIZE_32);
+    if(n<0){
+      return n;
+    }
+  }
+  return 0;
+}
+
 static int _recv_64(void* data, int sock_fd){
 	int n;
 	char buffer_32[BUFFER_SIZE_32];
@@ -105,6 +124,16 @@ int send_schedule(int sock_fd, schedule_data data){
     }
   }
   return 0;
+}
+
+int send_time(int sock_fd){
+	int n;
+	time_t curr_time=time(nullptr);
+	n=_send_64(&curr_time, sock_fd);
+	if(n){
+		return 1;
+	}
+	return 0;
 }
 
 std::ostream& operator<<(std::ostream& os, schedule_data &data){

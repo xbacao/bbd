@@ -6,8 +6,8 @@ After=network.target
 User=f0lk
 Group=f0lk
 Type=simple
-ExecStart=/opt/bbda_server start
-ExecStop=/opt/bbda_server stop
+ExecStart=/opt/bbd_server/daemon/bbda_server start
+ExecStop=/opt/bbd_server/daemon/bbda_server stop
 
 [Install]
 WantedBy=default.target

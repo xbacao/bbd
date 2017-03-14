@@ -20,7 +20,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(O_OBJECTS) -o $@ $(LDFLAGS) $(INCLUDES)
-	#sudo service/setup_systemd.sh
+	sudo service/setup_systemd.sh
 
 %.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -o bin/$@ $< $(INCLUDES)
@@ -40,4 +40,3 @@ endif
 
 $(EXECUTABLE_T): $(OBJECTS_T)
 	$(CXX) $(O_OBJECTS_T) -o $@ $(LDFLAGS) $(INCLUDES)
-
