@@ -5,8 +5,8 @@ SERVER_USER=f0lk
 # SERVER_IP=192.168.81.63
 # SERVER_USER=jribeiro
 PROJECT_DIR=/opt/bbd_server
-SERVER_FILES="bbd_server/daemon bbd_server/mySQL bbd_server/web_server"
-DAEMON_FILES="bbd_server/daemon"
+SERVER_FILES="bbd_server/daemon bbd_server/mySQL bbd_server/web_server bbd_server/logs bbd_server/run"
+DAEMON_FILES="bbd_server/daemon bbd_server/logs bbd_server/run"
 WEB_FILES="bbd_server/web_server"
 
 if [ $# -ne 1 ]; then
@@ -63,7 +63,8 @@ case ${OP} in
   echo "commands: ./upload.sh [option]"
   echo "options:"
   echo " -s              --server-full        uploads all of the server code to the server"
-  echo " -d              --deploy-web         deploys the web server to the server"
+  echo " -d              --daemon             uploads the server c++ daemon code to the server"
+  echo " -2              --deploy-web         deploys the web server code to the server"
   echo " -ls             --server-login       logs in to the server using ssh"
   ;;
 esac

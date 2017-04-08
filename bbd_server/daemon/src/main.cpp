@@ -9,7 +9,7 @@
 #include "db.h"
 #include "log.h"
 
-#define PID_FILE        "/var/run/bbda_server.pid"
+#define PID_FILE        "/opt/bbd_server/run/bbda_server.pid"
 
 #define SERVER_PORT     7777
 #define N_VALVES        5     //ESTATICO, POSSIVEL MUDAR PRA DB
@@ -17,6 +17,7 @@
 using namespace std;
 
 static bool _stop_flag=false;
+#define END_TRANS_CHAR 0xff
 
 static void _signal_callback_handler(int signum){
    log_file << time(nullptr) <<": "<<"Caught signal " << signum<<endl;
@@ -110,6 +111,9 @@ static int _run_server(){
         }
       }
     }
+    char temp[1];
+    temp[0]=END_TRANS_CHAR;
+    write(newsockfd, temp, 1);
     close(newsockfd);
   }
   close(sockfd);
@@ -138,7 +142,7 @@ int main(int argc, char *argv[]){
       return 0;
       break;
     case 1:
-      //daemonize(PID_FILE, _signal_callback_handler);
+      daemonize(PID_FILE, _signal_callback_handler);
       return _run_server();
       break;
     case 2:

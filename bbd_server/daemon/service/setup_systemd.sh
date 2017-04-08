@@ -14,11 +14,6 @@ if [ ! -f $S_PATH/../$BIN_FILE ]; then
 	exit 2
 fi
 
-if [ ! -d $BIN_FOLDER ]; then
-	echo "Creating bin folder $BIN_FOLDER !"
-	mkdir $BIN_FOLDER
-fi
-
 cp $S_PATH/$SERVICE /etc/systemd/system
 if [ $? != 0 ]
 then
