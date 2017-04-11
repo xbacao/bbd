@@ -2,11 +2,20 @@ DROP SCHEMA IF EXISTS bbd;
 CREATE SCHEMA IF NOT EXISTS bbd;
 USE bbd ;
 
+CREATE TABLE IF NOT EXISTS bbd.arduino (
+  arduinoID INT NOT NULL,
+  description VARCHAR(100),
+  PRIMARY KEY(arduinoID)
+);
+
 CREATE TABLE IF NOT EXISTS bbd.valve (
   valveID INT NOT NULL,
   description VARCHAR(100),
+  arduinoID_f INT NOT NULL,
   PRIMARY KEY (valveID)
 );
+ALTER TABLE bbd.valve ADD FOREIGN KEY fk_arduino(arduinoID_f) REFERENCES bbd.arduino(arduinoID)
+ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS bbd.schedule (
   scheduleID INT NOT NULL AUTO_INCREMENT,
@@ -31,18 +40,41 @@ CREATE TABLE IF NOT EXISTS bbd.schedule_entry (
 ALTER TABLE bbd.schedule_entry ADD FOREIGN KEY fk_schedule(scheduleID_f) REFERENCES bbd.schedule (scheduleID)
 ON DELETE CASCADE;
 
+DROP PROCEDURE IF EXISTS get_valve_unsent_schedule;
 DELIMITER $$
-DROP PROCEDURE IF EXISTS get_valve_schedule;
-CREATE PROCEDURE get_valve_schedule(IN valveID INT)
+CREATE PROCEDURE get_valve_unsent_schedule(IN arduino_ID INT)
 BEGIN
   SELECT scheduleID, start_time, stop_time
   FROM bbd.schedule_entry INNER JOIN (
     SELECT scheduleID
-    FROM bbd.schedule INNER JOIN (
-      SELECT @sche_id := MAX(scheduleID)
-      FROM bbd.schedule
-      WHERE valveID_f=valveID) AS T1 ON scheduleID=@sche_id
-    WHERE sent=0) AS T2 ON scheduleID_f=scheduleID;
+    FROM bbd.schedule INNER JOIN(
+      SELECT @max_sche_id := MAX(scheduleID)
+      FROM bbd.schedule INNER JOIN(
+        SELECT *
+        FROM bbd.valve
+        WHERE arduinoID_f=arduino_ID
+      ) AS T1 ON valveID_f=valveID
+    ) AS T2 ON scheduleID=@max_sche_id
+    WHERE scheduleID=@max_sche_id and active_start IS NULL) AS T3 ON scheduleID_f=scheduleID;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS get_valve_last_schedule;
+DELIMITER $$
+CREATE PROCEDURE get_valve_last_schedule(IN arduino_ID INT)
+BEGIN
+  SELECT scheduleID, start_time, stop_time
+  FROM bbd.schedule_entry INNER JOIN (
+    SELECT scheduleID
+    FROM bbd.schedule INNER JOIN(
+      SELECT @max_sche_id := MAX(scheduleID)
+      FROM bbd.schedule INNER JOIN(
+        SELECT *
+        FROM bbd.valve
+        WHERE arduinoID_f=arduino_ID
+      ) AS T1 ON valveID_f=valveID
+    ) AS T2 ON scheduleID=@max_sche_id
+    WHERE scheduleID=@max_sche_id) AS T3 ON scheduleID_f=scheduleID;
 END $$
 DELIMITER ;
 
@@ -79,7 +111,8 @@ GRANT EXECUTE ON PROCEDURE bbd.get_valve_schedule TO 'bbduser'@'localhost';
 
 
 /*TEST PROC*/
-INSERT INTO bbd.valve VALUES(1,"asdf");
+INSERT INTO bbd.arduino VALUES(1, "asdf");
+INSERT INTO bbd.valve VALUES(1,"asdf",1);
 INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
@@ -93,7 +126,7 @@ INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CU
 INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
 
 CALL set_schedule_active(1);
-CALL set_schedule_active(2);
+-- CALL set_schedule_active(2);
 /*
 CALL get_valve_schedule(1);
 

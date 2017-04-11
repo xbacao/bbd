@@ -52,11 +52,13 @@ void setup()
   do{
     n=gsm.attachGPRS();
     if(!n){
-      started=true;
       n=syncTimeWithServer();
       if(n){
         Serial.print("ERROR: SYNC TIME ");
         Serial.println(n);
+      }
+      else{
+        started=true;
       }
       n=gsm.dettachGPRS();
       if(n){
@@ -112,29 +114,6 @@ void loop()
 void requestSync(){
   timeSynced = false;
 }
-
-// /*
-//   return codes
-//   -1    error decoding time message
-// */
-// int setNewTime(){
-//   uint64_t time_v;
-//   int n;
-//
-//   n = decodeTime(&time_v);
-//
-//   if(n != 1){
-//       #ifdef DEBUG_ON
-//         Serial.println("DB:ERROR DECODING TIME!");
-//       #endif
-//     return -1;
-//   }
-//
-//   /* convert from ms to s and gmt to gmt+1*/
-//   setTime((time_v/1000.0)+3600);
-//   timeSynced = true;
-//   return 1;
-// }
 
 /*
   return codes

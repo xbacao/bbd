@@ -86,6 +86,17 @@ static int _run_server(){
             log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
           }
           break;
+        case LAST_SCHE_MSG:
+          schedule_data t_data[N_VALVES];
+          for(int i=0;i<N_VALVES;i++){
+            n=get_valve_last_schedule(i, t_data+i);
+            if(n){
+              log_file << time(nullptr)<<": MAIN: ERROR getting valve last sche "<<n<<endl;
+              break;
+            }
+          }
+          
+          break;
         case CHECKIN_MSG:
         {
           schedule_data t_data;

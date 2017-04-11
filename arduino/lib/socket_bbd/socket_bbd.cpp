@@ -1,23 +1,12 @@
 #include "socket_bbd.h"
 
-// static uint64_t _ntoh64(uint64_t in){
-//   uint64_t out=0;
-//   // for(int i=0;i<8;i++){
-//   //   out |= (uint64_t)((in >> 8*i)&0xff)<<(64-(8*i));
-//   // }
-//   for(int i=0;i<8;i++){
-//     memcpy((&out)+7-i, (&in)+i, 1);
-//   }
-//   return out;
-// }
-
 int get_time_request_msg(char** msg){
   uint8_t msg_len=0;
   uint16_t temp_16=htons(SOCKET_HEADER);
   memcpy(*msg, &temp_16, SH_SIZE);
   memcpy(*msg+SH_SIZE,&ARDUINO_ID, ID_SIZE);
   memcpy(*msg+SH_SIZE+ID_SIZE, &SYNC_TIME_MSG, TYPE_SIZE);
-  memcpy(*msg+SH_SIZE+ID_SIZE+TYPE_SIZE, &msg_len, T_SIZE_SIZE);;
+  memcpy(*msg+SH_SIZE+ID_SIZE+TYPE_SIZE, &msg_len, T_SIZE_SIZE);
   return 0;
 }
 
@@ -32,6 +21,15 @@ int decode_time_rsp_msg(char* msg, uint8_t msg_len, time_t* res){
   *res=ntohl(curr_time);
 
   return 0;
+}
+
+int get_last_sche_msg(char** msg){
+  uint8_t msg_len=0;
+  uint16_t temp_16=htons(SOCKET_HEADER);
+  memcpy(*msg, &temp_16, SH_SIZE);
+  memcpy(*msg+SH_SIZE,&ARDUINO_ID, ID_SIZE);
+  memcpy(*msg+SH_SIZE+ID_SIZE, &LAST_SCHE_MSG, TYPE_SIZE);
+  memcpy(*msg+SH_SIZE+ID_SIZE+TYPE_SIZE, &msg_len, T_SIZE_SIZE);
 }
 
 int get_check_requests_msg(char** msg){

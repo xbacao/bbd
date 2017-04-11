@@ -22,7 +22,8 @@ const uint32_t ID_SIZE=sizeof(uint8_t);
 
 const uint32_t TYPE_SIZE=sizeof(uint8_t);
 const uint8_t SYNC_TIME_MSG=0x1;
-const uint8_t CHECK_REQS=0x2;
+const uint8_t LAST_SCHE_MSG=0x1;
+const uint8_t CHECK_IN_MSG=0x3;
 
 
 const int32_t T_SIZE_SIZE=sizeof(uint8_t);
@@ -40,6 +41,7 @@ const uint32_t CHECK_REQS_MSG_SIZE = SH_SIZE+ID_SIZE+TYPE_SIZE+T_SIZE_SIZE;
 
 int get_time_request_msg(char** msg);
 int decode_time_rsp_msg(char* msg, uint8_t msg_len, time_t* res);
+int get_last_sche_msg(char** msg);
 int get_check_requests_msg(char** msg);
 int decode_schedule_msg(char* msg, uint8_t msg_len, schedule_data* res);
 

@@ -25,3 +25,6 @@ https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.h
 
 #Note
 IN ARCH LINUX CHANGE /usr/share/arduino/hardware/archlinux-arduino to /usr/share/arduino/hardware/arduino
+
+#TODO
+change N_VALVES from static in main.cpp

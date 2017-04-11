@@ -11,6 +11,7 @@
 #define MYSQL_PASS	"morcao123"
 
 int get_new_schedule(int valveID, schedule_data* data);
+int get_last_schedule(int valveID, schedule_data* data);
 
 int set_schedule_sent(int scheduleID);
 

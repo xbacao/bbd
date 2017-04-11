@@ -17,7 +17,8 @@ const uint8_t END_TRANS_CHAR = 0xff;
 const uint8_t TIME_RSP_SIZE = sizeof(uint32_t);
 
 #define SYNC_TIME_MSG	0x1
-#define CHECKIN_MSG		0x2
+#define LAST_SCHE_MSG	0x2
+#define CHECKIN_MSG		0x3
 #define SCHEDULE_MSG	0x3
 #define END_MSG				0x4
 
