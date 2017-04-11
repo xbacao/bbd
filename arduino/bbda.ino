@@ -113,28 +113,28 @@ void requestSync(){
   timeSynced = false;
 }
 
-/*
-  return codes
-  -1    error decoding time message
-*/
-int setNewTime(){
-  uint64_t time_v;
-  int n;
-
-  n = decodeTime(&time_v);
-
-  if(n != 1){
-      #ifdef DEBUG_ON
-        Serial.println("DB:ERROR DECODING TIME!");
-      #endif
-    return -1;
-  }
-
-  /* convert from ms to s and gmt to gmt+1*/
-  setTime((time_v/1000.0)+3600);
-  timeSynced = true;
-  return 1;
-}
+// /*
+//   return codes
+//   -1    error decoding time message
+// */
+// int setNewTime(){
+//   uint64_t time_v;
+//   int n;
+//
+//   n = decodeTime(&time_v);
+//
+//   if(n != 1){
+//       #ifdef DEBUG_ON
+//         Serial.println("DB:ERROR DECODING TIME!");
+//       #endif
+//     return -1;
+//   }
+//
+//   /* convert from ms to s and gmt to gmt+1*/
+//   setTime((time_v/1000.0)+3600);
+//   timeSynced = true;
+//   return 1;
+// }
 
 /*
   return codes
@@ -161,21 +161,26 @@ int syncTimeWithServer(){
 
   n=gsm.send_socket_msg(msg, REQUEST_TIME_MSG_SIZE, &rsp_len);
   if(n){
-    return 30000+n;
+    return 3000+n;
   }
 
   char* rsp = new char[rsp_len];
   n=gsm.get_socket_rsp(&rsp);
   if(n){
-    return 40000+n;
+    return 4000+n;
   }
 
-  Serial.print("SOCKET RSP:");
-  for(unsigned int i=0;i<rsp_len;i++){
-    Serial.print((unsigned int) rsp[i]);
-    Serial.print(' ');
+  time_t cur_time;
+  n=decode_time_rsp_msg(rsp, rsp_len, &cur_time);
+  if(n){
+    return 5000;
   }
-  Serial.println();
+
+  Serial.print("TIME:");
+  Serial.println((long)cur_time);
+
+  setTime(cur_time+3600);
+  timeSynced = true;
 
   return 0;
 }
@@ -366,62 +371,6 @@ int markRequestServed(int requestID){
   return codes
   -1  could not attach
 */
-
-// int attachGPRS(){
-//   // int i = 0;
-//   // int n;
-//   // for(;i < ATTACH_TIMEOUT; i++){
-//   //   n = inet.configureGPRS(APN, "", "");
-//   //   if (n == 1){
-//   //     Serial.println("GPRS = attached");
-//   //     return 1;
-//   //   }
-//   //   else
-//   //   {
-//   //     Serial.println("DB:ERROR ATTACHING GPRS!");
-//   //     delay(5000);
-//   //   }
-//   // }
-//   // return -1;
-//   return 1;
-// }
-//
-// int dettachGPRS(){
-//   // int i = 0;
-//   // int n;
-//   // for(; i < ATTACH_TIMEOUT; i++){
-//   //   n = inet.dettachGPRS();
-//   //   if(n == 1){
-//   //     Serial.println("GPRS = dettached");
-//   //     return 1;
-//   //   }
-//   //   else{
-//   //     Serial.println("DB:ERROR DETTACHING GPRS!");
-//   //     delay(5000);
-//   //   }
-//   // }
-//   // return n;
-//   return 1;
-// }
-
-/*
-int attachGPRS(){
-  int i = 0;
-  int n;
-  for(; i < ATTACH_TIMEOUT; i++){
-    n = inet.attachGPRS();
-    if(n == 1){
-      Serial.println("GPRS = attached");
-      return 1;
-    }
-    else{
-      Serial.println("DB:ERROR ATTACHING GPRS!");
-      delay(5000);
-    }
-  }
-  return confGPRS();
-}*/
-
 
 /*******timer debug **********/
 void digitalClockDisplay(){

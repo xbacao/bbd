@@ -17,7 +17,6 @@
 using namespace std;
 
 static bool _stop_flag=false;
-#define END_TRANS_CHAR 0xff
 
 static void _signal_callback_handler(int signum){
    log_file << time(nullptr) <<": "<<"Caught signal " << signum<<endl;
@@ -48,7 +47,7 @@ static int _run_server(){
   int newsockfd,n;
   socklen_t clilen;
   struct sockaddr_in cli_addr;
-  uint msg_size, msg_type, arduino_id;
+  uint8_t msg_size, msg_type, arduino_id;
 
   //init_db_handler();
   init_log();
@@ -77,6 +76,7 @@ static int _run_server(){
 
     n=recv_socket_header(newsockfd, &arduino_id, &msg_type, &msg_size);
     if(n==0){
+      log_file <<time(nullptr)<<": MSG RECVED: [arduino:"<<(int)arduino_id<<", type:"<< (int)msg_type <<", size:"<<(int)msg_size<<']'<<endl;
       switch(msg_type){
         default:
           break;
@@ -111,9 +111,9 @@ static int _run_server(){
         }
       }
     }
-    char temp[1];
-    temp[0]=END_TRANS_CHAR;
-    write(newsockfd, temp, 1);
+    else{
+      log_file << time(nullptr)<<"Error: recv socket header "<<n<<endl;
+    }
     close(newsockfd);
   }
   close(sockfd);

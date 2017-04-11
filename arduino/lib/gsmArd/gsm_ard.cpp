@@ -17,7 +17,8 @@ const PROGMEM char AT_CIURC_SET[]="AT+CIURC=0";
 const PROGMEM char AT_CGATT_R[]="AT+CGATT?";
 const PROGMEM char AT_CGATT_0[]="+CGATT: 0";
 const PROGMEM char AT_CGATT_1[]="+CGATT: 1";
-const PROGMEM char AT_CGATT_SET[]="AT+CGATT=1";
+const PROGMEM char AT_CGATT_SET_ON[]="AT+CGATT=1";
+const PROGMEM char AT_CGATT_SET_OFF[]="AT+CGATT=0";
 const PROGMEM char AT_CIFSR[]="AT+CIFSR";
 
 const PROGMEM char AT_CIPMODE_R[]="AT+CIPMODE?";
@@ -55,6 +56,8 @@ const PROGMEM char AT_ERROR[]="ERROR";
 
 const PROGMEM char AT_CIPCLOSE[]="AT+CIPCLOSE";
 const PROGMEM char AT_CIPCLOSE_OK[]="CLOSE OK";
+
+const PROGMEM char AT_CIPSTATUS[]="AT+CIPSTATUS";
 
 
 /***************************/
@@ -202,7 +205,7 @@ int Gsm_Ard::init_gsm_module(){
       {
         char at_cmd_buffer[11];
         char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CGATT_SET);
+        strcpy_P(at_cmd_buffer, AT_CGATT_SET_ON);
         strcpy_P(at_rsp_buffer, AT_OK);
         n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
       }
@@ -360,10 +363,57 @@ int Gsm_Ard::attachGPRS(){
 }
 
 int Gsm_Ard::dettachGPRS(){
+  int n;
   if(_gsm_state!=GSM_IP_STATE){
     return 1;
   }
-  return 1;
+
+  {
+    char at_cmd_buffer[11];
+    char at_rsp_buffer[8];
+    strcpy_P(at_cmd_buffer, AT_CIPSHUT);
+    strcpy_P(at_rsp_buffer, AT_SHUT_OK);
+    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
+  }
+  if(n){
+    return 2;
+  }
+
+  {
+    char at_cmd_buffer[10];
+    strcpy_P(at_cmd_buffer, AT_CGATT_R);
+
+    char rsp1[10];
+    char rsp2[10];
+    strcpy_P(rsp1, AT_CGATT_0);
+    strcpy_P(rsp2, AT_CGATT_1);
+    char* rsps[]={rsp1, rsp2};
+    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
+  }
+  switch(n){
+    default:
+      return 3;
+      break;
+    case 0:
+      break;
+    case 1:
+      {
+        char at_cmd_buffer[11];
+        char at_rsp_buffer[3];
+        strcpy_P(at_cmd_buffer, AT_CGATT_SET_OFF);
+        strcpy_P(at_rsp_buffer, AT_OK);
+        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
+      }
+      if(n){
+        return 4;
+      }
+      break;
+  }
+  _gsm_state=GSM_PIN_STATE;
+  #ifdef DEBUG_STATES
+  Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
+  #endif
+  return 0;
 }
 
 int Gsm_Ard::_connect_tcp_socket(){
@@ -453,20 +503,59 @@ int Gsm_Ard::_connect_tcp_socket(){
 int Gsm_Ard::_disconnect_tcp_socket(){
   int n;
   if(_gsm_state!=GSM_TCP_STATE){
-    return 1;
+    return 10;
   }
 
   {
-    char at_cmd_buffer[12];
-    char at_rsp_buffer[9];
-    strcpy_P(at_cmd_buffer, AT_CIPCLOSE);
-    strcpy_P(at_rsp_buffer, AT_CIPCLOSE_OK);
+    char at_cmd_buffer[13];
+    char at_rsp_buffer[3];
+    strcpy_P(at_cmd_buffer, AT_CIPSTATUS);
+    strcpy_P(at_rsp_buffer, AT_OK);
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n){
-    return 2;
+    return 20+n;
   }
 
+  n=_recv_string(10000,2);
+  if(n){
+    return 30+n;
+  }
+
+  {
+    unsigned int rsp_len;
+    char* rsp;
+    n=_fetch_rsp_wo_cmd(&rsp_len);
+    if(n){
+      return 40+n;
+    }
+
+    rsp=new char[rsp_len];
+    n=_get_rsp(&rsp);
+    if(n){
+      return 50+n;
+    }
+
+    char exp_rsp[11];
+    strcpy_P(exp_rsp, AT_CONNECT_OK);
+    if(strncmp(rsp, exp_rsp, rsp_len)==0){
+      {
+        char at_cmd_buffer[12];
+        char at_rsp_buffer[9];
+        strcpy_P(at_cmd_buffer, AT_CIPCLOSE);
+        strcpy_P(at_rsp_buffer, AT_CIPCLOSE_OK);
+        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
+      }
+      if(n){
+        return 60+n;
+      }
+    }
+  }
+
+  _gsm_state=GSM_IP_STATE;
+  #ifdef DEBUG_STATES
+  Serial.println("DB: GSM_STATE=GSM_IP_STATE");
+  #endif
   return 0;
 }
 
@@ -487,33 +576,38 @@ int Gsm_Ard::_send_tcp_data(char* data, unsigned int data_len){
     _write_cmd(cmd);
 
     //wait for prompt
-    Serial.println("WAITING PROMPT:");  ///
     for(int i=0;i<100 && !prompt_received;i++){
       if(!_ss.available()){
         delay(500);
       }
       else{
         temp=_ss.read();
-        Serial.print((unsigned int)temp);   ////
-        Serial.print(' ');
         if(temp==rsp[0]){
           prompt_received=true;
         }
       }
     }
-    Serial.println();
     if(!prompt_received){
       return 20;
     }
   }
 
+  #ifdef DEBUG_SOCKET
+  Serial.print("SOCK_SND: ");
+  #endif
   for(unsigned int i=0;i<data_len;i++){
     _ss.write(data[i]);
+    #ifdef DEBUG_SOCKET
+    Serial.print((uint8_t)data[i]);
+    Serial.print(' ');
+    #endif
   }
+  #ifdef DEBUG_SOCKET
+  Serial.println();
+  #endif
   _ss.write(SUB_CHAR);
 
-  n=_recv_socket(10000);
-  // n=_recv_string(10000,1);
+  n=_recv_string(10000,2);
   if(n){
     return 30+n;
   }
@@ -523,18 +617,18 @@ int Gsm_Ard::_send_tcp_data(char* data, unsigned int data_len){
     char* rsp;
     n=_fetch_rsp_wo_cmd(&rsp_len);
     if(n){
-      return 4;
+      return 40+n;
     }
 
     rsp=new char[rsp_len];
     n=_get_rsp(&rsp);
     if(n){
-      return 5;
+      return 50+n;
     }
 
     char exp_rsp[8];
     strcpy_P(exp_rsp, AT_CIPSEND_OK);
-    if(strncmp(rsp, exp_rsp, rsp_len)){
+    if(strncmp(rsp, exp_rsp, rsp_len)!=0){
       return 6;
     }
   }
@@ -544,13 +638,12 @@ int Gsm_Ard::_send_tcp_data(char* data, unsigned int data_len){
 int Gsm_Ard::_recv_tcp_data(unsigned int* data_len){
   int n;
   if(_sock_buff_state==BUFF_USED){
-    return 1;
+    return 10;
   }
 
-  //TODO
-  n=_recv_string(10000, 1);
+  n=_recv_socket(10000);
   if(n){
-    return 2;
+    return 20+n;
   }
 
   _sock_buff_state=BUFF_USED;
@@ -577,7 +670,7 @@ int Gsm_Ard::_send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_w
   #ifdef DEBUG_SS
   Serial.print("DB-SND: [");
   for(int i=0;i<cmd_size;i++){
-    Serial.print((unsigned int) cmd[i]);
+    Serial.print((uint8_t) cmd[i]);
     Serial.print(" ");
   }
   Serial.println("]");
@@ -615,7 +708,7 @@ int Gsm_Ard::_send_cmd_comp_several_rsp(const char* cmd, char** exp_rsps, unsign
   #ifdef DEBUG_SS
   Serial.print("DB-SND: [");
   for(int i=0;i<cmd_size;i++){
-    Serial.print((unsigned int) cmd[i]);
+    Serial.print((uint8_t) cmd[i]);
     Serial.print(" ");
   }
   Serial.println("]");
@@ -670,7 +763,7 @@ int Gsm_Ard::_recv_string(int wait_period, int max_nl){
   #ifdef DEBUG_SS
   Serial.print("RECV: [");
   for(unsigned int j=0;j<_recv_buff_idx;j++){
-    Serial.print((unsigned int)_recv_buff[j]);
+    Serial.print((uint8_t)_recv_buff[j]);
     Serial.print(" ");
   }
   Serial.println("]");
@@ -702,8 +795,8 @@ int Gsm_Ard::_recv_socket(int wait_period){
   bool size_set=false;
   bool ready_for_confirm=false;
   bool done=false;
-  unsigned int trans_size=0;
-  unsigned int data_read=0;
+  uint8_t trans_size=0;
+  uint8_t data_read=0;
 
   for(int i=0;i<10 && !done;i++){
     if(!_ss.available()){
@@ -712,6 +805,15 @@ int Gsm_Ard::_recv_socket(int wait_period){
     else{
       if(ready_for_confirm){
         if(_ss.read()!=0xff){
+          #ifdef DEBUG_SOCKET
+          Serial.print("CONFIRM FAILED SOCK_RECV: [");
+          for(unsigned int j=0;j<_recv_buff_idx;j++){
+            Serial.print((uint8_t)_recv_buff[j]);
+            Serial.print(" ");
+          }
+          Serial.print("] N:");
+          Serial.println(trans_size);
+          #endif
           return 3;
         }
         else{
@@ -720,7 +822,7 @@ int Gsm_Ard::_recv_socket(int wait_period){
       }
       else{
         if(!size_set){
-          trans_size=(unsigned int) _ss.read();
+          trans_size=(uint8_t) _ss.read();
           size_set=true;
         }
         while(_ss.available() && _recv_buff_idx<RECV_BUFF_LEN && data_read<trans_size){
@@ -737,7 +839,7 @@ int Gsm_Ard::_recv_socket(int wait_period){
   #ifdef DEBUG_SOCKET
   Serial.print("SOCK_RECV: [");
   for(unsigned int j=0;j<_recv_buff_idx;j++){
-    Serial.print((unsigned int)_recv_buff[j]);
+    Serial.print((uint8_t)_recv_buff[j]);
     Serial.print(" ");
   }
   Serial.println("]");
@@ -745,15 +847,15 @@ int Gsm_Ard::_recv_socket(int wait_period){
 
   if(_recv_buff_idx==RECV_BUFF_LEN){
     _clear_recv_buff();
-    return 2;
+    return 4;
   }
   else if(!_recv_buff_idx){
     _clear_recv_buff();
-    return 3;
+    return 5;
   }
   else if(!done){
     _clear_recv_buff();
-    return 4;
+    return 6;
   }
   _recv_buff_state=BUFF_USED;
   return 0;
@@ -819,11 +921,13 @@ int Gsm_Ard::_fetch_rsp_wo_cmd(unsigned int* rsp_len){
   if(_rsp_buff_state!=BUFF_READY || _recv_buff_state!=BUFF_USED){
     return 1;
   }
-  if(_recv_buff[0]!=CR_CHAR || _recv_buff[1]!=NL_CHAR){
-    return 2;
+  start_idx=0;
+  while(_recv_buff[start_idx]!=CR_CHAR || _recv_buff[start_idx+1]!=NL_CHAR){
+    start_idx++;
   }
 
-  start_idx=i=2;
+  start_idx+=2;
+  i=start_idx;
 
   while(_recv_buff[i]!=CR_CHAR && _recv_buff[i+1]!=NL_CHAR){
     i++;
@@ -871,23 +975,23 @@ int Gsm_Ard::send_socket_msg(char* data, unsigned int data_len, unsigned int* rs
   int n;
   n=_connect_tcp_socket();
   if(n){
-    return 1000+n;
+    return 100+n;
   }
 
   n=_send_tcp_data(data, data_len);
   if(n){
-    return 2000+n;
+    return 200+n;
   }
 
   n=_recv_tcp_data(rsp_len);
   if(n){
     _disconnect_tcp_socket();
-    return 3000+n;
+    return 300+n;
   }
 
   n=_disconnect_tcp_socket();
   if(n){
-    return 4000+n;
+    return 400+n;
   }
 
   return 0;
