@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include "socket_data.h"
 
-
 struct schedule_entry{
 	uint16_t cicle_start;
 	uint16_t cicle_stop;
