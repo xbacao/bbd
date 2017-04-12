@@ -30,11 +30,12 @@ int get_last_sche_msg(char** msg){
   memcpy(*msg+SH_SIZE,&ARDUINO_ID, ID_SIZE);
   memcpy(*msg+SH_SIZE+ID_SIZE, &LAST_SCHE_MSG, TYPE_SIZE);
   memcpy(*msg+SH_SIZE+ID_SIZE+TYPE_SIZE, &msg_len, T_SIZE_SIZE);
+  return 0;
 }
 
 int get_check_requests_msg(char** msg){
   memcpy(*msg, &SOCKET_HEADER, sizeof(SOCKET_HEADER));
-  memcpy(*msg+sizeof(SOCKET_HEADER), &CHECK_REQS, 1);
+  memcpy(*msg+sizeof(SOCKET_HEADER), &CHECK_IN_MSG, 1);
   return 0;
 }
 
