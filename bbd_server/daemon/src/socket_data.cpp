@@ -63,7 +63,7 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
     return 4;
   }
   *trans_type= (uint8_t) (buffer[0]);
-  if(*trans_type!=SCHEDULE_MSG && *trans_type!=SYNC_TIME_MSG){
+  if(*trans_type!=SYNC_TIME_MSG && *trans_type!=LAST_SCHE_MSG && *trans_type!=CHECKIN_MSG && *trans_type!=SCHE_ACT_MSG){
     return 5;
   }
 
@@ -100,6 +100,29 @@ int send_msg(char* msg, uint32_t size, int sock_fd){
 
 int send_empty_msg(int sock_fd){
 	return write(sock_fd, &END_TRANS_CHAR, sizeof(uint8_t))<0;
+}
+
+int recv_sche_act_msg_size(int sock_fd, uint16_t* size){
+	uint16_t temp;
+	int n;
+	n=read(sock_fd, &temp, BUFFER_SIZE_16);
+	if(n<0){
+		return 1;
+	}
+
+	*size=ntohs(temp);
+	return 0;
+}
+
+int recv_sche_act_msg(int sock_fd, uint16_t size, uint16_t **sche_ids){
+	uint16_t temp,i;
+	for(i=0;i<size;i++){
+		if(read(sock_fd, &temp, BUFFER_SIZE_16)<0){
+			return 1;
+		}
+		(*sche_ids)[i]=ntohs(temp);
+	}
+	return 0;
 }
 
 //FOR TESTING
