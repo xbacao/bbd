@@ -87,35 +87,45 @@ static int _run_server(){
           }
           break;
         case LAST_SCHE_MSG:
-          schedule_data t_data[N_VALVES];
-          for(int i=0;i<N_VALVES;i++){
-            n=get_valve_last_schedule(i, t_data+i);
-            if(n){
-              log_file << time(nullptr)<<": MAIN: ERROR getting valve last sche "<<n<<endl;
-              break;
-            }
+        {
+          ArduinoSchedules a_s(arduino_id);
+          n=get_last_schedule(&a_s);
+          if(n){
+            log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
+            break;
           }
-          
+
+          uint32_t msg_len = a_s.get_message_size();
+          char* msg = new char[msg_len];
+          a_s.make_message(&msg);
+          n=send_msg(msg, msg_len, newsockfd);
+          if(n){
+            log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+          }
           break;
+        }
         case CHECKIN_MSG:
         {
-          schedule_data t_data;
-          for(int i=0;i<N_VALVES;i++){
-            n=get_new_schedule(i,&t_data);
-            if(n==0){
-              n=send_schedule(newsockfd, t_data);
-              if(n!=0){
-                log_file << time(nullptr)<<": MAIN : Error sending schedule"<<endl;
-                break;
-              }
-              n=wait_schedule_reply(sockfd, t_data.schedule_id);
-              if(n!=0){
-                log_file<<time(nullptr)<<": MAIN : Error waiting schedule reply"<<endl;
-              }
-              n=set_schedule_sent(t_data.schedule_id);
-              if(n!=0){
-                log_file<<time(nullptr)<<": MAIN : Error setting schedule sent flag in db"<<endl;
-              }
+          ArduinoSchedules a_s(arduino_id);
+          n=get_unsent_schedule(&a_s);
+          if(n!=5){
+            if(n){
+              log_file<<time(nullptr)<<": ERROR GETTING UNSENT SCHEDULE "<<n<<endl;
+              break;
+            }
+
+            uint32_t msg_len = a_s.get_message_size();
+            char* msg = new char[msg_len];
+            a_s.make_message(&msg);
+            n=send_msg(msg, msg_len, newsockfd);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+            }
+          }
+          else{
+            n=send_empty_msg(newsockfd);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR SENDING EMPTY MESSAGE "<< n<<endl;
             }
           }
           break;

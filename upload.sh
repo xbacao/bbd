@@ -6,7 +6,7 @@ SERVER_USER=f0lk
 # SERVER_USER=jribeiro
 PROJECT_DIR=/opt/bbd_server
 SERVER_FILES="bbd_server/daemon bbd_server/mySQL bbd_server/web_server bbd_server/logs bbd_server/run"
-DAEMON_FILES="bbd_server/daemon bbd_server/logs bbd_server/run"
+DAEMON_FILES="bbd_server/daemon"
 WEB_FILES="bbd_server/web_server"
 
 if [ $# -ne 1 ]; then

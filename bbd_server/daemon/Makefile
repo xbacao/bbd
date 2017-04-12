@@ -3,7 +3,7 @@ CXXFLAGS=-g -Wall -c -std=c++11
 
 LDFLAGS=$(shell mysql_config --libs)
 INCLUDES=-I"include"
-SOURCES=daemon socket_data db log main
+SOURCES=daemon socket_data db log schedule main
 OBJECTS=$(addsuffix .o, $(SOURCES))
 O_OBJECTS=$(addprefix bin/, $(OBJECTS))
 EXECUTABLE=bbda_server

@@ -3,15 +3,15 @@
 
 #include <mysql.h>
 #include "log.h"
-#include "socket_data.h"
+#include "schedule.h"
 
 #define MYSQL_URL	"localhost"
 #define MYSQL_DB	"bbd"
 #define MYSQL_USER	"bbduser"
 #define MYSQL_PASS	"morcao123"
 
-int get_new_schedule(int valveID, schedule_data* data);
-int get_last_schedule(int valveID, schedule_data* data);
+int get_unsent_schedule(ArduinoSchedules* data);
+int get_last_schedule(ArduinoSchedules* data);
 
 int set_schedule_sent(int scheduleID);
 
