@@ -55,14 +55,16 @@ int get_unsent_schedule(ArduinoSchedules* data){
 		valve_id=atoi(row[0]);
 		schedule_id=atoi(row[1]);
 		schedule_entry se={_time_to_uint16(row[2]), _time_to_uint16(row[3])};
-		(*data).add_cicle(se, valve_id, schedule_id);
+		if((*data).add_cicle(se, valve_id, schedule_id)){
+			return 5;
+		}
 		i++;
 	}
 	/* close connection */
 	mysql_free_result(res);
 	mysql_close(conn);
 	if(!i){
-		return 5;
+		return 6;
 	}
 	return 0;
 }
@@ -97,14 +99,14 @@ int get_last_schedule(ArduinoSchedules* data){
 	res = mysql_store_result(conn);
 	if(!res){
 		mysql_close(conn);
-		return -1;
+		return 3;
 	}
 
 	n_rows=mysql_num_rows(res);
 	if(n_rows==0){
 		mysql_free_result(res);
 		mysql_close(conn);
-		return -2;
+		return 4;
 	}
 
 	/* output table name */
@@ -114,7 +116,9 @@ int get_last_schedule(ArduinoSchedules* data){
 		valve_id=atoi(row[0]);
 		schedule_id=atoi(row[1]);
 		schedule_entry se={_time_to_uint16(row[2]), _time_to_uint16(row[3])};
-		(*data).add_cicle(se, valve_id, schedule_id);
+		if((*data).add_cicle(se, valve_id, schedule_id)){
+			return 5;
+		}
 		i++;
 	}
 	/* close connection */

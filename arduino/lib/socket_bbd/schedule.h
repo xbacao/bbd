@@ -1,10 +1,9 @@
 #ifndef _SCHEDULE_H_
 #define _SCHEDULE_H_
 
+#include <inttypes.h>
 #include <string.h>
-#include <stdint.h>
-#include <arpa/inet.h>
-#include "socket_data.h"
+#include "arduino_cfg.h"
 
 struct schedule_entry{
 	uint16_t cicle_start;
@@ -14,6 +13,7 @@ struct schedule_entry{
 class ArduinoSchedules;
 class ValveSchedule{
 private:
+	friend int scheduler_action();
 	friend class ArduinoSchedules;
 	uint16_t valve_id;
 	uint16_t schedule_id;
@@ -21,6 +21,7 @@ private:
 	schedule_entry* cicles;
 public:
 	ValveSchedule();
+	ValveSchedule(const ValveSchedule &v_sche);
 	ValveSchedule(uint16_t _valve_id, uint8_t _schedule_id);
 	void add_cicle(schedule_entry cicle);
 	uint16_t get_valve_id();
@@ -35,10 +36,12 @@ private:
 public:
 	ArduinoSchedules(uint16_t _arduino_id);
 	int add_schedule(ValveSchedule sche);
+	int update_schedule(ValveSchedule sche);
 	int add_cicle(schedule_entry se, uint16_t valve_id, uint16_t schedule_id);
 	uint16_t get_arduino_id();
-	uint16_t get_message_size();
-	void make_message(char** msg);
+	int get_schedule_by_valve(uint16_t valve_id, ValveSchedule *sche);
+	int decode_message(char* msg, uint16_t msg_size);
+	int process_new_schedules(ArduinoSchedules _new_schedules);
 };
 
 #endif

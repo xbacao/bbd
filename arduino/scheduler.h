@@ -1,13 +1,15 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "valve.h"
 #include "string.h"
+#include "socket_bbd.h"
+#include "arduino_cfg.h"
+#include "Time.h"
 
-#define N_CYCLES 3
+int init_scheduler(ArduinoSchedules a_s);
 
-static int schedules[N_EV][N_CYCLES*3];
+int process_schedules(ArduinoSchedules a_s);
 
-int setValveSchedule(int valve_id, int new_sche[N_CYCLES*3]);
+int scheduler_action();
 
 #endif

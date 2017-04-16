@@ -132,10 +132,6 @@ int Gsm_Ard::init_gsm_module(){
       return 2;
       break;
     case 0:
-      _gsm_state=GSM_PIN_STATE;
-      #ifdef DEBUG_STATES
-      Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-      #endif
       break;
     case 1:
       {
@@ -148,10 +144,6 @@ int Gsm_Ard::init_gsm_module(){
       if(n){
         return 3;
       }
-      _gsm_state=GSM_PIN_STATE;
-      #ifdef DEBUG_STATES
-      Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-      #endif
       break;
   }
 
@@ -185,7 +177,21 @@ int Gsm_Ard::init_gsm_module(){
     case 1:
       break;
   }
-  //TODO METER DELAY
+
+  _gsm_state=GSM_PIN_STATE;
+  #ifdef DEBUG_STATES
+  Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
+  #endif
+  return 0;
+}
+
+int Gsm_Ard::attachGPRS(){
+  int n;
+
+  if(_gsm_state!=GSM_PIN_STATE){
+    return 1;
+  }
+
   {
     char at_cmd_buffer[10];
     strcpy_P(at_cmd_buffer, AT_CGATT_R);
@@ -199,7 +205,7 @@ int Gsm_Ard::init_gsm_module(){
   }
   switch(n){
     default:
-      return 6;
+      return 2;
       break;
     case 0:
       {
@@ -210,7 +216,7 @@ int Gsm_Ard::init_gsm_module(){
         n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
       }
       if(n){
-        return 7;
+        return 3;
       }
       break;
     case 1:
@@ -233,7 +239,7 @@ int Gsm_Ard::init_gsm_module(){
   }
   switch(n){
     default:
-      return 8;
+      return 4;
       break;
     case 0:
       break;
@@ -246,7 +252,7 @@ int Gsm_Ard::init_gsm_module(){
         n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
       }
       if(n){
-        return 9;
+        return 5;
       }
       break;
   }
@@ -259,17 +265,7 @@ int Gsm_Ard::init_gsm_module(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n){
-    return 10;
-  }
-  _gsm_state=GSM_GPRS_STATE;
-  return 0;
-}
-
-int Gsm_Ard::attachGPRS(){
-  int n;
-
-  if(_gsm_state!=GSM_GPRS_STATE){
-    return 1;
+    return 6;
   }
 
   {
@@ -281,7 +277,7 @@ int Gsm_Ard::attachGPRS(){
   }
   switch(n){
     default:
-      return 2;
+      return 7;
       break;
     case 1:
       #ifdef DEBUG_STATES
@@ -303,7 +299,7 @@ int Gsm_Ard::attachGPRS(){
   }
   switch(n){
     default:
-      return 3;
+      return 8;
       break;
     case 1:
       {
@@ -313,7 +309,7 @@ int Gsm_Ard::attachGPRS(){
         strcpy_P(at_rsp_buffer, AT_OK);
         n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
         if(!n){
-          return 4;
+          return 9;
         }
       }
       break;
@@ -329,7 +325,7 @@ int Gsm_Ard::attachGPRS(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n){
-    return 6;
+    return 10;
   }
 
   {
@@ -340,7 +336,7 @@ int Gsm_Ard::attachGPRS(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n){
-    return 7;
+    return 11;
   }
 
 
@@ -352,7 +348,7 @@ int Gsm_Ard::attachGPRS(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n!=1){
-    return 8;
+    return 12;
   }
 
   #ifdef DEBUG_STATES
@@ -424,6 +420,17 @@ int Gsm_Ard::_connect_tcp_socket(){
 
   {
     char at_cmd_buffer[11];
+    char at_rsp_buffer[8];
+    strcpy_P(at_cmd_buffer, AT_CIPSHUT);
+    strcpy_P(at_rsp_buffer, AT_SHUT_OK);
+    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
+  }
+  if(n){
+    return 20+n;
+  }
+
+  {
+    char at_cmd_buffer[11];
     strcpy_P(at_cmd_buffer, AT_CIPMUX_R);
 
     char rsp1[11];
@@ -435,7 +442,7 @@ int Gsm_Ard::_connect_tcp_socket(){
   }
   switch(n){
     default:
-      return 20;
+      return 30;
       break;
     case 0:
       break;
@@ -448,7 +455,7 @@ int Gsm_Ard::_connect_tcp_socket(){
         n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
       }
       if(n){
-        return 30+n;
+        return 40+n;
       }
       break;
   }
@@ -461,12 +468,12 @@ int Gsm_Ard::_connect_tcp_socket(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(n){
-    return 40+n;
+    return 50+n;
   }
 
   n=_recv_string(10000,2);
   if(n){
-    return 50+n;
+    return 60+n;
   }
 
   {
@@ -474,22 +481,22 @@ int Gsm_Ard::_connect_tcp_socket(){
     char* rsp;
     n=_fetch_rsp_wo_cmd(&rsp_len);
     if(n){
-      return 60+n;
+      return 70+n;
     }
     if(!rsp_len){
-      return 70;
+      return 80;
     }
 
     rsp=new char[rsp_len];
     n=_get_rsp(&rsp);
     if(n){
-      return 80+n;
+      return 90+n;
     }
 
     char exp_rsp[11];
     strcpy_P(exp_rsp, AT_CONNECT_OK);
     if(strncmp(rsp, exp_rsp, rsp_len)!=0){
-      return 90;
+      return 99;
     }
     _gsm_state=GSM_TCP_STATE;
     #ifdef DEBUG_STATES

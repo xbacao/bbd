@@ -1,34 +1,19 @@
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 #include <stdio.h>
-#include "gsm_ard.h"
-#include "socket_bbd.h"
-#include "network.h"
 #include "bbda.h"
 
-#define ARDUINO_ID    1
-
-#define R_OP_VALVE    "1+"
-#define MSG_SIZE      50
-#define N_SEPARATORS  4
-
-#define REQUEST_CHECK_MULT  1            //arduino checks requests in multiples of 15 mins
-
-#define ATTACH_TIMEOUT  5
-
-bool timeSynced = false;
 
 Gsm_Ard gsm;
 
-int result;
-int i=0;
-boolean started=false;
-
+bool started=false;
 bool request_checked = false;
+bool timeSynced = false;
 
 void setup()
 {
   int n;
+  bool error=false;
   /* setup timer */
   //setSyncProvider(requestSync);
   /****/
@@ -50,65 +35,43 @@ void setup()
   }while(n);
 
   do{
+    error=false;
     n=gsm.attachGPRS();
-    if(!n){
-      n=syncTimeWithServer();
-      if(n){
-        Serial.print("ERROR: SYNC TIME ");
-        Serial.println(n);
-      }
-      else{
-        started=true;
-      }
-      n=gsm.dettachGPRS();
-      if(n){
-        Serial.print("ERROR: DETTACH GPRS ");
-        Serial.println(n);
-      }
-      else{
-        Serial.println("CLOCK");
-        digitalClockDisplay();
-        started=true;
-      }
-    }
-    else{
+    if(n){
       Serial.print("ERROR: COULD NOT ATTACH GPRS ");
       Serial.println(n);
     }
-
+    else{
+      if(!timeSynced){
+        n=syncTimeWithServer();
+        if(n){
+          Serial.print("ERROR: SYNC TIME ");
+          Serial.println(n);
+          error=true;
+        }
+      }
+      if(!error){
+        n=get_last_schedule();
+        if(n){
+          Serial.print("ERROR: GET LAST SCHE ");
+          Serial.println(n);
+        }
+        else{
+          started=true;
+        }
+      }
+    }
+    n=gsm.dettachGPRS();
+    if(n){
+      Serial.print("ERROR: DETTACH GPRS ");
+      Serial.println(n);
+    }
   } while(!started);
 
 }
 
 void loop()
 {
-  // if(debug_gsm){
-  //   if(Serial.available()>0){
-  //     String str = Serial.readString();
-  //     Serial.println(str);
-  //     // gsm.SimpleWriteln(str);
-  //     // gsm.WaitResp(5000, 50, "DEBUG");
-  //   }
-  // }
-  // switch(ARDUINO_STATE){
-  //   default:
-  //     break;
-  //   case ARDUINO_GSM_ON_STATE:
-  //     if(!request_checked && minute()%REQUEST_CHECK_MULT == 0){
-  //       Serial.println("CHECKING REQUESTS");
-  //       gsm_ard.attachGPRS();
-  //       checkRequests();
-  //       request_checked = true;
-  //       syncTimeWithServer();
-  //       gsm_ard.dettachGPRS();
-  //     }
-  //     else{
-  //       if(minute()%REQUEST_CHECK_MULT != 0 && request_checked){
-  //         request_checked = false;
-  //       }
-  //     }
-  //     break;
-  // }
 }
 
 void requestSync(){
@@ -127,7 +90,7 @@ int syncTimeWithServer(){
   int n;
   unsigned int rsp_len;
 
-  if(gsm.get_gsm_state()!=GSM_IP_STATE || !started){
+  if(gsm.get_gsm_state()!=GSM_IP_STATE){
     return 1;
   }
 
@@ -155,12 +118,50 @@ int syncTimeWithServer(){
     return 5000;
   }
 
-  Serial.print("TIME:");
-  Serial.println((long)cur_time);
-
   setTime(cur_time+3600);
   timeSynced = true;
 
+  digitalClockDisplay();
+
+  return 0;
+}
+
+int get_last_schedule(){
+  int n;
+  char* msg;
+  unsigned int rsp_len;
+
+  if(gsm.get_gsm_state()!=GSM_IP_STATE){
+    return 1;
+  }
+
+  msg=new char[GET_LAST_SCHE_MSG_SIZE];
+  n=get_last_sche_msg(&msg);
+  if(n){
+    return 2000+n;
+  }
+
+  n=gsm.send_socket_msg(msg, GET_LAST_SCHE_MSG_SIZE, &rsp_len);
+  if(n){
+    return 3000+n;
+  }
+
+  char* rsp = new char[rsp_len];
+  n=gsm.get_socket_rsp(&rsp);
+  if(n){
+    return 4000+n;
+  }
+
+  ArduinoSchedules a_s(ARDUINO_ID);
+  n=a_s.decode_message(rsp, rsp_len);
+  if(n){
+    return 5000+n;
+  }
+
+  n=init_scheduler(a_s);
+  if(n){
+    return 6000+n;
+  }
   return 0;
 }
 
@@ -220,64 +221,45 @@ int checkRequests(){
   -1    error decoding
   -2    request not suported
 */
-int handleRequest(){
-  int n;
-  int requestID, valveID, action;
-
-  n = decodeRequest(&requestID, &valveID, &action);
-
-  if(n != 1){
-    Serial.println("DB:ERROR DECODING!");
-    return -1;
-  }
-
-
-  switch(action){
-    default:
-      Serial.println("DB:REQUEST NOT SUPPORTED");
-      return -2;
-      break;
-    case 1:       //open/close valve
-      Serial.print("--RECEIVED!");
-      Serial.print(requestID);
-      Serial.print("-");
-      Serial.print(valveID);
-      Serial.print("-");
-      Serial.print(action);
-      Serial.print("-");
-      break;
-    case 2:       //schedule changed
-      Serial.print("--RECEIVED!");
-      Serial.print(requestID);
-      Serial.print("-");
-      Serial.print(valveID);
-      Serial.print("-");
-      Serial.print(action);
-      Serial.print("-");
-      break;
-
-  }
-  return 1;
-}
-
-/*
-  return codes
-  0   no requests available
-*/
-int getRequestMsg(){
-  // return inet.httpGET(SERVER_IP, PORT, PATH_GET, msg);
-  return 1;
-}
-
-int getTimeMsg(){
-  // return inet.httpGET(SERVER_IP, PORT, PATH_TIME, msg);
-  return 1;
-}
-
-int markRequestServed(int requestID){
-  // return inet.httpGET(SERVER_IP, PORT, PATH_SERVED+requestID, msg);
-  return 1;
-}
+// int handleRequest(){
+//   int n;
+//   int requestID, valveID, action;
+//
+//   n = decodeRequest(&requestID, &valveID, &action);
+//
+//   if(n != 1){
+//     Serial.println("DB:ERROR DECODING!");
+//     return -1;
+//   }
+//
+//
+//   switch(action){
+//     default:
+//       Serial.println("DB:REQUEST NOT SUPPORTED");
+//       return -2;
+//       break;
+//     case 1:       //open/close valve
+//       Serial.print("--RECEIVED!");
+//       Serial.print(requestID);
+//       Serial.print("-");
+//       Serial.print(valveID);
+//       Serial.print("-");
+//       Serial.print(action);
+//       Serial.print("-");
+//       break;
+//     case 2:       //schedule changed
+//       Serial.print("--RECEIVED!");
+//       Serial.print(requestID);
+//       Serial.print("-");
+//       Serial.print(valveID);
+//       Serial.print("-");
+//       Serial.print(action);
+//       Serial.print("-");
+//       break;
+//
+//   }
+//   return 1;
+// }
 
 /*
   return codes
