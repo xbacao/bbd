@@ -57,6 +57,7 @@ private:
   int _recv_tcp_data(unsigned int* data_len);
   int _disconnect_tcp_socket();
 
+  void _change_gsm_state(GSM_STATE new_state);
 
   void _clear_recv_buff();
   void _clear_rsp_buff();

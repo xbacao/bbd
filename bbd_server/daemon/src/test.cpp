@@ -1,42 +1,62 @@
-#include "db.h"
 #include "log.h"
 #include "socket_data.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 
+static void _send_header(int sock){
+	uint16_t s_header=htons(SOCKET_HEADER);
+	write(sock, &s_header, sizeof(s_header));
+	uint8_t ard_id=1;
+	write(sock, &ard_id, 1);
+	uint8_t msg_type=CHECKIN_MSG;
+	write(sock, &msg_type, 1);
+	uint8_t msg_size=0;
+	write(sock, &msg_size, 1);
+}
+
 int main(void){
-	// int n;
-	// init_log();
-	// schedule_data data;
-	// n=get_new_schedule(1,&data);
-	// if(n!=0){
-	// 	std::cout << "ERROR GETTING SCHEDULE "<<n<<std::endl;
-	// }
-	// std::cout << data << std::endl;
-	// exit(1);
+	int sock,n;
+	struct sockaddr_in server;
+	sock = socket(AF_INET , SOCK_STREAM , 0);
+	if (sock == -1)
+	{
+		printf("Could not create socket");
+	}
+	puts("Socket created");
 
-	int sockfd, servlen,n;
-	struct sockaddr_un  serv_addr;
-	char buffer[82];
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+	server.sin_family = AF_INET;
+	server.sin_port = htons( 7777 );
 
-	bzero((char *)&serv_addr,sizeof(serv_addr));
-	serv_addr.sun_family = AF_UNIX;
-	strcpy(serv_addr.sun_path, "127.0.0.1");
-	servlen = strlen(serv_addr.sun_path) +
-								sizeof(serv_addr.sun_family);
-	if ((sockfd = socket(AF_UNIX, SOCK_STREAM,0)) < 0)
+	//Connect to remote server
+	if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
+	{
+		perror("connect failed. Error");
 		return 1;
-	if (connect(sockfd, (struct sockaddr *)
-												&serv_addr, servlen) < 0)
-			return 2;
-	write(sockfd, SOCKET_HEADER, sizeof(SOCKET_HEADER));
-	write(sockfd, SYNC_TIME_MSG, 1);
+	}
+	_send_header(sock);
 
-	time_t t_time=get_time(sockfd);
-	std::cout << "TIME:"<<t_time<<std::endl;
+	ArduinoSchedules a_s(1);
+	uint16_t size;
+	n=recv(sock, &size, sizeof(uint16_t), MSG_WAITALL);
+	if(n<0) return 2;
+	size=ntohs(size);
+	char* buff= new char[size];
+	n=recv(sock, buff, size, MSG_WAITALL);
+	if(n<0){
+		return 3;
+	}
+	n=a_s.decode_message(buff, size);
+	if(n<0){
+		std::cout << "ERROR "<<n<<std::endl;
+	}
+	else{
+		std::cout << "SUCCESS "<<a_s<<std::endl;
+	}
+
 	return 0;
 }

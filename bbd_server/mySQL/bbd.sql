@@ -1,5 +1,5 @@
 DROP SCHEMA IF EXISTS bbd;
-CREATE SCHEMA IF NOT EXISTS bbd;
+CREATE SCHEMA bbd;
 USE bbd ;
 
 CREATE TABLE IF NOT EXISTS bbd.arduino (
@@ -80,8 +80,8 @@ BEGIN
 END $$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS set_schedule_active;
 DELIMITER $$
-DROP PROCEDURE IF EXISTS set_schedule_sent;
 CREATE PROCEDURE set_schedule_active(IN scheID INT)
 BEGIN
   UPDATE bbd.schedule SET active=0,active_end=CURRENT_TIMESTAMP WHERE active=1;
@@ -89,8 +89,8 @@ BEGIN
 END $$
 DELIMITER ;
 
-DELIMITER $$
 DROP PROCEDURE IF EXISTS new_valve_schedule;
+DELIMITER $$
 CREATE PROCEDURE new_valve_schedule(IN scheID INT, IN descr VARCHAR(100))
 BEGIN
   INSERT INTO bbd.schedule(valveID_f, description) VALUES (scheID, descr);
@@ -98,8 +98,8 @@ BEGIN
 END $$
 DELIMITER ;
 
-DELIMITER $$
 DROP PROCEDURE IF EXISTS new_schedule_entry;
+DELIMITER $$
 CREATE PROCEDURE new_schedule_entry(IN scheID INT, IN start_time TIME, IN stop_time TIME)
 BEGIN
   INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES (scheID, start_time, stop_time);
@@ -109,8 +109,12 @@ DELIMITER ;
 DROP USER 'bbduser'@'localhost';
 CREATE USER 'bbduser'@'localhost' IDENTIFIED BY 'morcao123';
 GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX ON bbd.* TO 'bbduser'@'localhost';
-GRANT EXECUTE ON PROCEDURE bbd.get_valve_schedule TO 'bbduser'@'localhost';
 
+GRANT EXECUTE ON PROCEDURE bbd.get_unsent_schedule TO 'bbduser'@'localhost';
+GRANT EXECUTE ON PROCEDURE bbd.get_last_schedule TO 'bbduser'@'localhost';
+GRANT EXECUTE ON PROCEDURE bbd.set_schedule_active TO 'bbduser'@'localhost';
+GRANT EXECUTE ON PROCEDURE bbd.new_valve_schedule TO 'bbduser'@'localhost';
+GRANT EXECUTE ON PROCEDURE bbd.new_schedule_entry TO 'bbduser'@'localhost';
 
 /*TEST PROC*/
 INSERT INTO bbd.arduino VALUES(1, "asdf");

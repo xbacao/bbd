@@ -1,5 +1,11 @@
 #include "daemon.h"
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fstream>
+#include <sstream>
+
 using namespace std;
 
 void daemonize(const char* pid_file, sighandler_t handler){

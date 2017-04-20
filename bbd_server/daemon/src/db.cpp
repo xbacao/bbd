@@ -1,4 +1,7 @@
 #include "db.h"
+#include <mysql.h>
+#include "log.h"
+#include <sstream>
 
 using namespace std;
 
@@ -78,6 +81,7 @@ int get_last_schedule(ArduinoSchedules* data){
 	MYSQL *conn;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
+	int err;
 
 	conn = mysql_init(NULL);
 
@@ -90,9 +94,10 @@ int get_last_schedule(ArduinoSchedules* data){
 	ss << "CALL get_last_schedule("<<(*data).get_arduino_id()<<")";
 	temp_str=(char*)ss.str().c_str();
 	/* send SQL query */
-	if (mysql_query(conn, temp_str)) {
+	err=mysql_query(conn, temp_str);
+	if (err) {
+		log_file << time(nullptr) <<": DB:"<<mysql_error(conn)<<", "<<err<<endl;
 		mysql_close(conn);
-		log_file << time(nullptr) <<": DB:"<<mysql_error(conn)<<endl;
 		return 2;
 	}
 

@@ -1,23 +1,40 @@
 #include "socket_data.h"
+#include <arpa/inet.h>
+#include <iostream>
+#include "log.h"
+#include <string.h>
 
 using namespace std;
 
-static int _recv_64(void* data, int sock_fd){
-	int n;
-	char buffer_32[BUFFER_SIZE_32];
-	char buffer_64[BUFFER_SIZE_64];
-	uint32_t temp_32;
+static void _prep_to_send_8(const void* in_data, void* out_data){
+	memcpy(out_data, in_data, BUFFER_SIZE_8);
+}
 
-	for(uint i=0;i<(BUFFER_SIZE_64/BUFFER_SIZE_32);i++){
-		n=read(sock_fd, buffer_32, BUFFER_SIZE_32);
-		if(n<0){
-			return n;
-		}
-		memcpy(&temp_32, buffer_32, BUFFER_SIZE_32);
-		temp_32 = ntohl(temp_32);
-		memcpy(buffer_64+i*BUFFER_SIZE_32, &temp_32, BUFFER_SIZE_32);
+static void _prep_to_send_16(const void* in_data, void* out_data){
+  uint16_t temp_16;
+  memcpy(&temp_16, in_data, BUFFER_SIZE_16);
+  temp_16 = htons(temp_16);
+  memcpy(out_data, &temp_16, BUFFER_SIZE_16);
+}
+
+static void _prep_to_send_32(const void* in_data, void* out_data){
+	uint32_t temp_32;
+	memcpy(&temp_32, in_data, BUFFER_SIZE_32);
+	temp_32=htonl(temp_32);
+	memcpy(out_data, &temp_32, BUFFER_SIZE_32);
+}
+
+static int _recv_8(void* data, int sock_fd){
+	int n;
+	char buffer_8[BUFFER_SIZE_8];
+
+	memset(data, 0, BUFFER_SIZE_8);
+	n=recv(sock_fd, buffer_8, BUFFER_SIZE_8, MSG_WAITALL);
+	if(n<0){
+		return n;
 	}
-	memcpy(data, buffer_64, BUFFER_SIZE_64);
+
+	memcpy(data, &buffer_8, BUFFER_SIZE_8);
 	return 0;
 }
 
@@ -26,7 +43,8 @@ static int _recv_16(void* data, int sock_fd){
 	char buffer_16[BUFFER_SIZE_16];
 	uint16_t temp_16;
 
-	n=read(sock_fd, buffer_16, BUFFER_SIZE_16);
+	memset(data, 0, BUFFER_SIZE_16);
+	n=recv(sock_fd, buffer_16, BUFFER_SIZE_16, MSG_WAITALL);
 	if(n<0){
 		return n;
 	}
@@ -39,7 +57,6 @@ static int _recv_16(void* data, int sock_fd){
 
 int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, uint8_t* trans_size){
   uint16_t temp_16;
-  char buffer[1];
   int n;
   n= _recv_16(&temp_16, sock_fd);
   if(n!=0){
@@ -50,29 +67,25 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
     return 2;
   }
 
-  bzero(buffer, 1);
-  n=read(sock_fd,buffer,1);
-  if (n < 0){
-    return 3;
-  }
-  *arduino_id= (uint8_t) (buffer[0]);
+	n=_recv_8(arduino_id, sock_fd);
+	if(n){
+		return 3;
+	}
 
-  bzero(buffer, 1);
-  n=read(sock_fd,buffer,1);
-  if (n < 0){
-    return 4;
-  }
-  *trans_type= (uint8_t) (buffer[0]);
+	n=_recv_8(trans_type, sock_fd);
+	if(n){
+		return 4;
+	}
+
   if(*trans_type!=SYNC_TIME_MSG && *trans_type!=LAST_SCHE_MSG && *trans_type!=CHECKIN_MSG && *trans_type!=SCHE_ACT_MSG){
     return 5;
   }
 
-  bzero(buffer, 1);
-  n=read(sock_fd,buffer,1);
-  if (n < 0){
-    return 6;
-  }
-  *trans_size= (uint) (buffer[0]);
+	n=_recv_8(trans_size, sock_fd);
+	if(n){
+		return 6;
+	}
+
   if(*trans_size<0 || *trans_size>128){
     return 7;
   }
@@ -81,53 +94,30 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
 }
 
 
-int send_time(int sock_fd){
-	char* msg=new char[TIME_RSP_SIZE+2*sizeof(uint8_t)];
+int send_time_msg(int sock_fd){
+	uint16_t msg_size=TIME_RSP_SIZE+2*sizeof(uint8_t);
+	uint32_t curr_time=time(nullptr);
+	char* msg=new char[msg_size];
 
-	memcpy(msg, &TIME_RSP_SIZE, sizeof(uint8_t));
+	_prep_to_send_8(&TIME_RSP_SIZE, msg);
 
-	uint32_t curr_time=htonl(time(nullptr));
-	memcpy(msg+sizeof(uint8_t), &curr_time, sizeof(uint32_t));
+	_prep_to_send_32(&curr_time, msg+BUFFER_SIZE_8);
 
-	memcpy(msg+sizeof(uint8_t)+sizeof(uint32_t), &END_TRANS_CHAR, sizeof(uint8_t));
+	_prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_8+BUFFER_SIZE_32);
 
-	return write(sock_fd, msg, TIME_RSP_SIZE+2*sizeof(uint8_t))<0;
+	return send(sock_fd, msg, msg_size, 0)<0;
 }
 
-int send_msg(char* msg, uint32_t size, int sock_fd){
-	return write(sock_fd, msg, size)<0;
+int send_schedule_msg(ArduinoSchedules a_s, int sock_fd){
+	uint16_t msg_len = a_s.get_message_size();
+
+	char* msg = new char[msg_len+BUFFER_SIZE_16];
+	_prep_to_send_16(&msg_len, msg);
+	a_s.make_message(msg+BUFFER_SIZE_16);
+
+	return send(sock_fd, msg, msg_len+BUFFER_SIZE_16, 0)<0;
 }
 
 int send_empty_msg(int sock_fd){
-	return write(sock_fd, &END_TRANS_CHAR, sizeof(uint8_t))<0;
-}
-
-int recv_sche_act_msg_size(int sock_fd, uint16_t* size){
-	uint16_t temp;
-	int n;
-	n=read(sock_fd, &temp, BUFFER_SIZE_16);
-	if(n<0){
-		return 1;
-	}
-
-	*size=ntohs(temp);
-	return 0;
-}
-
-int recv_sche_act_msg(int sock_fd, uint16_t size, uint16_t **sche_ids){
-	uint16_t temp,i;
-	for(i=0;i<size;i++){
-		if(read(sock_fd, &temp, BUFFER_SIZE_16)<0){
-			return 1;
-		}
-		(*sche_ids)[i]=ntohs(temp);
-	}
-	return 0;
-}
-
-//FOR TESTING
-time_t get_time(int sock_fd){
-	time_t currt;
-	_recv_64(&currt, sock_fd);
-	return currt;
+	return send(sock_fd, &END_TRANS_CHAR, BUFFER_SIZE_8, 0)<0;
 }

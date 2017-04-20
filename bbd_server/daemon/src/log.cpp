@@ -1,4 +1,6 @@
 #include "log.h"
+#include <sstream>
+#include <sys/stat.h>
 
 using namespace std;
 

@@ -153,15 +153,15 @@ int get_last_schedule(){
   }
 
   ArduinoSchedules a_s(ARDUINO_ID);
-  n=a_s.decode_message(rsp, rsp_len);
-  if(n){
-    return 5000+n;
-  }
-
-  n=init_scheduler(a_s);
-  if(n){
-    return 6000+n;
-  }
+  // n=a_s.decode_message(rsp, rsp_len);
+  // if(n){
+  //   return 5000+n;
+  // }
+  //
+  // n=init_scheduler(a_s);
+  // if(n){
+  //   return 6000+n;
+  // }
   return 0;
 }
 

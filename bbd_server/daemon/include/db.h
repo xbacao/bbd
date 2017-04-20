@@ -1,8 +1,6 @@
 #ifndef _DB_H_
 #define _DB_H_
 
-#include <mysql.h>
-#include "log.h"
 #include "schedule.h"
 
 #define MYSQL_URL	"localhost"

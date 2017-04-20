@@ -2,11 +2,6 @@
 #define _DAEMON_H_
 
 #include <signal.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fstream>
-#include <sstream>
 
 void daemonize(const char* pid_file, sighandler_t handler);
 

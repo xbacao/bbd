@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <iostream>
+#include <unistd.h>
 #include "daemon.h"
 #include "socket_data.h"
 #include "db.h"
@@ -81,7 +82,7 @@ static int _run_server(){
         default:
           break;
         case SYNC_TIME_MSG:
-          n=send_time(newsockfd);
+          n=send_time_msg(newsockfd);
           if(n){
             log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
           }
@@ -89,16 +90,14 @@ static int _run_server(){
         case LAST_SCHE_MSG:
         {
           ArduinoSchedules a_s(arduino_id);
-          n=get_last_schedule(&a_s);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
-            break;
-          }
 
-          uint32_t msg_len = a_s.get_message_size();
-          char* msg = new char[msg_len];
-          a_s.make_message(&msg);
-          n=send_msg(msg, msg_len, newsockfd);
+        	n=get_last_schedule(&a_s);
+        	if(n){
+        		log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
+        		break;
+        	}
+
+          n=send_schedule_msg(a_s, newsockfd);
           if(n){
             log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
           }
@@ -107,52 +106,42 @@ static int _run_server(){
         case CHECKIN_MSG:
         {
           ArduinoSchedules a_s(arduino_id);
-          n=get_unsent_schedule(&a_s);
-          if(n!=5){
-            if(n){
-              log_file<<time(nullptr)<<": ERROR GETTING UNSENT SCHEDULE "<<n<<endl;
-              break;
-            }
 
-            uint32_t msg_len = a_s.get_message_size();
-            char* msg = new char[msg_len];
-            a_s.make_message(&msg);
-            n=send_msg(msg, msg_len, newsockfd);
-            if(n){
-              log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
-            }
-          }
-          else{
-            n=send_empty_msg(newsockfd);
-            if(n){
-              log_file<<time(nullptr)<<": ERROR SENDING EMPTY MESSAGE "<< n<<endl;
-            }
+        	n=get_unsent_schedule(&a_s);
+        	if(n){
+        		log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
+        		break;
+        	}
+
+          n=send_schedule_msg(a_s, newsockfd);
+          if(n){
+            log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
           }
           break;
         }
         case SCHE_ACT_MSG:
         {
-          uint16_t msg_size;
-          n=recv_sche_act_msg_size(newsockfd, &msg_size);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE SIZE "<< n<<endl;
-            break;
-          }
-
-          uint16_t* sche_ids = new uint16_t[msg_size];
-          n=recv_sche_act_msg(newsockfd, msg_size,&sche_ids);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE "<< n<<endl;
-            break;
-          }
-
-          for(uint16_t i=0;i<msg_size;i++){
-            n=set_schedule_sent(sche_ids[i]);
-            if(n){
-              log_file<<time(nullptr)<<": ERROR SETTING SCHE SENT AT DB "<< n<<endl;
-              break;
-            }
-          }
+          // uint16_t msg_size;
+          // n=recv_sche_act_msg_size(newsockfd, &msg_size);
+          // if(n){
+          //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE SIZE "<< n<<endl;
+          //   break;
+          // }
+          //
+          // uint16_t* sche_ids = new uint16_t[msg_size];
+          // n=recv_sche_act_msg(newsockfd, msg_size,&sche_ids);
+          // if(n){
+          //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE "<< n<<endl;
+          //   break;
+          // }
+          //
+          // for(uint16_t i=0;i<msg_size;i++){
+          //   n=set_schedule_sent(sche_ids[i]);
+          //   if(n){
+          //     log_file<<time(nullptr)<<": ERROR SETTING SCHE SENT AT DB "<< n<<endl;
+          //     break;
+          //   }
+          // }
           break;
         }
       }

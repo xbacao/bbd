@@ -74,13 +74,35 @@ Gsm_Ard::Gsm_Ard(){
   #endif
 }
 
+void Gsm_Ard::_change_gsm_state(GSM_STATE new_state){
+  _gsm_state=new_state;
+  #ifdef DEBUG_STATES
+  switch(_gsm_state){
+    default:
+      break;
+    case GSM_OFF_STATE:
+      Serial.println("DB: GSM_STATE=GSM_OFF_STATE");
+      break;
+    case GSM_ON_STATE:
+      Serial.println("DB: GSM_STATE=GSM_ON_STATE");
+      break;
+    case GSM_PIN_STATE:
+      Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
+      break;
+    case GSM_IP_STATE:
+      Serial.println("DB: GSM_STATE=GSM_IP_STATE");
+      break;
+    case GSM_TCP_STATE:
+      Serial.println("DB: GSM_STATE=GSM_TCP_STATE");
+      break;
+  }
+  #endif
+}
+
 int Gsm_Ard::init_gsm_module(){
   int i,n;
-  _gsm_state=GSM_OFF_STATE;
+  _change_gsm_state(GSM_OFF_STATE);
   _ss = SoftwareSerial(_GSM_RXPIN_, _GSM_TXPIN_);
-  #ifdef DEBUG_STATES
-  Serial.println("DB: GSM_STATE=GSM_OFF_STATE");
-  #endif
   _ss.begin(DEFAULT_SS_BAUDRATE);
   {
     char at_cmd_buffer[3];
@@ -90,10 +112,7 @@ int Gsm_Ard::init_gsm_module(){
     n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
   }
   if(!n){
-    _gsm_state=GSM_ON_STATE;
-    #ifdef DEBUG_STATES
-    Serial.println("DB: GSM_STATE=GSM_ON_STATE");
-    #endif
+    _change_gsm_state(GSM_ON_STATE);
   }
   for(i=0;i<8 && _gsm_state!=GSM_ON_STATE;i++){
     _ss.begin(_POSSIBLE_BRS[i]);
@@ -105,10 +124,7 @@ int Gsm_Ard::init_gsm_module(){
       n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
     }
     if(!n){
-      _gsm_state=GSM_ON_STATE;
-      #ifdef DEBUG_STATES
-      Serial.println("DB: GSM_STATE=GSM_ON_STATE");
-      #endif
+      _change_gsm_state(GSM_ON_STATE);
     }
   }
 
@@ -178,10 +194,7 @@ int Gsm_Ard::init_gsm_module(){
       break;
   }
 
-  _gsm_state=GSM_PIN_STATE;
-  #ifdef DEBUG_STATES
-  Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-  #endif
+  _change_gsm_state(GSM_PIN_STATE);
   return 0;
 }
 
@@ -220,9 +233,6 @@ int Gsm_Ard::attachGPRS(){
       }
       break;
     case 1:
-      #ifdef DEBUG_STATES
-      Serial.println("DB: GSM_STATE=GSM_GPRS_STATE");
-      #endif
       break;
   }
 
@@ -280,10 +290,7 @@ int Gsm_Ard::attachGPRS(){
       return 7;
       break;
     case 1:
-      #ifdef DEBUG_STATES
-      Serial.println("DB: GSM_STATE=GSM_IP_STATE");
-      #endif
-      _gsm_state=GSM_IP_STATE;
+      _change_gsm_state(GSM_IP_STATE);
       return 0;
       break;
     case 0:
@@ -351,10 +358,7 @@ int Gsm_Ard::attachGPRS(){
     return 12;
   }
 
-  #ifdef DEBUG_STATES
-  Serial.println("DB: GSM_STATE=GSM_IP_STATE");
-  #endif
-  _gsm_state=GSM_IP_STATE;
+  _change_gsm_state(GSM_IP_STATE);
   return 0;
 }
 
@@ -405,10 +409,7 @@ int Gsm_Ard::dettachGPRS(){
       }
       break;
   }
-  _gsm_state=GSM_PIN_STATE;
-  #ifdef DEBUG_STATES
-  Serial.println("DB: GSM_STATE=GSM_PIN_STATE");
-  #endif
+  _change_gsm_state(GSM_PIN_STATE);
   return 0;
 }
 
@@ -498,10 +499,7 @@ int Gsm_Ard::_connect_tcp_socket(){
     if(strncmp(rsp, exp_rsp, rsp_len)!=0){
       return 99;
     }
-    _gsm_state=GSM_TCP_STATE;
-    #ifdef DEBUG_STATES
-    Serial.println("DB: GSM_STATE=GSM_TCP_STATE");
-    #endif
+    _change_gsm_state(GSM_TCP_STATE);
   }
 
   return 0;
@@ -559,10 +557,7 @@ int Gsm_Ard::_disconnect_tcp_socket(){
     }
   }
 
-  _gsm_state=GSM_IP_STATE;
-  #ifdef DEBUG_STATES
-  Serial.println("DB: GSM_STATE=GSM_IP_STATE");
-  #endif
+  _change_gsm_state(GSM_IP_STATE);
   return 0;
 }
 
