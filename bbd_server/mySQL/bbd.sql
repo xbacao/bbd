@@ -1,5 +1,10 @@
+GRANT USAGE ON *.* TO 'bbduser'@'localhost';
+DROP USER 'bbduser'@'localhost';
+CREATE USER 'bbduser'@'localhost' IDENTIFIED BY 'morcao123';
+
 DROP SCHEMA IF EXISTS bbd;
 CREATE SCHEMA bbd;
+
 USE bbd ;
 
 CREATE TABLE IF NOT EXISTS bbd.arduino (
@@ -106,8 +111,6 @@ BEGIN
 END $$
 DELIMITER ;
 
-DROP USER 'bbduser'@'localhost';
-CREATE USER 'bbduser'@'localhost' IDENTIFIED BY 'morcao123';
 GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX ON bbd.* TO 'bbduser'@'localhost';
 
 GRANT EXECUTE ON PROCEDURE bbd.get_unsent_schedule TO 'bbduser'@'localhost';

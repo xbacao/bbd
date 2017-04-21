@@ -89,5 +89,20 @@ then
 	echo "An error has occured setting up httpd.conf!"
 	exit 7
 fi
-echo "done!"
-echo "to start apache run sudo $APACHE_DIR/bin/apachectl -k start"
+
+echo "creating apache service"
+sudo cp $APACHE_DIR/bin/apachectl /etc/init.d/apache_bbd
+if [ $? != 0 ]
+then
+	echo "An error has occured creating apache service!"
+	exit 8
+fi
+
+sudo update-rc.d apache_bbd defaults
+if [ $? != 0 ]
+then
+	echo "An error has occured creating apache service!"
+	exit 9
+fi
+
+exit 0
