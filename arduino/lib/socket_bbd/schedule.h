@@ -2,8 +2,6 @@
 #define _SCHEDULE_H_
 
 #include <inttypes.h>
-#include <string.h>
-#include "arduino_cfg.h"
 
 struct schedule_entry{
 	uint16_t cicle_start;

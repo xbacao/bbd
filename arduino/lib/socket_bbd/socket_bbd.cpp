@@ -1,4 +1,7 @@
 #include "socket_bbd.h"
+#include <string.h>
+#include <Arduino.h>
+#include "arduino_cfg.h"
 
 int get_time_request_msg(char** msg){
   uint8_t msg_len=0;

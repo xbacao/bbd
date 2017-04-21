@@ -1,10 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "string.h"
-#include "socket_bbd.h"
-#include "arduino_cfg.h"
-#include "Time.h"
+#include "schedule.h"
 
 int init_scheduler(ArduinoSchedules a_s);
 

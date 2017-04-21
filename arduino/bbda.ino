@@ -1,14 +1,19 @@
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 #include <stdio.h>
+#include "gsm_ard.h"
+#include "socket_bbd.h"
+#include "arduino_cfg.h"
 #include "bbda.h"
-
+#include "scheduler.h"
 
 Gsm_Ard gsm;
 
 bool started=false;
 bool request_checked = false;
 bool timeSynced = false;
+time_t last_sync;
+time_t last_ci;
 
 void setup()
 {
@@ -43,7 +48,7 @@ void setup()
     }
     else{
       if(!timeSynced){
-        n=syncTimeWithServer();
+        n=sync_time_with_server();
         if(n){
           Serial.print("ERROR: SYNC TIME ");
           Serial.println(n);
@@ -72,21 +77,48 @@ void setup()
 
 void loop()
 {
+  int n;
+
+  bool need_time_sync=now()-last_sync>SYNC_TIME;
+  bool need_ci=now()-last_ci>CI_TIME;
+  
+  if(need_time_sync || need_ci){
+    n=gsm.attachGPRS();
+    if(n){
+      Serial.print("ERROR ATTACH GPRS ");
+      Serial.println(n);
+      goto scheduler_ops;
+    }
+    if(need_time_sync){
+      n=sync_time_with_server();
+      if(n){
+        Serial.print("ERROR SYNC TIME ");
+        Serial.println(n);
+        gsm.dettachGPRS();
+        goto scheduler_ops;
+      }
+    }
+    if(need_ci){
+      n=checkin_server();
+      if(n){
+        Serial.print("ERROR CHECK IN SERVER ");
+        Serial.println(n);
+        gsm.dettachGPRS();
+        goto scheduler_ops;
+      }
+    }
+    n=gsm.dettachGPRS();
+    if(n){
+      Serial.print("ERROR DETTACHING GPRS ");
+      Serial.println(n);
+      goto scheduler_ops;
+    }
+  }
+scheduler_ops:
+  scheduler_action();
 }
 
-void requestSync(){
-  timeSynced = false;
-}
-
-/*
-  return codes
-  -1    error attaching gprs
-  -2    bad http response
-  -3    error setting new time
-  -4    error detaching gprs
-  -10   gprs module not active
-*/
-int syncTimeWithServer(){
+int sync_time_with_server(){
   int n;
   unsigned int rsp_len;
 
@@ -120,8 +152,7 @@ int syncTimeWithServer(){
 
   setTime(cur_time+3600);
   timeSynced = true;
-
-  digitalClockDisplay();
+  last_sync=now();
 
   return 0;
 }
@@ -153,185 +184,61 @@ int get_last_schedule(){
   }
 
   ArduinoSchedules a_s(ARDUINO_ID);
-  // n=a_s.decode_message(rsp, rsp_len);
-  // if(n){
-  //   return 5000+n;
-  // }
-  //
-  // n=init_scheduler(a_s);
-  // if(n){
-  //   return 6000+n;
-  // }
+  n=a_s.decode_message(rsp, rsp_len);
+  if(n){
+    return 5000+n;
+  }
+
+  n=init_scheduler(a_s);
+  if(n){
+    return 6000+n;
+  }
+
+  last_ci=now();
   return 0;
 }
 
-/*
-  return codes
-  -1    error attaching gprs
-  -2    bad http responde code
-  -3    error handling request
-  -4    error detaching gprs
-  -10   gprs module not active
-  0     no requests available
-*/
-int checkRequests(){
-  // int n;
-  // if(started){
-  //   /*n = connectGPRS();
-  //   if(n != 1){
-  //     return -1;
-  //   }*/
-  //
-  //   //Read IP address.
-  //   gsm.SimpleWriteln("AT+CIFSR");
-  //   delay(5000);
-  //   //Read until serial buffer is empty.
-  //   gsm.WhileSimpleRead();
-  //
-  //   //TCP Client GET, send a GET request to the server and
-  //   n = getRequestMsg();
-  //   if(n != 1){
-  //     Serial.println("DB:BAD HTTP RESPONSE!");
-  //     return -2;
-  //   }
-  //   else if(n == 0){
-  //     Serial.println("DB:NO REQUESTS AT THIS MOMENT");
-  //     return 0;
-  //   }
-  //   else{
-  //     if(strcmp(msg, "||||")==0){
-  //       Serial.println("DB:NO REQUESTS AVAILABLE");
-  //       return 0;
-  //     }
-  //     n = handleRequest();
-  //     if(n != 1){
-  //       Serial.println("DB:ERROR HANDLING REQUEST");
-  //       return -3;
-  //     }
-  //   }
-  //   return 1;
-  // }
-  // Serial.println("DB:GPRS MODULE NOT ACTIVE!");
-  // return -10;
-  return 1;
+int checkin_server(){
+  int n;
+  char* msg;
+  unsigned int rsp_len;
+
+  if(gsm.get_gsm_state()!=GSM_IP_STATE){
+    return 1;
+  }
+
+  msg=new char[CHECK_REQS_MSG_SIZE];
+  n=get_check_requests_msg(&msg);
+  if(n){
+    return 2000+n;
+  }
+
+  n=gsm.send_socket_msg(msg, CHECK_REQS_MSG_SIZE, &rsp_len);
+  if(n){
+    return 3000+n;
+  }
+
+  char* rsp = new char[rsp_len];
+  n=gsm.get_socket_rsp(&rsp);
+  if(n){
+    return 4000+n;
+  }
+
+  ArduinoSchedules a_s(ARDUINO_ID);
+  n=a_s.decode_message(rsp, rsp_len);
+  if(n){
+    return 5000+n;
+  }
+
+  n=process_schedules(a_s);
+  if(n){
+    return 6000+n;
+  }
+
+  last_ci=now();
+  return 0;
 }
 
-/*format: |requestID|valveID|action|
-  return codes
-  -1    error decoding
-  -2    request not suported
-*/
-// int handleRequest(){
-//   int n;
-//   int requestID, valveID, action;
-//
-//   n = decodeRequest(&requestID, &valveID, &action);
-//
-//   if(n != 1){
-//     Serial.println("DB:ERROR DECODING!");
-//     return -1;
-//   }
-//
-//
-//   switch(action){
-//     default:
-//       Serial.println("DB:REQUEST NOT SUPPORTED");
-//       return -2;
-//       break;
-//     case 1:       //open/close valve
-//       Serial.print("--RECEIVED!");
-//       Serial.print(requestID);
-//       Serial.print("-");
-//       Serial.print(valveID);
-//       Serial.print("-");
-//       Serial.print(action);
-//       Serial.print("-");
-//       break;
-//     case 2:       //schedule changed
-//       Serial.print("--RECEIVED!");
-//       Serial.print(requestID);
-//       Serial.print("-");
-//       Serial.print(valveID);
-//       Serial.print("-");
-//       Serial.print(action);
-//       Serial.print("-");
-//       break;
-//
-//   }
-//   return 1;
-// }
-
-/*
-  return codes
-  -1  msg not formated
-  -2  not a time message
-*/
-// int decodeTime(uint64_t *time_64){
-//   int i = 0;
-//   int k = 0;
-//   int indx[N_SEPARATORS];
-//   for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
-//     if(msg[i] == '|'){
-//       indx[k] = i;
-//       k++;
-//     }
-//   }
-//
-//   if(k != N_SEPARATORS){
-//     Serial.println("DB:MSG NOT FORMATTED (TIME)");
-//     return -1;
-//   }
-//
-//   /*check if t is there */
-//   if(indx[0] != 0 or indx[1] != 2 or msg[1] != 't'){
-//     Serial.println("DB:MSG NOT A TIME MSG");
-//     return -2;
-//   }
-//
-//   uint64_t l_time = 0ULL;
-//   for(int i = indx[1]+1; i < indx[2]; i++){
-//     l_time |= (0x000000000000000fLL & ((uint64_t)msg[i])) << 4*(i-indx[1]-1);
-//   }
-//
-//   *time_64 = l_time;
-//
-//   return 1;
-// }
-
-/*
-  return codes
-  -1    message not formated
-*/
-// int decodeRequest(int *requestID, int *valveID, int *action){
-//   int i = 0;
-//   int k = 0;
-//   int indx[N_SEPARATORS];
-//   for(; i < MSG_SIZE || k < N_SEPARATORS; i++ ){
-//     if(msg[i] == '|'){
-//       indx[k] = i;
-//       k++;
-//     }
-//   }
-//
-//   if(k != N_SEPARATORS){
-//     Serial.println("DB:MSG NOT FORMATTED");
-//     return -1;
-//   }
-//
-//   char* p_end;
-//
-//   *requestID = strtol(msg+indx[0], &p_end, 10);
-//   *valveID = strtol(msg+indx[1], &p_end, 10);
-//   *action = strtol(msg+indx[2], &p_end, 10);
-//
-//   return 1;
-//
-// }
-
-/*
-  return codes
-  -1  could not attach
-*/
 
 /*******timer debug **********/
 void digitalClockDisplay(){

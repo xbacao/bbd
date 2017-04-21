@@ -1,4 +1,7 @@
 #include "evController.h"
+#include <inttypes.h>
+#include "arduino_cfg.h"
+#include <Arduino.h>
 
 static bool current_state[N_EV];
 

@@ -1,9 +1,7 @@
 #ifndef _GSM_ARD_H_
 #define _GSM_ARD_H_
 
-#include <Arduino.h>
 #include <SoftwareSerial.h>
-#include <avr/pgmspace.h>
 // #include "MemoryFree.h"
 
 #define _GSM_RXPIN_ 7

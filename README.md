@@ -1,6 +1,6 @@
 # bbd
 #client packages
-arduino
+arduino-avr-core
 
 #compiling
 make

@@ -1,7 +1,6 @@
 #ifndef _SOCKET_BBD_H_
 #define _SOCKET_BBD_H_
 
-#include <string.h>
 #include <inttypes.h>
 #include <time.h>
 #include "schedule.h"

@@ -1,4 +1,6 @@
 #include "gsm_ard.h"
+#include <avr/pgmspace.h>
+#include <Arduino.h>
 
 using namespace std;
 

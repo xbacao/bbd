@@ -1,5 +1,9 @@
 #include "schedule.h"
 
+#include <string.h>
+#include "arduino_cfg.h"
+#include "socket_bbd.h"
+
 ValveSchedule::ValveSchedule(){}
 
 ValveSchedule::ValveSchedule(const ValveSchedule &v_sche){
@@ -104,7 +108,7 @@ int ArduinoSchedules::get_schedule_by_valve(uint16_t valve_id, ValveSchedule *sc
 
 int ArduinoSchedules::decode_message(char* msg, uint16_t msg_size){
   uint8_t  i_sche, i_cicle;
-  uint16_t _valve_id, _schedule_id, _n_cicles, _cicle_start, _cicle_stop;
+  uint16_t _valve_id, _schedule_id, _n_cicles, _cicle_start, _cicle_stop, _n_schedules;
   ValveSchedule _v_s;
   schedule_entry _s_e;
 
@@ -114,21 +118,25 @@ int ArduinoSchedules::decode_message(char* msg, uint16_t msg_size){
 
   memcpy(&arduino_id, msg, size_8);
   total_read+=size_8;
-  memcpy(&n_schedules, msg+total_read , size_8);
+  memcpy(&_n_schedules, msg+total_read , size_8);
   total_read+=size_8;
-  for(i_sche=0;i_sche<n_schedules;i_sche++){
+  for(i_sche=0;i_sche<_n_schedules;i_sche++){
     memcpy(&_valve_id, msg+total_read , size_16);
     total_read+=size_16;
+    _valve_id=ntohs(_valve_id);
     memcpy(&_schedule_id, msg+total_read, size_16);
     total_read+=size_16;
+    _schedule_id=ntohs(_schedule_id);
     memcpy(&_n_cicles, msg+total_read, size_8);
     total_read+=size_8;
     _v_s=ValveSchedule(_valve_id, _schedule_id);
     for(i_cicle=0;i_cicle<_n_cicles;i_cicle++){
       memcpy(&_cicle_start, msg+total_read , size_16);
       total_read+=size_16;
+      _cicle_start=ntohs(_cicle_start);
       memcpy(&_cicle_stop, msg+total_read, size_16);
       total_read+=size_16;
+      _cicle_stop=ntohs(_cicle_stop);
       _s_e={_cicle_start, _cicle_stop};
       _v_s.add_cicle(_s_e);
     }

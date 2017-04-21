@@ -1,13 +1,12 @@
 #ifndef _BBDA_H_
 #define _BBDA_H_
 
+#define SYNC_TIME 60*30
+#define CI_TIME   60*15
 
-#include "gsm_ard.h"
-#include "socket_bbd.h"
-#include "scheduler.h"
-
-int syncTimeWithServer();
+int sync_time_with_server();
 int get_last_schedule();
+int checkin_server();
 /*******************/
 void digitalClockDisplay();
 void printDigits(int digits);
