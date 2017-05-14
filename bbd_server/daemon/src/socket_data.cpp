@@ -10,12 +10,12 @@ static void _prep_to_send_8(const void* in_data, void* out_data){
 	memcpy(out_data, in_data, BUFFER_SIZE_8);
 }
 
-static void _prep_to_send_16(const void* in_data, void* out_data){
-  uint16_t temp_16;
-  memcpy(&temp_16, in_data, BUFFER_SIZE_16);
-  temp_16 = htons(temp_16);
-  memcpy(out_data, &temp_16, BUFFER_SIZE_16);
-}
+// static void _prep_to_send_16(const void* in_data, void* out_data){
+//   uint16_t temp_16;
+//   memcpy(&temp_16, in_data, BUFFER_SIZE_16);
+//   temp_16 = htons(temp_16);
+//   memcpy(out_data, &temp_16, BUFFER_SIZE_16);
+// }
 
 static void _prep_to_send_32(const void* in_data, void* out_data){
 	uint32_t temp_32;
@@ -95,7 +95,7 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
 
 
 int send_time_msg(int sock_fd){
-	uint16_t msg_size=TIME_RSP_SIZE+2*sizeof(uint8_t);
+	uint16_t msg_size=TIME_RSP_SIZE+2*BUFFER_SIZE_8;
 	uint32_t curr_time=time(nullptr);
 	char* msg=new char[msg_size];
 
@@ -109,13 +109,21 @@ int send_time_msg(int sock_fd){
 }
 
 int send_schedule_msg(ArduinoSchedules a_s, int sock_fd){
-	uint16_t msg_len = a_s.get_message_size();
+	uint8_t msg_len = a_s.get_message_size();
 
-	char* msg = new char[msg_len+BUFFER_SIZE_16];
-	_prep_to_send_16(&msg_len, msg);
-	a_s.make_message(msg+BUFFER_SIZE_16);
+	char* msg = new char[msg_len+2*BUFFER_SIZE_8];
+	_prep_to_send_8(&msg_len, msg);
+	a_s.make_message(msg+BUFFER_SIZE_8);
+	_prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_8+msg_len);
 
-	return send(sock_fd, msg, msg_len+BUFFER_SIZE_16, 0)<0;
+	#ifdef DEBUG_SOCKET
+	log_file << time(nullptr) << ": DB-SOCK [ ";
+	for(uint16_t i=0; i<msg_len;i++){
+		log_file << unsigned(msg[i]) << " ";
+	}
+	log_file << "]"<<endl;
+	#endif
+	return send(sock_fd, msg, msg_len+2*BUFFER_SIZE_8, 0)<0;
 }
 
 int send_empty_msg(int sock_fd){

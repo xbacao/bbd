@@ -39,7 +39,7 @@ public:
 	int add_schedule(ValveSchedule sche);
 	int add_cicle(schedule_entry se, uint16_t valve_id, uint16_t schedule_id);
 	uint16_t get_arduino_id();
-	uint16_t get_message_size();
+	uint8_t get_message_size();
 	void make_message(char* msg);
 	//test
 	int decode_message(char* msg, uint16_t msg_size);

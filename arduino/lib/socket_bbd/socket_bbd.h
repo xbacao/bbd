@@ -21,7 +21,7 @@ const uint32_t ID_SIZE=sizeof(uint8_t);
 
 const uint32_t TYPE_SIZE=sizeof(uint8_t);
 const uint8_t SYNC_TIME_MSG=0x1;
-const uint8_t LAST_SCHE_MSG=0x1;
+const uint8_t LAST_SCHE_MSG=0x2;
 const uint8_t CHECK_IN_MSG=0x3;
 
 

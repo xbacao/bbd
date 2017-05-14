@@ -59,6 +59,7 @@ static int _run_server(){
     if(n){
       log_file << time(nullptr)<<": Error starting server"<<endl;
     }
+    usleep(1000000);
   } while(n && !_stop_flag);
 
   log_file << time(nullptr) <<": Server initialized" << endl;

@@ -15,6 +15,7 @@ void ValveSchedule::add_cicle(schedule_entry cicle){
   schedule_entry* _temp=new schedule_entry[n_cicles+1];
   memcpy(_temp, cicles, n_cicles*sizeof(schedule_entry));
   memcpy(_temp+n_cicles, &cicle, sizeof(schedule_entry));
+  delete[] cicles;
   cicles=_temp;
   n_cicles++;
 }
@@ -44,6 +45,7 @@ int ArduinoSchedules::add_schedule(ValveSchedule sche){
   memcpy(_temp+n_schedules, &sche, sizeof(ValveSchedule));
   _temp[n_schedules].cicles=new schedule_entry[sche.n_cicles];
   memcpy(_temp[n_schedules].cicles, sche.cicles, sizeof(schedule_entry)*sche.n_cicles);
+  delete[] schedules;
   schedules=_temp;
   n_schedules++;
   return 0;
@@ -72,22 +74,22 @@ uint16_t ArduinoSchedules::get_arduino_id(){
   return arduino_id;
 }
 
-uint16_t ArduinoSchedules::get_message_size(){
+uint8_t ArduinoSchedules::get_message_size(){
   uint8_t i;
-  uint32_t size_16=sizeof(uint16_t);
-  uint32_t size_8=sizeof(uint8_t);
-  uint16_t size=size_8 + size_8;  //arduino_id n_schedules
+  uint8_t size_16=sizeof(uint16_t);
+  uint8_t size_8=sizeof(uint8_t);
+  uint8_t size=2*size_8;  //arduino_id n_schedules
   for(i=0;i<n_schedules;i++){
     size+=2*size_16+size_8 + schedules[i].n_cicles*2*size_16; //valveid scheduleid, n_cicles, cicles
   }
-  return size+size_8;    //endchar
+  return size;
 }
 
 void ArduinoSchedules::make_message(char* msg){
   uint8_t i,j;
-  uint32_t size_16=sizeof(uint16_t);
-  uint32_t size_8=sizeof(uint8_t);
-  uint32_t total_copied=0;
+  uint8_t size_16=sizeof(uint16_t);
+  uint8_t size_8=sizeof(uint8_t);
+  uint8_t total_copied=0;
   uint16_t _valve_id, _schedule_id, _cicle_start, _cicle_stop;
   // uint16_t msg_size = get_message_size()-size_16;
 
@@ -115,7 +117,6 @@ void ArduinoSchedules::make_message(char* msg){
       total_copied+=size_16;
     }
   }
-  memcpy(msg+total_copied, &END_TRANS_CHAR, size_8);
 }
 
 int ArduinoSchedules::decode_message(char* msg, uint16_t msg_size){

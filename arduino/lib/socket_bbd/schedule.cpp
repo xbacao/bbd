@@ -20,6 +20,16 @@ ValveSchedule::ValveSchedule(uint16_t _valve_id, uint8_t _schedule_id){
   n_cicles=0;
 }
 
+ValveSchedule::~ValveSchedule(){
+  // for(uint8_t i=0;i<n_cicles;i++){
+  //   delete cicles[i];
+  // }
+  delete[] cicles;
+  // delete valve_id;
+  // delete schedule_id;
+  // delete n_cicles;
+}
+
 void ValveSchedule::add_cicle(schedule_entry cicle){
   schedule_entry* _temp=new schedule_entry[n_cicles+1];
   memcpy(_temp, cicles, n_cicles*sizeof(schedule_entry));
@@ -39,6 +49,15 @@ uint16_t ValveSchedule::get_schedule_id(){
 ArduinoSchedules::ArduinoSchedules(uint16_t _arduino_id){
   arduino_id=_arduino_id;
   n_schedules=0;
+}
+
+ArduinoSchedules::~ArduinoSchedules(){
+  // for(uint8_t i=0;i<n_schedules;i++){
+  //   delete schedules[i];
+  // }
+  delete[] schedules;
+  // delete n_schedules;
+  // delete arduino_id;
 }
 
 int ArduinoSchedules::add_schedule(ValveSchedule sche){

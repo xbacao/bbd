@@ -3,6 +3,8 @@
 
 #include "schedule.h"
 
+#define DEBUG_SOCKET
+
 #define BUFFER_SIZE_8   sizeof(uint8_t)
 #define BUFFER_SIZE_16	sizeof(uint16_t)
 #define BUFFER_SIZE_32	sizeof(uint32_t)

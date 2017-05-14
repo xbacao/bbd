@@ -1,68 +1,10 @@
 #include "gsm_ard.h"
+#include "gsm_cmds.h"
 #include <avr/pgmspace.h>
 #include <Arduino.h>
 
 using namespace std;
 
-/*******AT COMMANDS******/
-const PROGMEM char AT[]="AT";
-const PROGMEM char AT_CPIN_R[]="AT+CPIN?";
-const PROGMEM char AT_CPIN_READY[]="+CPIN: READY";
-const PROGMEM char AT_CPIN_SIM_PIN[]="+CPIN: SIM PIN";
-const PROGMEM char AT_CPIN_SET[]="AT+CPIN=0048";
-
-const PROGMEM char AT_CIURC_R[]="AT+CIURC?";
-const PROGMEM char AT_CIURC_0[]="+CIURC: 1";
-const PROGMEM char AT_CIURC_1[]="+CIURC: 0";
-const PROGMEM char AT_CIURC_SET[]="AT+CIURC=0";
-
-const PROGMEM char AT_CGATT_R[]="AT+CGATT?";
-const PROGMEM char AT_CGATT_0[]="+CGATT: 0";
-const PROGMEM char AT_CGATT_1[]="+CGATT: 1";
-const PROGMEM char AT_CGATT_SET_ON[]="AT+CGATT=1";
-const PROGMEM char AT_CGATT_SET_OFF[]="AT+CGATT=0";
-const PROGMEM char AT_CIFSR[]="AT+CIFSR";
-
-const PROGMEM char AT_CIPMODE_R[]="AT+CIPMODE?";
-const PROGMEM char AT_CIPMODE_0[]="+CIPMODE: 0";
-const PROGMEM char AT_CIPMODE_1[]="+CIPMODE: 1";
-const PROGMEM char AT_CIPMODE[]="AT+CIPMODE=0";
-
-const PROGMEM char AT_CGDCONT[]="AT+CGDCONT=1,\"IP\",\"internet.vodafone.pt\"";
-
-const PROGMEM char AT_CIPSERVER_R[]="AT+CIPSERVER?";
-const PROGMEM char AT_CIPSERVER_RESP[]="+CIPSERVER: 0";
-const PROGMEM char AT_CIPSERVER_SET[]="AT+CIPSERVER=0";
-
-const PROGMEM char AT_CIPSHUT[]="AT+CIPSHUT";
-const PROGMEM char AT_SHUT_OK[]="SHUT OK";
-
-const PROGMEM char AT_CSTT[]="AT+CSTT=\"internet.vodafone.pt\",\"\",\"\"";
-
-const PROGMEM char AT_CIICR[]="AT+CIICR";
-
-const PROGMEM char AT_CIPMUX_R[]="AT+CIPMUX?";
-const PROGMEM char AT_CIPMUX_0[]="+CIPMUX: 0";
-const PROGMEM char AT_CIPMUX_1[]="+CIPMUX: 1";
-const PROGMEM char AT_CIPMUX_SET[]="AT+CIPMUX=0";
-
-const PROGMEM char AT_CIPSTART_SET[]="AT+CIPSTART=\"TCP\",\"178.62.6.44\",7777";
-const PROGMEM char AT_CONNECT_OK[]="CONNECT OK";
-
-const PROGMEM char AT_CIPSEND[]="AT+CIPSEND";
-const PROGMEM char AT_CIPSEND_PROMPT[]=">";
-const PROGMEM char AT_CIPSEND_OK[]="SEND OK";
-
-const PROGMEM char AT_OK[]="OK";
-const PROGMEM char AT_ERROR[]="ERROR";
-
-const PROGMEM char AT_CIPCLOSE[]="AT+CIPCLOSE";
-const PROGMEM char AT_CIPCLOSE_OK[]="CLOSE OK";
-
-const PROGMEM char AT_CIPSTATUS[]="AT+CIPSTATUS";
-
-
-/***************************/
 
 const unsigned long int _POSSIBLE_BRS[8] ={1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200};
 
@@ -106,25 +48,14 @@ int Gsm_Ard::init_gsm_module(){
   _change_gsm_state(GSM_OFF_STATE);
   _ss = SoftwareSerial(_GSM_RXPIN_, _GSM_TXPIN_);
   _ss.begin(DEFAULT_SS_BAUDRATE);
-  {
-    char at_cmd_buffer[3];
-    char at_rsp_buffer[6];
-    strcpy_P(at_cmd_buffer, AT);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+
+  n=_send_cmd_comp_rsp(AT, AT_LEN, AT_OK, AT_OK_LEN, 5000);
   if(!n){
     _change_gsm_state(GSM_ON_STATE);
   }
   for(i=0;i<8 && _gsm_state!=GSM_ON_STATE;i++){
     _ss.begin(_POSSIBLE_BRS[i]);
-    {
-      char at_cmd_buffer[3];
-      char at_rsp_buffer[6];
-      strcpy_P(at_cmd_buffer, AT);
-      strcpy_P(at_rsp_buffer, AT_OK);
-      n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-    }
+    n=_send_cmd_comp_rsp(AT, AT_LEN, AT_OK, AT_OK_LEN, 5000);
     if(!n){
       _change_gsm_state(GSM_ON_STATE);
     }
@@ -134,62 +65,30 @@ int Gsm_Ard::init_gsm_module(){
     return 1;
   }
 
-  {
-    char at_cmd_buffer[9];
-    strcpy_P(at_cmd_buffer, AT_CPIN_R);
-
-    char rsp1[13];
-    char rsp2[15];
-    strcpy_P(rsp1, AT_CPIN_READY);
-    strcpy_P(rsp2, AT_CPIN_SIM_PIN);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CPIN_R, AT_CPIN_R_LEN, AT_CPIN_READY, AT_CPIN_READY_LEN, AT_CPIN_SIM_PIN, AT_CPIN_SIM_PIN_LEN, 5000);
   switch(n){
     default:
-      return 2;
+      return 2+10*n;
       break;
     case 0:
       break;
     case 1:
-      {
-        char at_cmd_buffer[13];
-        char at_rsp_buffer[6];
-        strcpy_P(at_cmd_buffer, AT_CPIN_SET);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-      }
+      n=_send_cmd_comp_rsp(AT_CPIN_SET, AT_CPIN_SET_LEN, AT_OK, AT_OK_LEN, 5000);
       if(n){
-        return 3;
+        return 3+10*n;
       }
       break;
   }
 
-  {
-    char at_cmd_buffer[10];
-    strcpy_P(at_cmd_buffer, AT_CIURC_R);
-
-    char rsp1[10];
-    char rsp2[10];
-    strcpy_P(rsp1, AT_CIURC_0);
-    strcpy_P(rsp2, AT_CIURC_1);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CIURC_R, AT_CIURC_R_LEN, AT_CIURC_0, AT_CIURC_0_LEN, AT_CIURC_1, AT_CIURC_1_LEN, 5000);
   switch(n){
     default:
-      return 4;
+      return 4+10*n;
       break;
     case 0:
-      {
-        char at_cmd_buffer[11];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CIURC_SET);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-      }
+      n=_send_cmd_comp_rsp(AT_CIURC_SET, AT_CIURC_SET_LEN, AT_OK, AT_OK_LEN, 5000);
       if(n){
-        return 5;
+        return 5+10*n;
       }
       break;
     case 1:
@@ -207,89 +106,45 @@ int Gsm_Ard::attachGPRS(){
     return 1;
   }
 
-  {
-    char at_cmd_buffer[10];
-    strcpy_P(at_cmd_buffer, AT_CGATT_R);
-
-    char rsp1[10];
-    char rsp2[10];
-    strcpy_P(rsp1, AT_CGATT_0);
-    strcpy_P(rsp2, AT_CGATT_1);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CGATT_R, AT_CGATT_R_LEN, AT_CGATT_0, AT_CGATT_0_LEN, AT_CGATT_1, AT_CGATT_1_LEN, 5000);
   switch(n){
     default:
-      return 2;
+      return 2+n*10;
       break;
     case 0:
-      {
-        char at_cmd_buffer[11];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CGATT_SET_ON);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
-      }
+      n=_send_cmd_comp_rsp(AT_CGATT_SET_ON, AT_CGATT_SET_ON_LEN, AT_OK, AT_OK_LEN, 10000);
       if(n){
-        return 3;
+        return 3+n*10;
       }
       break;
     case 1:
       break;
   }
 
-  {
-    char at_cmd_buffer[12];
-    strcpy_P(at_cmd_buffer, AT_CIPMODE_R);
-
-    char rsp1[12];
-    char rsp2[12];
-    strcpy_P(rsp1, AT_CIPMODE_0);
-    strcpy_P(rsp2, AT_CIPMODE_1);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CIPMODE_R, AT_CIPMODE_R_LEN, AT_CIPMODE_0, AT_CIPMODE_0_LEN, AT_CIPMODE_1, AT_CIPMODE_1_LEN, 5000);
   switch(n){
     default:
-      return 4;
+      return 4+n*10;
       break;
     case 0:
       break;
     case 1:
-      {
-        char at_cmd_buffer[13];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CIPMODE);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-      }
+      n=_send_cmd_comp_rsp(AT_CIPMODE, AT_CIPMODE_LEN, AT_OK, AT_OK_LEN, 5000);
       if(n){
-        return 5;
+        return 5+n*10;
       }
       break;
   }
 
-  {
-    char at_cmd_buffer[41];
-    char at_rsp_buffer[3];
-    strcpy_P(at_cmd_buffer, AT_CGDCONT);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CGDCONT, AT_CGDCONT_LEN, AT_OK, AT_OK_LEN, 5000);
   if(n){
-    return 6;
+    return 6+n*10;
   }
 
-  {
-    char at_cmd_buffer[9];
-    char at_rsp_buffer[6];
-    strcpy_P(at_cmd_buffer, AT_CIFSR);
-    strcpy_P(at_rsp_buffer, AT_ERROR);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIFSR, AT_CIFSR_LEN, AT_ERROR, AT_ERROR_LEN, 5000);
   switch(n){
     default:
-      return 7;
+      return 7+n*10;
       break;
     case 1:
       _change_gsm_state(GSM_IP_STATE);
@@ -299,63 +154,32 @@ int Gsm_Ard::attachGPRS(){
       break;
   }
 
-  {
-    char at_cmd_buffer[14];
-    char at_rsp_buffer[14];
-    strcpy_P(at_cmd_buffer, AT_CIPSERVER_R);
-    strcpy_P(at_rsp_buffer, AT_CIPSERVER_RESP);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIPSERVER_R, AT_CIPSERVER_R_LEN, AT_CIPSERVER_RESP, AT_CIPSERVER_RESP_LEN, 5000);
   switch(n){
     default:
-      return 8;
+      return 8+n*10;
       break;
     case 1:
-      {
-        char at_cmd_buffer[15];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CIPSERVER_SET);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-        if(!n){
-          return 9;
-        }
+      n=_send_cmd_comp_rsp(AT_CIPSERVER_SET, AT_CIPSERVER_SET_LEN, AT_OK, AT_OK_LEN, 5000);
+      if(!n){
+        return 9+n*10;
       }
       break;
     case 0:
       break;
   }
 
-  {
-    char at_cmd_buffer[37];
-    char at_rsp_buffer[3];
-    strcpy_P(at_cmd_buffer, AT_CSTT);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CSTT, AT_CSTT_LEN, AT_OK, AT_OK_LEN, 5000);
   if(n){
     return 10;
   }
 
-  {
-    char at_cmd_buffer[9];
-    char at_rsp_buffer[3];
-    strcpy_P(at_cmd_buffer, AT_CIICR);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIICR, AT_CIICR_LEN, AT_OK, AT_OK_LEN, 5000);
   if(n){
     return 11;
   }
 
-
-  {
-    char at_cmd_buffer[9];
-    char at_rsp_buffer[6];
-    strcpy_P(at_cmd_buffer, AT_CIFSR);
-    strcpy_P(at_rsp_buffer, AT_ERROR);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIFSR, AT_CIFSR_LEN, AT_ERROR, AT_ERROR_LEN, 5000);
   if(n!=1){
     return 12;
   }
@@ -370,44 +194,22 @@ int Gsm_Ard::dettachGPRS(){
     return 1;
   }
 
-  {
-    char at_cmd_buffer[11];
-    char at_rsp_buffer[8];
-    strcpy_P(at_cmd_buffer, AT_CIPSHUT);
-    strcpy_P(at_rsp_buffer, AT_SHUT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIPSHUT, AT_CIPSHUT_LEN, AT_SHUT_OK, AT_SHUT_OK_LEN, 10000);
   if(n){
-    return 2;
+    return 2+10*n;
   }
 
-  {
-    char at_cmd_buffer[10];
-    strcpy_P(at_cmd_buffer, AT_CGATT_R);
-
-    char rsp1[10];
-    char rsp2[10];
-    strcpy_P(rsp1, AT_CGATT_0);
-    strcpy_P(rsp2, AT_CGATT_1);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CGATT_R, AT_CGATT_R_LEN, AT_CGATT_0, AT_CGATT_0_LEN, AT_CGATT_1, AT_CGATT_1_LEN, 5000);
   switch(n){
     default:
-      return 3;
+      return 3+10*n;
       break;
     case 0:
       break;
     case 1:
-      {
-        char at_cmd_buffer[11];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CGATT_SET_OFF);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
-      }
+      n=_send_cmd_comp_rsp(AT_CGATT_SET_OFF, AT_CGATT_SET_OFF_LEN, AT_OK, AT_OK_LEN, 10000);
       if(n){
-        return 4;
+        return 4+10*n;
       }
       break;
   }
@@ -418,91 +220,40 @@ int Gsm_Ard::dettachGPRS(){
 int Gsm_Ard::_connect_tcp_socket(){
   int n;
   if(_gsm_state!=GSM_IP_STATE){
-    return 10;
+    return 1;
   }
 
-  {
-    char at_cmd_buffer[11];
-    char at_rsp_buffer[8];
-    strcpy_P(at_cmd_buffer, AT_CIPSHUT);
-    strcpy_P(at_rsp_buffer, AT_SHUT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,10000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIPSHUT, AT_CIPSHUT_LEN, AT_SHUT_OK, AT_SHUT_OK_LEN, 10000);
   if(n){
-    return 20+n;
+    return 2+10*n;
   }
 
-  {
-    char at_cmd_buffer[11];
-    strcpy_P(at_cmd_buffer, AT_CIPMUX_R);
-
-    char rsp1[11];
-    char rsp2[11];
-    strcpy_P(rsp1, AT_CIPMUX_0);
-    strcpy_P(rsp2, AT_CIPMUX_1);
-    char* rsps[]={rsp1, rsp2};
-    n=_send_cmd_comp_several_rsp(at_cmd_buffer, rsps,2,5000);
-  }
+  n=_send_cmd_comp_several_rsp(AT_CIPMUX_R, AT_CIPMUX_R_LEN, AT_CIPMUX_0, AT_CIPMUX_0_LEN, AT_CIPMUX_1, AT_CIPMUX_1_LEN, 5000);
   switch(n){
     default:
-      return 30;
+      return 3+10*n;
       break;
     case 0:
       break;
     case 1:
-      {
-        char at_cmd_buffer[12];
-        char at_rsp_buffer[3];
-        strcpy_P(at_cmd_buffer, AT_CIPMUX_SET);
-        strcpy_P(at_rsp_buffer, AT_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-      }
+      n=_send_cmd_comp_rsp(AT_CIPMUX_SET, AT_CIPMUX_SET_LEN, AT_OK, AT_OK_LEN, 5000);
       if(n){
-        return 40+n;
+        return 4+10*n;
       }
       break;
   }
 
-  {
-    char at_cmd_buffer[37];
-    char at_rsp_buffer[3];
-    strcpy_P(at_cmd_buffer, AT_CIPSTART_SET);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIPSTART_SET, AT_CIPSTART_SET_LEN, AT_OK, AT_OK_LEN, 5000);
   if(n){
-    return 50+n;
+    return 5+10*n;
   }
 
-  n=_recv_string(10000,2);
+  n=_no_cmd_comp_rsp(AT_CONNECT_OK, AT_CONNECT_OK_LEN, 10000);
   if(n){
-    return 60+n;
+    return 6+10*n;
   }
 
-  {
-    unsigned int rsp_len;
-    char* rsp;
-    n=_fetch_rsp_wo_cmd(&rsp_len);
-    if(n){
-      return 70+n;
-    }
-    if(!rsp_len){
-      return 80;
-    }
-
-    rsp=new char[rsp_len];
-    n=_get_rsp(&rsp);
-    if(n){
-      return 90+n;
-    }
-
-    char exp_rsp[11];
-    strcpy_P(exp_rsp, AT_CONNECT_OK);
-    if(strncmp(rsp, exp_rsp, rsp_len)!=0){
-      return 99;
-    }
-    _change_gsm_state(GSM_TCP_STATE);
-  }
+  _change_gsm_state(GSM_TCP_STATE);
 
   return 0;
 }
@@ -510,52 +261,19 @@ int Gsm_Ard::_connect_tcp_socket(){
 int Gsm_Ard::_disconnect_tcp_socket(){
   int n;
   if(_gsm_state!=GSM_TCP_STATE){
-    return 10;
+    return 1;
   }
 
-  {
-    char at_cmd_buffer[13];
-    char at_rsp_buffer[3];
-    strcpy_P(at_cmd_buffer, AT_CIPSTATUS);
-    strcpy_P(at_rsp_buffer, AT_OK);
-    n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-  }
+  n=_send_cmd_comp_rsp(AT_CIPSTATUS, AT_CIPSTATUS_LEN , AT_OK, AT_OK_LEN, 5000);
   if(n){
-    return 20+n;
+    return 2+10*n;
   }
 
-  n=_recv_string(10000,2);
+  n=_no_cmd_comp_rsp(AT_CONNECT_OK, AT_CONNECT_OK_LEN, 10000);
   if(n){
-    return 30+n;
-  }
-
-  {
-    unsigned int rsp_len;
-    char* rsp;
-    n=_fetch_rsp_wo_cmd(&rsp_len);
+    n=_send_cmd_comp_rsp(AT_CIPCLOSE, AT_CIPCLOSE_LEN, AT_CIPCLOSE_OK, AT_CIPCLOSE_OK_LEN, 5000);
     if(n){
-      return 40+n;
-    }
-
-    rsp=new char[rsp_len];
-    n=_get_rsp(&rsp);
-    if(n){
-      return 50+n;
-    }
-
-    char exp_rsp[11];
-    strcpy_P(exp_rsp, AT_CONNECT_OK);
-    if(strncmp(rsp, exp_rsp, rsp_len)==0){
-      {
-        char at_cmd_buffer[12];
-        char at_rsp_buffer[9];
-        strcpy_P(at_cmd_buffer, AT_CIPCLOSE);
-        strcpy_P(at_rsp_buffer, AT_CIPCLOSE_OK);
-        n=_send_cmd_comp_rsp(at_cmd_buffer,at_rsp_buffer,5000);
-      }
-      if(n){
-        return 60+n;
-      }
+      return 3+10*n;
     }
   }
 
@@ -564,36 +282,35 @@ int Gsm_Ard::_disconnect_tcp_socket(){
 }
 
 int Gsm_Ard::_send_tcp_data(char* data, unsigned int data_len){
-  int n;
+  int n,err=0;
+  char* cmd;
+  char temp;
+
   if(_gsm_state!=GSM_TCP_STATE){
-    return 10;
+    return 1;
   }
 
-  {
-    bool prompt_received=false;
-    char cmd[11];
-    char rsp[2];
-    char temp;
+  bool prompt_received=false;
+  cmd=new char[AT_CIPSEND_LEN];
 
-    strcpy_P(cmd, AT_CIPSEND);
-    strcpy_P(rsp, AT_CIPSEND_PROMPT);
-    _write_cmd(cmd);
+  strcpy_P(cmd, AT_CIPSEND);
+  _write_cmd(cmd);
 
-    //wait for prompt
-    for(int i=0;i<100 && !prompt_received;i++){
-      if(!_ss.available()){
-        delay(500);
-      }
-      else{
-        temp=_ss.read();
-        if(temp==rsp[0]){
-          prompt_received=true;
-        }
+  //wait for prompt
+  for(int i=0;i<100 && !prompt_received;i++){
+    if(!_ss.available()){
+      delay(100);
+    }
+    else{
+      temp=_ss.read();
+      if(temp==AT_CIPSEND_PROMPT){
+        prompt_received=true;
       }
     }
-    if(!prompt_received){
-      return 20;
-    }
+  }
+  if(!prompt_received){
+    err=2;
+    goto exit_clean;
   }
 
   #ifdef DEBUG_SOCKET
@@ -611,47 +328,33 @@ int Gsm_Ard::_send_tcp_data(char* data, unsigned int data_len){
   #endif
   _ss.write(SUB_CHAR);
 
-  n=_recv_string(10000,2);
+  n=_no_cmd_comp_rsp(AT_CIPSEND_OK, AT_CIPSEND_OK_LEN, 10000);
   if(n){
-    return 30+n;
+    err=3+n*10;
+    goto exit_clean;
   }
 
-  {
-    unsigned int rsp_len;
-    char* rsp;
-    n=_fetch_rsp_wo_cmd(&rsp_len);
-    if(n){
-      return 40+n;
-    }
+  err=0;
+  goto exit_clean;
 
-    rsp=new char[rsp_len];
-    n=_get_rsp(&rsp);
-    if(n){
-      return 50+n;
-    }
-
-    char exp_rsp[8];
-    strcpy_P(exp_rsp, AT_CIPSEND_OK);
-    if(strncmp(rsp, exp_rsp, rsp_len)!=0){
-      return 6;
-    }
-  }
-  return 0;
+exit_clean:
+  delete[] cmd;
+  return err;
 }
 
 int Gsm_Ard::_recv_tcp_data(unsigned int* data_len){
   int n;
   if(_sock_buff_state==BUFF_USED){
-    return 10;
+    return 1;
   }
 
   n=_recv_socket(10000);
   if(n){
-    return 20+n;
+    return 2+10*n;
   }
 
   _sock_buff_state=BUFF_USED;
-  strncpy(_sock_buff, _recv_buff, _recv_buff_idx);
+  memcpy(_sock_buff, _recv_buff, _recv_buff_idx);
   _sock_buff_idx=_recv_buff_idx;
 
   _clear_recv_buff();
@@ -663,79 +366,150 @@ int Gsm_Ard::_recv_tcp_data(unsigned int* data_len){
 /*
   sends a command, fetches response, compares with desired output
 */
-int Gsm_Ard::_send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wait_period){
-  int n;
-  int cmd_size=strlen(cmd);
+int Gsm_Ard::_send_cmd_comp_rsp(const char* cmd, const uint16_t cmd_size, const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period){
+  int n, error=0;
   char* rsp;
   unsigned int rsp_len;
+
+  char* cmd_buffer = new char[cmd_size];
+  char* exp_rsp_buffer = new char[exp_rsp_size];
+  strcpy_P(cmd_buffer, cmd);
+  strcpy_P(exp_rsp_buffer, exp_rsp);
 
   while(_ss.available()) _ss.read();
 
   #ifdef DEBUG_SS
   Serial.print("DB-SND: [");
-  for(int i=0;i<cmd_size;i++){
-    Serial.print((uint8_t) cmd[i]);
+  for(uint16_t i=0;i<cmd_size;i++){
+    Serial.print((uint8_t) cmd_buffer[i]);
     Serial.print(" ");
   }
   Serial.println("]");
   #endif
-  _write_cmd(cmd);
+  _write_cmd(cmd_buffer);
   n=_recv_string(recv_wait_period);
   if(!n){
-    n=_fetch_rsp_from_recv(cmd, cmd_size, &rsp_len);
+    n=_fetch_rsp_from_recv(cmd_buffer, cmd_size, &rsp_len);
     if(!n){
       rsp=new char[rsp_len];
       n=_get_rsp(&rsp);
       if(n){
-        return 2;
+        error=2+10*n;
+        goto leave_func;
       }
-      if(!strncmp(rsp, exp_rsp, rsp_len)) return 0;
+      if(!strncmp(rsp, exp_rsp_buffer, rsp_len)){
+        error=0;
+        goto leave_func;
+      }
       else{
-        return 1;
+        error=1;
+        goto leave_func;
       }
     }
     else{
-      return 3;
+      error=3+10*n;
+      goto leave_func;
     }
   }
   else{
-    return 4;
+    error=4+10*n;
+    goto leave_func;
   }
+
+leave_func:
+  delete[] cmd_buffer;
+  delete[] exp_rsp_buffer;
+  delete[] rsp;
+  return error;
 }
 
-int Gsm_Ard::_send_cmd_comp_several_rsp(const char* cmd, char** exp_rsps, unsigned int exp_rsps_len, int recv_wait_period){
-  int n;
-  int cmd_size=strlen(cmd);
+int Gsm_Ard::_send_cmd_comp_several_rsp(const char* cmd, const uint16_t cmd_size, const char* exp_rsp1, const uint16_t exp_rsp1_size,
+  const char* exp_rsp2, const uint16_t exp_rsp2_size, int recv_wait_period){
+  int n, error=0;
   char* rsp;
   unsigned int rsp_len;
+
+  char* cmd_buffer = new char[cmd_size];
+  char* exp_rsp1_buffer = new char[exp_rsp1_size];
+  char* exp_rsp2_buffer = new char[exp_rsp2_size];
+  strcpy_P(cmd_buffer, cmd);
+  strcpy_P(exp_rsp1_buffer, exp_rsp1);
+  strcpy_P(exp_rsp2_buffer, exp_rsp2);
+
   while(_ss.available()) _ss.read();
   #ifdef DEBUG_SS
   Serial.print("DB-SND: [");
-  for(int i=0;i<cmd_size;i++){
-    Serial.print((uint8_t) cmd[i]);
+  for(uint16_t i=0;i<cmd_size;i++){
+    Serial.print((uint8_t) cmd_buffer[i]);
     Serial.print(" ");
   }
   Serial.println("]");
   #endif
-  _write_cmd(cmd);
+  _write_cmd(cmd_buffer);
   n=_recv_string(recv_wait_period);
   if(!n){
-    n=_fetch_rsp_from_recv(cmd, cmd_size, &rsp_len);
+    n=_fetch_rsp_from_recv(cmd_buffer, cmd_size, &rsp_len);
     if(!n){
       rsp=new char[rsp_len];
       n=_get_rsp(&rsp);
       if(n){
-        return -2;
+        error=3+n*10;
+        goto leave_func;
       }
-      for(unsigned int j=0;j<exp_rsps_len;j++){
-        if(!strncmp(exp_rsps[j], rsp, strlen(exp_rsps[j]))) return j;
+      if(!strncmp(exp_rsp1_buffer, rsp, exp_rsp1_size)){
+        error=0;
+        goto leave_func;
+      }
+      if(!strncmp(exp_rsp2_buffer, rsp, exp_rsp2_size)){
+        error=1;
+        goto leave_func;
       }
     }
     else{
-      return -3;
+      error=4+n*10;
+      goto leave_func;
     }
   }
-  return -1;
+  error=2;
+  goto leave_func;
+leave_func:
+  delete[] cmd_buffer;
+  delete[] exp_rsp1_buffer;
+  delete[] exp_rsp2_buffer;
+  delete[] rsp;
+  return error;
+}
+
+int Gsm_Ard::_no_cmd_comp_rsp(const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period){
+  int n, ret;
+  unsigned int rsp_len;
+
+  n=_recv_string(recv_wait_period,2);
+  if(n){
+    return 1+n*10;
+  }
+
+  char* rsp;
+  n=_fetch_rsp_wo_cmd(&rsp_len);
+  if(n){
+    return 2+n*10;
+  }
+
+  rsp=new char[rsp_len];
+  n=_get_rsp(&rsp);
+  if(n){
+    return 3+n*10;
+  }
+
+  char* exp_rsp_buffer = new char[exp_rsp_size];
+  strcpy_P(exp_rsp_buffer, exp_rsp);
+
+  if(!strncmp(rsp, exp_rsp_buffer, rsp_len)) ret=0;
+  else ret=4;
+
+  delete[] exp_rsp_buffer;
+  delete[] rsp;
+  return ret;
 }
 
 /*
@@ -886,15 +660,27 @@ void Gsm_Ard::_clear_sock_buff(){
 int Gsm_Ard::_fetch_rsp_from_recv(const char* cmd, unsigned int cmd_size, unsigned int* rsp_len){
   unsigned int i, start_idx;
   if(_rsp_buff_state!=BUFF_READY || _recv_buff_state!=BUFF_USED){
+    Serial.print("THIS ");
+    if(_rsp_buff_state!=BUFF_READY){
+      Serial.print("1");
+    }
+    if(_recv_buff_state!=BUFF_USED){
+      Serial.print("2");
+    }
+    // Serial.print(_rsp_buff_state);
+    // Serial.println(_recv_buff_state);
+
     return 1;
   }
   for(i=0;i<cmd_size;i++){
     if(cmd[i]!=_recv_buff[i]){
+      _clear_recv_buff();
       return 2;
     }
   }
 
   if(_recv_buff[i]!=CR_CHAR || _recv_buff[i+1]!=NL_CHAR || _recv_buff[i+2]!=CR_CHAR || _recv_buff[i+3]!=NL_CHAR){
+    _clear_recv_buff();
     return 3;
   }
 
@@ -906,6 +692,7 @@ int Gsm_Ard::_fetch_rsp_from_recv(const char* cmd, unsigned int cmd_size, unsign
   }
 
   if(i!=_recv_buff_idx-2){
+    _clear_recv_buff();
     return 4;
   }
 
@@ -979,23 +766,23 @@ int Gsm_Ard::send_socket_msg(char* data, unsigned int data_len, unsigned int* rs
   int n;
   n=_connect_tcp_socket();
   if(n){
-    return 100+n;
+    return 1+10*n;
   }
 
   n=_send_tcp_data(data, data_len);
   if(n){
-    return 200+n;
+    return 2+10*n;
   }
 
   n=_recv_tcp_data(rsp_len);
   if(n){
     _disconnect_tcp_socket();
-    return 300+n;
+    return 3+10*n;
   }
 
   n=_disconnect_tcp_socket();
   if(n){
-    return 400+n;
+    return 4+10*n;
   }
 
   return 0;
@@ -1006,7 +793,14 @@ int Gsm_Ard::get_socket_rsp(char** data){
     return 1;
   }
 
-  strncpy(*data, _sock_buff, _sock_buff_idx);
+  Serial.print("SOCK BUFF=");
+  for(unsigned int i=0;i<_sock_buff_idx;i++){
+    Serial.print((unsigned int) _sock_buff[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+
+  memcpy(*data, _sock_buff, _sock_buff_idx);
   _clear_sock_buff();
 
   return 0;

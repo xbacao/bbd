@@ -19,6 +19,7 @@ private:
 	schedule_entry* cicles;
 public:
 	ValveSchedule();
+	~ValveSchedule();
 	ValveSchedule(const ValveSchedule &v_sche);
 	ValveSchedule(uint16_t _valve_id, uint8_t _schedule_id);
 	void add_cicle(schedule_entry cicle);
@@ -33,6 +34,7 @@ private:
 	ValveSchedule* schedules;
 public:
 	ArduinoSchedules(uint16_t _arduino_id);
+	~ArduinoSchedules();
 	int add_schedule(ValveSchedule sche);
 	int update_schedule(ValveSchedule sche);
 	int add_cicle(schedule_entry se, uint16_t valve_id, uint16_t schedule_id);

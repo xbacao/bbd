@@ -46,8 +46,10 @@ public:
   int get_socket_rsp(char** data);
   GSM_STATE get_gsm_state();
 private:
-  int _send_cmd_comp_rsp(const char* cmd, const char* exp_rsp, int recv_wait_period);
-  int _send_cmd_comp_several_rsp(const char* cmd, char** exp_rsps, unsigned int exp_rsps_len, int recv_wait_period);
+  int _send_cmd_comp_rsp(const char* cmd, const uint16_t cmd_size, const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period);
+  int _send_cmd_comp_several_rsp(const char* cmd, const uint16_t cmd_size, const char* exp_rsp1, const uint16_t exp_rsp1_size,
+    const char* exp_rsp2, const uint16_t exp_rsp2_size, int recv_wait_period);
+  int _no_cmd_comp_rsp(const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period);
 
   /* tcp */
   int _connect_tcp_socket();
