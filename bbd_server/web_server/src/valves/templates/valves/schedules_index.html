@@ -16,7 +16,7 @@
 		<tr><td>
 			<form action="#" method="post">
 	        {% csrf_token %}
-	        	<input type="submit" class="btn" value="{{valve.valveid}}" name="select_valve">
+	        	<input type="submit" class="btn btn-default" value="{{valve.valveid}}" name="select_valve">
 	    	</form>
 		</td></tr>
 	{% endfor %}
@@ -56,7 +56,7 @@
 				<form action="#" method="post">
 				{% csrf_token %}
 					<input type="hidden" value="{{sche.scheduleid}}" name="sche_id">
-					<button class="btn glyphicon glyphicon-arrow-right" name="view_sche_btn">
+					<button class="btn btn-default glyphicon glyphicon-arrow-right" name="view_sche_btn">
 				</form>
 			</td>
 		</tr>
@@ -69,7 +69,7 @@
 	{% if valve_id %}
 	<form action="#" method="post">
 			{% csrf_token %}
-				<input type="submit" class="btn" value="add schedule" name="add_new">
+				<input type="submit" class="btn btn-default" value="add schedule" name="add_new">
 				<input type="hidden" value="{{valve_id}}" name="valve_id">
 	</form>
 	{% endif %}

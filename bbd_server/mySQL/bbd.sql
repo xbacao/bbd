@@ -27,22 +27,14 @@ CREATE TABLE IF NOT EXISTS bbd.schedule (
   valveID_f INT NOT NULL,
   description VARCHAR(100),
   created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  start_time TIME NOT NULL,
+  stop_time TIME NOT NULL,
   active BOOLEAN NOT NULL DEFAULT FALSE,
   active_start TIMESTAMP NULL DEFAULT NULL,
   active_end TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (scheduleID)
 );
 ALTER TABLE bbd.schedule ADD FOREIGN KEY fk_valve(valveID_f) REFERENCES bbd.valve(valveID)
-ON DELETE CASCADE;
-
-CREATE TABLE IF NOT EXISTS bbd.schedule_entry (
-  entryID INT NOT NULL AUTO_INCREMENT,
-  scheduleID_f INT NOT NULL,
-  start_time TIME NOT NULL,
-  stop_time TIME NOT NULL,
-  PRIMARY KEY (entryID)
-);
-ALTER TABLE bbd.schedule_entry ADD FOREIGN KEY fk_schedule(scheduleID_f) REFERENCES bbd.schedule (scheduleID)
 ON DELETE CASCADE;
 
 DROP PROCEDURE IF EXISTS get_unsent_schedule;
@@ -123,25 +115,25 @@ GRANT EXECUTE ON PROCEDURE bbd.new_schedule_entry TO 'bbduser'@'localhost';
 INSERT INTO bbd.arduino VALUES(1, "asdf");
 INSERT INTO bbd.valve VALUES(1,"asdf",1);
 INSERT INTO bbd.valve VALUES(2,"asdf",1);
-
-INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
-
-INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "TEST SENT");
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
-
-INSERT INTO bbd.schedule(valveID_f, description) VALUES (2, "TEST SENT");
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
-INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
-CALL set_schedule_active(1);
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "TEST SENT");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (2, "TEST SENT");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- CALL set_schedule_active(1);
 -- CALL set_schedule_active(2);
 /*
 CALL get_valve_schedule(1);

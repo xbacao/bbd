@@ -3,6 +3,7 @@ from .models import Valve, Schedule, ScheduleEntry
 from django.forms.formsets import formset_factory
 from .forms import CicleForm, BaseCicleFormSet
 import datetime
+from rest_framework.decorators import api_view
 
 def valves_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
@@ -68,6 +69,7 @@ def add_schedule(request):
 		if 'submit_sche' in keys:
 			cicle_form_set_o = cicleFormSet(request.POST)
 			if cicle_form_set_o.is_valid():
+				print("VALID")
 
 				#create sche
 				valve_obj = Valve.objects.get(valveid=valve_id)
@@ -78,8 +80,11 @@ def add_schedule(request):
 				for cicle_form in cicle_form_set_o:
 					start_time = str(cicle_form.cleaned_data.get('start_hour'))+':'+str(cicle_form.cleaned_data.get('start_min'))+':00'
 					stop_time = str(cicle_form.cleaned_data.get('stop_hour'))+':'+str(cicle_form.cleaned_data.get('stop_min'))+':00'
-					sche_entry_obj = ScheduleEntry(scheduleid_f=schedule_obj, start_time=start_time, stop_time=stop_time)
-					sche_entry_obj.save()
+					sche_entry_obj = ScheduleEntry(scheduleid_f=schedule_obj, start_time=start_time, stop_time=stop_time, active=False)
+					print("RESULT",sche_entry_obj.save())
+			else:
+				print("INVALID")
+				print(cicleFormSet(request.POST))
 
 
 
@@ -94,3 +99,18 @@ def view_schedule(request):
 	entry_objs = ScheduleEntry.objects.filter(scheduleid_f=sche_obj)
 	context={'sche':sche_obj, 'entries':entry_objs}
 	return render(request, 'valves/view_schedule.html',context)
+
+@api_view(['POST'])
+def create_new_schedule(request):
+	valveID_f=request.POST.get('valveID_f')
+	description=request.POST.get('description')
+	entries=request.POST.get('entries')
+	start_time
+	stop_time
+
+	schedule_obj=Schedule(valveid_f=valveID_f, description=description)
+
+	if schedule_obj.save():
+		return Response(status=status.HTTP_200_OK)
+	else:
+		return Response(status=status.HTTP_400_BAD_REQUEST)

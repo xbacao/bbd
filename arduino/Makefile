@@ -137,7 +137,7 @@ ARDUINO_LIBS=SoftwareSerial
 # User libraries (in ~/sketchbook/libraries/).
 # Give the name of the directory containing the library source files.
 USER_LIBDIR ?=	$(CURDIR)/lib
-USER_LIBS ?= Time gsmArd MemoryFree socket_bbd
+USER_LIBS ?= Time gsmArd MemoryFree socket_bbd dbg
 
 # Additional pre-compiled libraries to link with.
 # Always leave the math (m) library last!

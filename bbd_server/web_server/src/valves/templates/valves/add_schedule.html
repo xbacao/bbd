@@ -3,15 +3,56 @@
 
 {% block content %}
 
+<!-- <script>
+function cloneMore(selector, type) {
+  var newElement = $(selector).clone(true);
+  var total = $('#id_' + type + '-TOTAL_FORMS').val();
+  newElement.find(':input').each(function() {
+      var name = $(this).attr('name').replace('-' + (total-1) + '-','-' + total + '-');
+      var id = 'id_' + name;
+      $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
+  });
+  newElement.find('label').each(function() {
+      var newFor = $(this).attr('for').replace('-' + (total-1) + '-','-' + total + '-');
+      $(this).attr('for', newFor);
+  });
+  total++;
+  $('#id_' + type + '-TOTAL_FORMS').val(total);
+  $(selector).after(newElement);
+}
+</script> -->
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<script src="{% static "js/form_clone.js" %}" type="text/javascript"></script>
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 
+<script>
+$(document).ready(function() {
+       $("#form_sche").submit(function(event){
+            $.ajax({
+                 type:"POST",
+                 url:"/create_new_schedule/",
+                 data: {
+                        'start_h': $('#form_sche').val() // from form
+                        },
+                 success: function(){
+                    alert("New schedule succesfully added!");
+                 },
+                 error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    alert("Error adding schedule!");
+                    console.log("DBG:"+textStatus);
+                    console.log("DBG:"+errorThrown);
+                 }
+            });
+            return false; //<---- move it here
+       });
+
+});
+</script>
 <ul>
 
 <h1>New schedule</h1>
-<form action="#" method="POST">
+<!-- <form action="#" method="POST">
 	{% csrf_token %}
 	{{ cicle_form_set.management_form }}
 	<table class='no_error'>
@@ -39,6 +80,28 @@
 	</script>
 	<input type="submit" class="btn" value="submit schedule" name="submit_sche">
 
+</form> -->
+<form method="post" id="form_sche">
+  <table class="table">
+    <tr><td class="col-md-4">ValveID</td><td class="col-md-8">{{valve_id}}</td></tr>
+    <tr><td class="col-md-4">Description</td><td class="col-md-8"><input class="form-control" type="text" name="description"></td></tr>
+    <tr>
+      <td class="col-md-4">Watering Schedule</td>
+      <td class="col-md-8">
+        <div class="input-group">
+          <span class="input-group-addon">Starting at:</span>
+          <input class="form-control" size="2" type="text" name="start_h" placeholder="start hour">
+          <span class="input-group-addon">:</span>
+          <input class="form-control" size="2" type="text" name="start_min" placeholder="start min">
+          <span class="input-group-addon"> Stoping at:</span>
+          <input class="form-control" size="2" type="text" name="stop_h" placeholder="stop hour">
+          <span class="input-group-addon">:</span>
+          <input class="form-control" size="2" type="text" name="stop_min" placeholder="stop min">
+        </div>
+      </td>
+    </tr>
+  </table>
+  <button class="btn btn-default" type="submit">submit</button>
 </form>
 
 {% endblock %}

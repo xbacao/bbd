@@ -54,7 +54,7 @@ case ${OP} in
   do
     WEB_FILES_PATH="${WEB_FILES_PATH} ${S_PATH}/${i}"
   done
-  scp -r ${WEB_FILES_PATH} ${SERVER_USER}@${SERVER_IP}:${PROJECT_DIR}/web_server
+  scp -r ${WEB_FILES_PATH} ${SERVER_USER}@${SERVER_IP}:${PROJECT_DIR}
   ;;
   SERVER_LOGIN)
   ssh ${SERVER_USER}@${SERVER_IP}
@@ -64,7 +64,7 @@ case ${OP} in
   echo "options:"
   echo " -s              --server-full        uploads all of the server code to the server"
   echo " -d              --daemon             uploads the server c++ daemon code to the server"
-  echo " -2              --deploy-web         deploys the web server code to the server"
+  echo " -w              --deploy-web         deploys the web server code to the server"
   echo " -ls             --server-login       logs in to the server using ssh"
   ;;
 esac

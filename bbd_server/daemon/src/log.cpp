@@ -20,5 +20,6 @@ void init_log(){
 }
 
 void stop_log(){
+	log_file << "Exiting.."<<endl;
 	log_file.close();
 }
