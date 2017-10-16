@@ -27,6 +27,8 @@ static void _signal_callback_handler(int signum){
 
 static int _start_socket_server(int* sockfd){
   struct sockaddr_in serv_addr;
+  struct timeval tv;
+
   *sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0){
     log_file << time(nullptr) <<": Error creating socket descriptor!"<<endl;
@@ -40,6 +42,11 @@ static int _start_socket_server(int* sockfd){
     log_file << time(nullptr) <<": Error binding socket!"<<endl;
     return 2;
   }
+
+  tv.tv_sec = 30;  /* 30 Secs Timeout */
+  tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+  setsockopt(*sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,sizeof(struct timeval));
+
   listen(*sockfd,5);
   return 0;
 }
@@ -70,87 +77,98 @@ static int _run_server(){
     newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
     if (newsockfd < 0){
       log_file << time(nullptr) <<": Error accepting connection!"<<endl;
-      return 1;
     }
     else{
       log_file << time(nullptr) <<": New connection accepted from "<< inet_ntoa(cli_addr.sin_addr)<<endl;
-    }
 
-    n=recv_socket_header(newsockfd, &arduino_id, &msg_type, &msg_size);
-    if(n==0){
-      log_file <<time(nullptr)<<": MSG RECVED: [arduino:"<<(int)arduino_id<<", type:"<< (int)msg_type <<", size:"<<(int)msg_size<<']'<<endl;
-      switch(msg_type){
-        default:
-          break;
-        case SYNC_TIME_MSG:
-          n=send_time_msg(newsockfd);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
+      n=recv_socket_header(newsockfd, &arduino_id, &msg_type, &msg_size);
+      if(n==0){
+        log_file <<time(nullptr)<<": MSG RECVED: [arduino:"<<(int)arduino_id<<", type:"<< (int)msg_type <<", size:"<<(int)msg_size<<']'<<endl;
+        switch(msg_type){
+          default:
+            break;
+          case SYNC_TIME_MSG:
+            n=send_time_msg(newsockfd);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
+            }
+            break;
+          case ACTIVE_SCHES_MSG:
+          {
+            schedule* sches;
+            uint16_t n_sches;
+            n=get_active_sches_amount(arduino_id, &n_sches);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES AMOUNT "<<n<<endl;
+              break;
+            }
+
+            sches = new schedule[n_sches];
+            n=get_active_schedules(arduino_id, &sches, n_sches);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES "<<n<<endl;
+            }
+
+          	// n=get_last_schedule(&a_s);
+          	// if(n){
+          	// 	log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
+          	// 	break;
+          	// }
+
+            // n=send_schedule_msg(a_s, newsockfd);
+            // if(n){
+            //   log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+            // }
+            break;
           }
-          break;
-        case LAST_SCHE_MSG:
-        {
-          ArduinoSchedules a_s(arduino_id);
-
-        	n=get_last_schedule(&a_s);
-        	if(n){
-        		log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
-        		break;
-        	}
-
-          n=send_schedule_msg(a_s, newsockfd);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+          case CHECKIN_MSG:
+          {
+            // ArduinoSchedules a_s(arduino_id);
+            //
+          	// n=get_unsent_schedule(&a_s);
+          	// if(n){
+          	// 	log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
+          	// 	break;
+          	// }
+            //
+            // n=send_schedule_msg(a_s, newsockfd);
+            // if(n){
+            //   log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+            // }
+            break;
           }
-          break;
-        }
-        case CHECKIN_MSG:
-        {
-          ArduinoSchedules a_s(arduino_id);
-
-        	n=get_unsent_schedule(&a_s);
-        	if(n){
-        		log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
-        		break;
-        	}
-
-          n=send_schedule_msg(a_s, newsockfd);
-          if(n){
-            log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
+          case SCHE_ACT_MSG:
+          {
+            // uint16_t msg_size;
+            // n=recv_sche_act_msg_size(newsockfd, &msg_size);
+            // if(n){
+            //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE SIZE "<< n<<endl;
+            //   break;
+            // }
+            //
+            // uint16_t* sche_ids = new uint16_t[msg_size];
+            // n=recv_sche_act_msg(newsockfd, msg_size,&sche_ids);
+            // if(n){
+            //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE "<< n<<endl;
+            //   break;
+            // }
+            //
+            // for(uint16_t i=0;i<msg_size;i++){
+            //   n=set_schedule_sent(sche_ids[i]);
+            //   if(n){
+            //     log_file<<time(nullptr)<<": ERROR SETTING SCHE SENT AT DB "<< n<<endl;
+            //     break;
+            //   }
+            // }
+            break;
           }
-          break;
-        }
-        case SCHE_ACT_MSG:
-        {
-          // uint16_t msg_size;
-          // n=recv_sche_act_msg_size(newsockfd, &msg_size);
-          // if(n){
-          //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE SIZE "<< n<<endl;
-          //   break;
-          // }
-          //
-          // uint16_t* sche_ids = new uint16_t[msg_size];
-          // n=recv_sche_act_msg(newsockfd, msg_size,&sche_ids);
-          // if(n){
-          //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE "<< n<<endl;
-          //   break;
-          // }
-          //
-          // for(uint16_t i=0;i<msg_size;i++){
-          //   n=set_schedule_sent(sche_ids[i]);
-          //   if(n){
-          //     log_file<<time(nullptr)<<": ERROR SETTING SCHE SENT AT DB "<< n<<endl;
-          //     break;
-          //   }
-          // }
-          break;
         }
       }
+      else{
+        log_file << time(nullptr)<<"Error: recv socket header "<<n<<endl;
+      }
+      close(newsockfd);
     }
-    else{
-      log_file << time(nullptr)<<"Error: recv socket header "<<n<<endl;
-    }
-    close(newsockfd);
   }
   close(sockfd);
   stop_log();

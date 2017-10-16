@@ -2,6 +2,8 @@
 #include <Arduino.h>
 #include "dbg.h"
 
+#ifdef DEBUG
+
 void dbg_print_serial_buffer(const char* file, int line, const char* msg,
     const char* buffer, size_t size){
   Serial.print(file);
@@ -25,16 +27,27 @@ void dbg_print_serial_buffer(const char* file, int line, const char* msg,
 
 void dbg_print_sock_buffer(const char* file, int line, const char* msg,
     const char* buffer, size_t size){
-      Serial.print(file);
-      Serial.print(":");
-      Serial.println(line);
-      Serial.print(msg);
-      Serial.print(" : [");
-      for(size_t i=0;i<size;i++){
-        Serial.print((uint8_t) msg[i]);
-        if(i<size-1){
-          Serial.print(' ');
-        }
-      }
-      Serial.println("]");
+  Serial.print(file);
+  Serial.print(":");
+  Serial.println(line);
+  Serial.print(msg);
+  Serial.print(" : [");
+  for(size_t i=0;i<size;i++){
+    Serial.print((uint8_t) msg[i]);
+    if(i<size-1){
+      Serial.print(' ');
+    }
+  }
+  Serial.println("]");
 }
+
+void dbg_print_error(const char* file, int line, int code){
+  Serial.print("ERROR in ");
+  Serial.print(file);
+  Serial.print(":");
+  Serial.print(line);
+  Serial.print(" code ");
+  Serial.println(code);
+}
+
+#endif

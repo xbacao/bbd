@@ -12,19 +12,20 @@
 
 const uint16_t SOCKET_HEADER = 38017;
 const uint8_t END_TRANS_CHAR = 0xff;
-const uint8_t TIME_RSP_SIZE = sizeof(uint32_t);
+const uint16_t TIME_RSP_SIZE = sizeof(uint32_t);
 
-#define SYNC_TIME_MSG	0x1
-#define LAST_SCHE_MSG	0x2
-#define CHECKIN_MSG		0x3
-#define SCHE_ACT_MSG  0x4
+#define SYNC_TIME_MSG       0x1
+#define ACTIVE_SCHES_MSG    0x2
+#define CHECKIN_MSG         0x3
+#define SCHE_ACT_MSG        0x4
 // #define END_MSG				0x4
 
 int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, uint8_t* trans_size);
 
 int send_time_msg(int sock_fd);
 
-int send_schedule_msg(ArduinoSchedules a_s, int sock_fd);
+// int send_schedule_msg(ArduinoSchedules a_s, int sock_fd);
+int send_schedules_msg(int sock_fd);
 
 int send_empty_msg(int sock_fd);
 

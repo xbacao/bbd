@@ -1,12 +1,13 @@
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
 #include <stdio.h>
-#include "gsm_ard.h"
-#include "socket_bbd.h"
+#include <Arduino.h>
+#include <gsm_ard.h>
+#include <socket_bbd.h>
+#include <dbg.h>
 #include "arduino_cfg.h"
 #include "bbda.h"
 #include "scheduler.h"
-#include "MemoryFree.h"
 
 Gsm_Ard gsm;
 
@@ -20,9 +21,6 @@ void setup()
 {
   int n;
   bool error=false;
-  /* setup timer */
-  //setSyncProvider(requestSync);
-  /****/
 
   Serial.begin(9600);
 
@@ -34,34 +32,34 @@ void setup()
   do{
     n=gsm.init_gsm_module();
     if(n){
-      Serial.print("ERROR: COULD NOT INITIALIZE GSM MODULE ");
-      Serial.println(n);
+      #ifdef DEBUG
+      dbg_print_error(__FILE__, __LINE__, n);
+      #endif
       delay(10000);
     }
   }while(n);
 
   do{
-    error=false;
-
-    Serial.print("MEMORY=");
-    Serial.println(freeMemory());
-
     n=gsm.attachGPRS();
     if(n){
-      Serial.print("ERROR: COULD NOT ATTACH GPRS ");
-      Serial.println(n);
+      #ifdef DEBUG
+      dbg_print_error(__FILE__, __LINE__, n);
+      #endif
     }
     else{
-      // if(!timeSynced){
-      //   n=sync_time_with_server();
-      //   if(n){
-      //     Serial.print("ERROR: SYNC TIME ");
-      //     Serial.println(n);
-      //     error=true;
-      //   }
-      //   Serial.print("MEMORY=");
-      //   Serial.println(freeMemory());
-      // }
+      if(!timeSynced){
+        n=sync_time_with_server();
+        if(n){
+          #ifdef DEBUG
+          dbg_print_error(__FILE__, __LINE__, n);
+          #endif
+          error=true;
+          started=true;//apagar
+        }
+      }
+      if(!error){
+
+      }
       // if(!error){
       //   n=get_last_schedule();
       //   if(n){
@@ -74,22 +72,22 @@ void setup()
       //   Serial.print("MEMORY=");
       //   Serial.println(freeMemory());
       // }
-      n=get_last_schedule();
-      if(n){
-        Serial.print("ERROR: GET LAST SCHE ");
-        Serial.println(n);
-      }
+      // n=get_last_schedule();
+      // if(n){
+      //   Serial.print("ERROR: GET LAST SCHE ");
+      //   Serial.println(n);
+      // }
       // else{
       //   Serial.println("WHAT");
       // }
-      Serial.println("WHATSasdf");
-      delay(100);
+      n=gsm.dettachGPRS();
+      if(n){
+        #ifdef DEBUG
+        dbg_print_error(__FILE__, __LINE__, n);
+        #endif
+      }
     }
-    n=gsm.dettachGPRS();
-    if(n){
-      Serial.print("ERROR: DETTACH GPRS ");
-      Serial.println(n);
-    }
+    delay(1000);
   } while(!started);
 
 }
@@ -178,140 +176,138 @@ int sync_time_with_server(){
   timeSynced = true;
   last_sync=now();
 
+  #ifdef DEBUG
+  digitalClockDisplay();
+  #endif
+
   err=0;
   goto exit_clean;
 
 exit_clean:
   delete[] msg;
   delete[] rsp;
+  #ifdef DEBUG
+  dbg_print_error(__FILE__, __LINE__, err);
+  #endif
   return err;
 }
 
-int get_last_schedule(){
-  int n,err=0;
+int get_active_sches(){
   unsigned int rsp_len;
-  char* msg;
   char* rsp;
-  Serial.print("MEMORY1=");
-  Serial.println(freeMemory());
-  ArduinoSchedules a_s(ARDUINO_ID);
-  Serial.print("MEMORY2=");
-  Serial.println(freeMemory());
+  char* msg;
+  int err,n;
+  schedule* sches;
+  uint16_t n_sches;
 
   if(gsm.get_gsm_state()!=GSM_IP_STATE){
     return 1;
   }
 
-  msg=new char[GET_LAST_SCHE_MSG_SIZE];
-  n=get_last_sche_msg(&msg);
+  msg = new char[REQUEST_ACTIVE_SCHES_MSG_SIZE];
+  n=get_active_request_msg(&msg);
   if(n){
     err=2+10*n;
-    // goto exit_clean_l;
+    goto exit_clean;
   }
 
-  n=gsm.send_socket_msg(msg, GET_LAST_SCHE_MSG_SIZE, &rsp_len);
+  n=gsm.send_socket_msg(msg, REQUEST_ACTIVE_SCHES_MSG_SIZE, &rsp_len);
   if(n){
     err=3+10*n;
-    // goto exit_clean_l;
-  }
-
-
-  Serial.print("MEMORY=");
-  Serial.println(freeMemory());
-
-  Serial.print("RSP LEN ");
-  Serial.println((unsigned int)rsp_len);
-  rsp = new char[rsp_len];
-  memset(rsp, 0, rsp_len);  
-  n=gsm.get_socket_rsp(&rsp);
-  if(n){
-    err=4+10*n;
-    goto exit_clean_l;
-  }
-
-  //TODO EMPANCA
-
-  n=a_s.decode_message(rsp, rsp_len);
-  if(n){
-    err=5+10*n;
-    goto exit_clean_l;
-  }
-
-  n=init_scheduler(a_s);
-  if(n){
-    err=6+10*n;
-    goto exit_clean_l;
-  }
-
-  last_ci=now();
-
-  err=0;
-  // goto exit_clean_l;
-
-exit_clean_l:
-  delete[] msg;
-  delete[] rsp;
-  Serial.println("HERE");
-  Serial.println(err);
-  return err;
-}
-
-int checkin_server(){
-  int n,err=0;
-  unsigned int rsp_len;
-  char* msg;
-  char* rsp;
-  ArduinoSchedules a_s(ARDUINO_ID);
-
-  if(gsm.get_gsm_state()!=GSM_IP_STATE){
-    return 1;
-  }
-
-  msg=new char[CHECK_REQS_MSG_SIZE];
-  n=get_check_requests_msg(&msg);
-  if(n){
-    err=2+10*n;
-    goto exit_clean_c;
-  }
-
-  n=gsm.send_socket_msg(msg, CHECK_REQS_MSG_SIZE, &rsp_len);
-  if(n){
-    err=3+10*n;
-    goto exit_clean_c;
+    goto exit_clean;
   }
 
   rsp = new char[rsp_len];
   n=gsm.get_socket_rsp(&rsp);
   if(n){
     err=4+10*n;
-    goto exit_clean_c;
+    goto exit_clean;
   }
 
-  Serial.print("Decoding message with ");
-  Serial.print(rsp_len);
-  Serial.println("bytes");
+  n_sches=(rsp_len-1)/sizeof(schedule);
+  sches=new schedule[n_sches];
 
-  n=a_s.decode_message(rsp, rsp_len);
-  if(n){
-    err=5+10*n;
-    goto exit_clean_c;
-  }
 
-  // n=process_schedules(a_s);
-  // if(n){
-  //   err=6+10*n;
-  //   goto exit_clean_c;
-  // }
-  //
-  // last_ci=now();
-  // err=0;
-  // goto exit_clean_c;
 
-exit_clean_c:
+  /*TODO*/
+
+exit_clean:
   delete[] msg;
   delete[] rsp;
+  #ifdef DEBUG
+  dbg_print_error(__FILE__, __LINE__, err);
+  #endif
   return err;
 }
+
+// int get_last_schedule(){
+//   int n,err=0;
+//   unsigned int rsp_len;
+//   char* msg;
+//   char* rsp;
+//   Serial.print("MEMORY1=");
+//   Serial.println(freeMemory());
+//   ArduinoSchedules a_s(ARDUINO_ID);
+//   Serial.print("MEMORY2=");
+//   Serial.println(freeMemory());
+//
+//   if(gsm.get_gsm_state()!=GSM_IP_STATE){
+//     return 1;
+//   }
+//
+//   msg=new char[GET_LAST_SCHE_MSG_SIZE];
+//   n=get_last_sche_msg(&msg);
+//   if(n){
+//     err=2+10*n;
+//     // goto exit_clean_l;
+//   }
+//
+//   n=gsm.send_socket_msg(msg, GET_LAST_SCHE_MSG_SIZE, &rsp_len);
+//   if(n){
+//     err=3+10*n;
+//     // goto exit_clean_l;
+//   }
+//
+//
+//   Serial.print("MEMORY=");
+//   Serial.println(freeMemory());
+//
+//   Serial.print("RSP LEN ");
+//   Serial.println((unsigned int)rsp_len);
+//   rsp = new char[rsp_len];
+//   memset(rsp, 0, rsp_len);
+//   n=gsm.get_socket_rsp(&rsp);
+//   if(n){
+//     err=4+10*n;
+//     goto exit_clean_l;
+//   }
+//
+//   //TODO EMPANCA
+//
+//   n=a_s.decode_message(rsp, rsp_len);
+//   if(n){
+//     err=5+10*n;
+//     goto exit_clean_l;
+//   }
+//
+//   n=init_scheduler(a_s);
+//   if(n){
+//     err=6+10*n;
+//     goto exit_clean_l;
+//   }
+//
+//   last_ci=now();
+//
+//   err=0;
+//   // goto exit_clean_l;
+//
+// exit_clean_l:
+//   delete[] msg;
+//   delete[] rsp;
+//   Serial.println("HERE");
+//   Serial.println(err);
+//   return err;
+// }
 
 
 /*******timer debug **********/

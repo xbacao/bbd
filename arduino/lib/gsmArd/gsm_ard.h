@@ -2,7 +2,6 @@
 #define _GSM_ARD_H_
 
 #include <SoftwareSerial.h>
-// #include "MemoryFree.h"
 
 #define _GSM_RXPIN_ 7
 #define _GSM_TXPIN_ 8
@@ -15,10 +14,7 @@
 #define CR_CHAR   0x0d
 #define NL_CHAR   0x0a
 #define SUB_CHAR  0x1a
-
-// #define DEBUG_GSM
-#define DEBUG_SS
-#define DEBUG_SOCKET
+#define END_TRANS_CHAR 0xff
 
 #define DEBUG_STATES
 
@@ -42,7 +38,7 @@ public:
   int init_gsm_module();
   int attachGPRS();
   int dettachGPRS();
-  int send_socket_msg(char* data, unsigned int data_len, unsigned int* rsp_len);
+  int send_socket_msg(char* data, uint16_t data_len,uint16_t* rsp_len);
   int get_socket_rsp(char** data);
   GSM_STATE get_gsm_state();
 private:
@@ -53,8 +49,8 @@ private:
 
   /* tcp */
   int _connect_tcp_socket();
-  int _send_tcp_data(char* data, unsigned int data_len);
-  int _recv_tcp_data(unsigned int* data_len);
+  int _send_tcp_data(char* data, uint16_t data_len);
+  int _recv_tcp_data(uint16_t* data_len);
   int _disconnect_tcp_socket();
 
   void _change_gsm_state(GSM_STATE new_state);
@@ -63,9 +59,11 @@ private:
   void _clear_rsp_buff();
   void _clear_sock_buff();
   int _recv_string(int wait_period, int max_nl=3);
+  int _recv_socket_size(int wait_period, uint16_t* rsp_size);
   int _recv_socket(int wait_period);
   int _fetch_rsp_from_recv(const char* cmd, unsigned int cmd_size, unsigned int* rsp_len);
   int _fetch_rsp_wo_cmd(unsigned int* rsp_len);
+  int _wait_for_tcp_start();
   int _get_rsp(char** rsp);
   void _write_cmd(const char* cmd);
 

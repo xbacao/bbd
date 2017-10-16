@@ -8,6 +8,7 @@ bin/gsm_ard.cpp.o bin/gsm_ard.S bin/gsm_ard.d: \
  /usr/share/arduino/hardware/arduino/avr/cores/arduino/Printable.h \
  /home/jlr/Documents/bbd/arduino/lib/gsmArd/gsm_cmds.h \
  /home/jlr/Documents/bbd/arduino/lib/dbg/dbg.h \
+ /home/jlr/Documents/bbd/arduino/lib/net_utils/net_utils.h \
  /usr/share/arduino/hardware/arduino/avr/cores/arduino/Arduino.h \
  /usr/share/arduino/hardware/arduino/avr/cores/arduino/binary.h \
  /usr/share/arduino/hardware/arduino/avr/cores/arduino/WCharacter.h \
@@ -32,6 +33,8 @@ bin/gsm_ard.cpp.o bin/gsm_ard.S bin/gsm_ard.d: \
 /home/jlr/Documents/bbd/arduino/lib/gsmArd/gsm_cmds.h:
 
 /home/jlr/Documents/bbd/arduino/lib/dbg/dbg.h:
+
+/home/jlr/Documents/bbd/arduino/lib/net_utils/net_utils.h:
 
 /usr/share/arduino/hardware/arduino/avr/cores/arduino/Arduino.h:
 

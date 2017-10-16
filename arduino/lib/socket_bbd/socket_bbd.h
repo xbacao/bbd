@@ -21,7 +21,7 @@ const uint32_t ID_SIZE=sizeof(uint8_t);
 
 const uint32_t TYPE_SIZE=sizeof(uint8_t);
 const uint8_t SYNC_TIME_MSG=0x1;
-const uint8_t LAST_SCHE_MSG=0x2;
+const uint8_t ACTIVE_SCHES_MSG=0x2;
 const uint8_t CHECK_IN_MSG=0x3;
 
 
@@ -36,14 +36,13 @@ typedef struct _schedule_data_{
 } schedule_data;
 
 const uint32_t REQUEST_TIME_MSG_SIZE = SH_SIZE+ID_SIZE+TYPE_SIZE+T_SIZE_SIZE;
-const uint32_t GET_LAST_SCHE_MSG_SIZE = SH_SIZE+ID_SIZE+TYPE_SIZE+T_SIZE_SIZE;
+const uint32_t REQUEST_ACTIVE_SCHES_MSG_SIZE = SH_SIZE+ID_SIZE+TYPE_SIZE+T_SIZE_SIZE;
 const uint32_t CHECK_REQS_MSG_SIZE = SH_SIZE+ID_SIZE+TYPE_SIZE+T_SIZE_SIZE;
 
 int get_time_request_msg(char** msg);
-int decode_time_rsp_msg(char* msg, uint8_t msg_len, time_t* res);
-int get_last_sche_msg(char** msg);
-int decode_last_sche_msg(char** msg, uint8_t msg_len);
-int get_check_requests_msg(char** msg);
-int decode_schedule_msg(char* msg, uint8_t msg_len, schedule_data* res);
+int decode_time_rsp_msg(char* msg, uint16_t msg_len, time_t* res);
+
+int get_active_request_msg(char** msg);
+int decode_active_sches_rsp(char* msg, uint16_t msg_len);
 
 #endif

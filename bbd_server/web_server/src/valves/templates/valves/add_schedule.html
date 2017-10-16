@@ -31,17 +31,24 @@ $(document).ready(function() {
        $("#form_sche").submit(function(event){
             $.ajax({
                  type:"POST",
-                 url:"/create_new_schedule/",
+                 url:"/valves/create_new_schedule/",
                  data: {
-                        'start_h': $('#form_sche').val() // from form
+                        'valveID_f': $('#valveID_f').val(),
+                        'description': $('#description').val(),
+                        'start_h': $('#start_h').val(),
+                        'start_m': $('#start_m').val(),
+                        'stop_h': $('#stop_h').val(),
+                        'stop_m': $('#stop_m').val(),
                         },
                  success: function(){
                     alert("New schedule succesfully added!");
+                    window.location.replace("/valves/schedules/");
                  },
                  error: function(XMLHttpRequest, textStatus, errorThrown) {
                     alert("Error adding schedule!");
-                    console.log("DBG:"+textStatus);
-                    console.log("DBG:"+errorThrown);
+                    console.log("DBG XMLHttpRequest: "+XMLHttpRequest);
+                    console.log("DBG textStatus:"+textStatus);
+                    console.log("DBG errorThrown:"+errorThrown);
                  }
             });
             return false; //<---- move it here
@@ -84,23 +91,24 @@ $(document).ready(function() {
 <form method="post" id="form_sche">
   <table class="table">
     <tr><td class="col-md-4">ValveID</td><td class="col-md-8">{{valve_id}}</td></tr>
-    <tr><td class="col-md-4">Description</td><td class="col-md-8"><input class="form-control" type="text" name="description"></td></tr>
+    <tr><td class="col-md-4">Description</td><td class="col-md-8"><input class="form-control" type="text" id="description"></td></tr>
     <tr>
       <td class="col-md-4">Watering Schedule</td>
       <td class="col-md-8">
         <div class="input-group">
           <span class="input-group-addon">Starting at:</span>
-          <input class="form-control" size="2" type="text" name="start_h" placeholder="start hour">
+          <input class="form-control" size="2" type="text" id="start_h" placeholder="start hour">
           <span class="input-group-addon">:</span>
-          <input class="form-control" size="2" type="text" name="start_min" placeholder="start min">
+          <input class="form-control" size="2" type="text" id="start_m" placeholder="start min">
           <span class="input-group-addon"> Stoping at:</span>
-          <input class="form-control" size="2" type="text" name="stop_h" placeholder="stop hour">
+          <input class="form-control" size="2" type="text" id="stop_h" placeholder="stop hour">
           <span class="input-group-addon">:</span>
-          <input class="form-control" size="2" type="text" name="stop_min" placeholder="stop min">
+          <input class="form-control" size="2" type="text" id="stop_m" placeholder="stop min">
         </div>
       </td>
     </tr>
   </table>
+  <input type="hidden" id="valveID_f" value="{{valve_id}}"/>
   <button class="btn btn-default" type="submit">submit</button>
 </form>
 
