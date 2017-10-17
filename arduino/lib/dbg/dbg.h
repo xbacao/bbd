@@ -13,6 +13,8 @@ void dbg_print_sock_buffer(const char* file, int line, const char* msg,
     const char* buffer, size_t size);
 
 void dbg_print_error(const char* file, int line, int code);
+
+void dbg_print_val(const char* file, int line, const char* msg, uint16_t val);
 #endif
 
 #endif

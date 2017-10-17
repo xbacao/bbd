@@ -33,7 +33,7 @@ void dbg_print_sock_buffer(const char* file, int line, const char* msg,
   Serial.print(msg);
   Serial.print(" : [");
   for(size_t i=0;i<size;i++){
-    Serial.print((uint8_t) msg[i]);
+    Serial.print((uint8_t) buffer[i]);
     if(i<size-1){
       Serial.print(' ');
     }
@@ -50,4 +50,14 @@ void dbg_print_error(const char* file, int line, int code){
   Serial.println(code);
 }
 
+void dbg_print_val(const char* file, int line, const char* msg, uint16_t val){
+  Serial.print("NOTIFY in ");
+  Serial.print(file);
+  Serial.print(":");
+  Serial.print(line);
+  Serial.print(" msg:");
+  Serial.print(msg);
+  Serial.print(" val ");
+  Serial.println(val);
+}
 #endif

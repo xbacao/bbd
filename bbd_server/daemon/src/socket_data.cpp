@@ -93,20 +93,71 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
   return 0;
 }
 
+static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size){
+	int n;
+	char* total_reply_msg;
+	uint16_t total_reply_msg_size = BUFFER_SIZE_16+reply_msg_size+BUFFER_SIZE_8;
+
+	total_reply_msg=new char[total_reply_msg_size];
+
+	_prep_to_send_16(&reply_msg_size, total_reply_msg);
+
+	memcpy(total_reply_msg+BUFFER_SIZE_16, reply_msg, reply_msg_size);
+
+	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+BUFFER_SIZE_16
+			+reply_msg_size);
+
+	#ifdef DEBUG_SOCKET
+	log_file<<"SENDING: [";
+	for(uint16_t i=0;i<=total_reply_msg_size;i++){
+		log_file<<unsigned((uint8_t) total_reply_msg[i])<<" ";
+	}
+	log_file<<"]"<<endl;
+	#endif
+
+	n=send(sock_fd, total_reply_msg, total_reply_msg_size, 0)<0;
+
+	delete[] total_reply_msg;
+	return n;
+}
 
 int send_time_msg(int sock_fd){
-	uint16_t msg_size=TIME_RSP_SIZE+2*BUFFER_SIZE_8;
+	char* reply_msg;
+	int n;
 	uint32_t curr_time=time(nullptr);
-	char* msg=new char[msg_size];
 
-	_prep_to_send_16(&TIME_RSP_SIZE, msg);
+	reply_msg=new char[TIME_RSP_SIZE];
 
-	_prep_to_send_32(&curr_time, msg+BUFFER_SIZE_8);
+	_prep_to_send_32(&curr_time, reply_msg);
 
-	_prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_8+BUFFER_SIZE_32);
+	n=_send_reply_msg(sock_fd, reply_msg, TIME_RSP_SIZE);
 
-	return send(sock_fd, msg, msg_size, 0)<0;
+	delete[] reply_msg;
+	return n;
 }
+
+
+// int send_time_msg(int sock_fd){
+// 	uint16_t total_msg_size=BUFFER_SIZE_16+TIME_RSP_SIZE+BUFFER_SIZE_8;
+// 	uint32_t curr_time=time(nullptr);
+// 	char* msg=new char[msg_size];
+//
+// 	_prep_to_send_16(&TIME_RSP_SIZE, msg);
+//
+// 	_prep_to_send_32(&curr_time, msg+BUFFER_SIZE_16);
+//
+// 	_prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_16+TIME_RSP_SIZE);
+//
+// 	#ifdef DEBUG_SOCKET
+// 	log_file<<"SENDING: [";
+// 	for(uint16_t i=0;i<=msg_size;i++){
+// 		log_file<<static_cast<int>(msg[i])<<" ";
+// 	}
+// 	log_file<<"]"<<endl;
+// 	#endif
+//
+// 	return send(sock_fd, msg, total_msg_size, 0)<0;
+// }
 
 int send_schedules_msg(schedule* sches, uint16_t n_sches, int sock_fd){
 	// uint8_t msg_len = a_s.get_message_size();

@@ -521,7 +521,7 @@ leave_func:
 }
 
 int Gsm_Ard::_no_cmd_comp_rsp(const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period){
-  int n, ret;
+  int n, ret=0;
   unsigned int rsp_len;
   char* exp_rsp_buffer;
 
@@ -566,7 +566,7 @@ exit1:
 exit2:
   #ifdef DEBUG
   if(ret){
-    dbg_print_error(__FILE__, __LINE__,  2+n*10);
+    dbg_print_error(__FILE__, __LINE__,  2+ret*10);
   }
   #endif
   delete[] exp_rsp_buffer;
@@ -640,7 +640,10 @@ int Gsm_Ard::_recv_string(int wait_period, int max_nl){
   return 0;
 }
 
+
+/*FIXME*/
 int Gsm_Ard::_recv_socket_size(int wait_period, uint16_t* rsp_size){
+  uint16_t tmp;
   if(_recv_buff_state!=BUFF_READY){
     #ifdef DEBUG
     dbg_print_error(__FILE__, __LINE__,  1);
@@ -673,8 +676,8 @@ int Gsm_Ard::_recv_socket_size(int wait_period, uint16_t* rsp_size){
     return 3;
   }
 
-  memcpy(rsp_size, _recv_buff, 2);
-  *rsp_size=ntohs(*rsp_size);
+  memcpy(&tmp, _recv_buff, 2);
+  *rsp_size=ntohs(tmp);
 
   _clear_recv_buff();
   return 0;
@@ -717,10 +720,11 @@ int Gsm_Ard::_recv_socket(int wait_period){
     else{
       if(ready_for_confirm){
         if(_ss.read()!=END_TRANS_CHAR){
-          _clear_recv_buff();
           #ifdef DEBUG
           dbg_print_error(__FILE__, __LINE__,  4);
+          dbg_print_sock_buffer(__FILE__, __LINE__, "", _recv_buff, _recv_buff_idx);
           #endif
+          _clear_recv_buff();
           return 4;
         }
         else{

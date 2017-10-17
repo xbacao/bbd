@@ -4,6 +4,7 @@
 #include <fstream>
 
 #define LOG_DIR_PATH   "/opt/bbd_server/logs/"
+#define DEBUG_SOCKET
 
 extern std::ofstream log_file;
 

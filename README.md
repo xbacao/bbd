@@ -28,3 +28,9 @@ IN ARCH LINUX CHANGE /usr/share/arduino/hardware/archlinux-arduino to /usr/share
 
 #TODO
 change N_VALVES from static in main.cpp
+
+
+
+BUGS
+
+.----. 1 byte a mais a ser enviado pelo server

@@ -54,6 +54,8 @@ void setup()
           dbg_print_error(__FILE__, __LINE__, n);
           #endif
           error=true;
+        }
+        else{
           started=true;//apagar
         }
       }
@@ -187,7 +189,9 @@ exit_clean:
   delete[] msg;
   delete[] rsp;
   #ifdef DEBUG
-  dbg_print_error(__FILE__, __LINE__, err);
+  if(err){
+    dbg_print_error(__FILE__, __LINE__, err);
+  }
   #endif
   return err;
 }
