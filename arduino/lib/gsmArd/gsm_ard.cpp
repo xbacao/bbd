@@ -276,7 +276,7 @@ int Gsm_Ard::_disconnect_tcp_socket(){
     return 2+10*n;
   }
 
-  n=_no_cmd_comp_rsp(AT_CONNECT_OK, AT_CONNECT_OK_LEN, 10000);
+  n=_no_cmd_comp_rsp(AT_STATE_CONNECT_OK, AT_STATE_CONNECT_OK_LEN, 10000);
   if(!n){
     n=_send_cmd_comp_rsp(AT_CIPCLOSE, AT_CIPCLOSE_LEN, AT_CIPCLOSE_OK, AT_CIPCLOSE_OK_LEN, 5000);
     if(n){
@@ -550,6 +550,7 @@ int Gsm_Ard::_no_cmd_comp_rsp(const char* exp_rsp, const uint16_t exp_rsp_size, 
   }
 
   exp_rsp_buffer = new char[exp_rsp_size];
+
   strcpy_P(exp_rsp_buffer, exp_rsp);
 
   if(!strncmp(rsp, exp_rsp_buffer, rsp_len)) ret=0;
@@ -566,7 +567,7 @@ exit1:
 exit2:
   #ifdef DEBUG
   if(ret){
-    dbg_print_error(__FILE__, __LINE__,  2+ret*10);
+    dbg_print_error(__FILE__, __LINE__,  ret);
   }
   #endif
   delete[] exp_rsp_buffer;

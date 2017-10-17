@@ -83,7 +83,7 @@ const PROGMEM char AT_CONNECT_OK[]="CONNECT OK";
 
 const PROGMEM char TCP_START_RSP[]={65, 84, 43, 67, 73, 80, 83, 69, 78, 68, 13,
    10, 13, 10, 62, 32};
-#define TCP_START_RSP_LEN     16   
+#define TCP_START_RSP_LEN     16
 
 const PROGMEM char AT_CIPSEND[]="AT+CIPSEND";
 #define AT_CIPSEND_PROMPT     26
@@ -103,6 +103,8 @@ const PROGMEM char AT_CIPCLOSE_OK[]="CLOSE OK";
 
 const PROGMEM char AT_CIPSTATUS[]="AT+CIPSTATUS";
 #define AT_CIPSTATUS_LEN      12
+const PROGMEM char AT_STATE_CONNECT_OK[]="STATE: CONNECT OK";
+#define AT_STATE_CONNECT_OK_LEN 17
 
 
 /***************************/

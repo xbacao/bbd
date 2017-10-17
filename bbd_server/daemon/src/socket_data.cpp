@@ -109,7 +109,7 @@ static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size
 
 	#ifdef DEBUG_SOCKET
 	log_file<<"SENDING: [";
-	for(uint16_t i=0;i<=total_reply_msg_size;i++){
+	for(uint16_t i=0;i<total_reply_msg_size;i++){
 		log_file<<unsigned((uint8_t) total_reply_msg[i])<<" ";
 	}
 	log_file<<"]"<<endl;
