@@ -109,16 +109,11 @@ static int _run_server(){
               log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES "<<n<<endl;
             }
 
-          	// n=get_last_schedule(&a_s);
-          	// if(n){
-          	// 	log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
-          	// 	break;
-          	// }
+            n=send_schedules_msg(newsockfd, sches, n_sches);
+            if(n){
+              log_file<<time(nullptr)<<": ERROR SENDING SCHES MSG "<<n<<endl;
+            }
 
-            // n=send_schedule_msg(a_s, newsockfd);
-            // if(n){
-            //   log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
-            // }
             break;
           }
           case CHECKIN_MSG:

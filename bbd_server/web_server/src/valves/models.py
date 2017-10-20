@@ -137,6 +137,7 @@ class Schedule(models.Model):
     start_time = models.SmallIntegerField()
     stop_time = models.SmallIntegerField()
     active = models.IntegerField()
+    deactivate_request = models.IntegerField()
     active_start = models.DateTimeField(blank=True, null=True)
     active_end = models.DateTimeField(blank=True, null=True)
 

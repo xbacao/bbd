@@ -136,71 +136,30 @@ int send_time_msg(int sock_fd){
 	return n;
 }
 
-
-// int send_time_msg(int sock_fd){
-// 	uint16_t total_msg_size=BUFFER_SIZE_16+TIME_RSP_SIZE+BUFFER_SIZE_8;
-// 	uint32_t curr_time=time(nullptr);
-// 	char* msg=new char[msg_size];
-//
-// 	_prep_to_send_16(&TIME_RSP_SIZE, msg);
-//
-// 	_prep_to_send_32(&curr_time, msg+BUFFER_SIZE_16);
-//
-// 	_prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_16+TIME_RSP_SIZE);
-//
-// 	#ifdef DEBUG_SOCKET
-// 	log_file<<"SENDING: [";
-// 	for(uint16_t i=0;i<=msg_size;i++){
-// 		log_file<<static_cast<int>(msg[i])<<" ";
-// 	}
-// 	log_file<<"]"<<endl;
-// 	#endif
-//
-// 	return send(sock_fd, msg, total_msg_size, 0)<0;
-// }
-
-int send_schedules_msg(schedule* sches, uint16_t n_sches, int sock_fd){
-	// uint8_t msg_len = a_s.get_message_size();
-	//
-	// char* msg = new char[msg_len+2*BUFFER_SIZE_8];
-	// _prep_to_send_8(&msg_len, msg);
-	// a_s.make_message(msg+BUFFER_SIZE_8);
-	// _prep_to_send_8(&END_TRANS_CHAR, msg+BUFFER_SIZE_8+msg_len);
-	//
-	// #ifdef DEBUG_SOCKET
-	// log_file << time(nullptr) << ": DB-SOCK [ ";
-	// for(uint16_t i=0; i<msg_len;i++){
-	// 	log_file << unsigned(msg[i]) << " ";
-	// }
-	// log_file << "]"<<endl;
-	// #endif
-
-	uint16_t msg_len=sizeof(schedule)*n_sches;
-	char* msg = new char[BUFFER_SIZE_8+BUFFER_SIZE_16+msg_len];
+int send_schedules_msg(int sock_fd, schedule* sches, int sches_size){
+	int n;
+	uint16_t msg_len=sizeof(schedule)*sches_size;
+	char* msg = new char[msg_len];
 
 	_prep_to_send_16(&msg_len, msg);
-	for(uint16_t i=0;i<n_sches;i++){
-		_prep_to_send_16(&(sches[i].schedule_id), msg+BUFFER_SIZE_16+
-			sizeof(schedule)*i);
-		_prep_to_send_16(&(sches[i].schedule_id), msg+BUFFER_SIZE_16+
-			sizeof(schedule)*i+BUFFER_SIZE_16);
-		_prep_to_send_16(&(sches[i].schedule_id), msg+BUFFER_SIZE_16+
-			sizeof(schedule)*i+2*BUFFER_SIZE_16);
-		_prep_to_send_16(&(sches[i].schedule_id), msg+BUFFER_SIZE_16+
-			sizeof(schedule)*i+3*BUFFER_SIZE_16);
+	for(uint16_t i=0;i<sches_size;i++){
+		encode_schedule(msg+sizeof(schedule)*i, sches[i]);
 	}
 
 	_prep_to_send_8(&END_TRANS_CHAR, msg+msg_len-BUFFER_SIZE_8);
 
 	#ifdef DEBUG_SOCKET
 	log_file << time(nullptr) << ": DB-SOCK [ ";
-	for(uint16_t i=0; i<msg_len;i++){
+	for(uint16_t i=0; i<sches_size;i++){
 		log_file << unsigned(msg[i]) << " ";
 	}
 	log_file << "]"<<endl;
 	#endif
 
-	return send(sock_fd, msg, msg_len+2*BUFFER_SIZE_8, 0)<0;
+	n=_send_reply_msg(sock_fd, msg, msg_len);
+
+	delete[] msg;
+	return n;
 }
 
 int send_empty_msg(int sock_fd){

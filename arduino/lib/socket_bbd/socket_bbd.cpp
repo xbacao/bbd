@@ -35,3 +35,12 @@ int get_active_request_msg(char** msg){
   memcpy(*msg+SH_SIZE+ID_SIZE+TYPE_SIZE, &msg_len, T_SIZE_SIZE);
   return 0;
 }
+
+void decode_sches_rsp(char* msg, uint16_t msg_len, schedule* sches){
+  schedule tmp;
+
+  for(uint16_t i=0;i<msg_len/sizeof(schedule);i++){
+    decode_schedule(tmp, msg+i*sizeof(schedule));
+    sches[i]=tmp;
+  }
+}

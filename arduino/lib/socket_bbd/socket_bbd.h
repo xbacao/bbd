@@ -3,7 +3,9 @@
 
 #include <inttypes.h>
 #include <time.h>
-#include "schedule.h"
+#include <schedule.h>
+
+#define BUFFER_SIZE_16 sizeof(uint16_t)
 
 #define htons(x) ( ((x)<<8) | (((x)>>8)&0xFF) )
 #define ntohs(x) htons(x)
@@ -43,6 +45,7 @@ int get_time_request_msg(char** msg);
 int decode_time_rsp_msg(char* msg, uint16_t msg_len, time_t* res);
 
 int get_active_request_msg(char** msg);
-int decode_active_sches_rsp(char* msg, uint16_t msg_len);
+
+void decode_sches_rsp(char* msg, uint16_t msg_len, schedule* sches);
 
 #endif

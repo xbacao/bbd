@@ -6,6 +6,7 @@
 
 int sync_time_with_server();
 int get_last_schedule();
+int get_active_sches();
 int checkin_server();
 /*******************/
 void digitalClockDisplay();

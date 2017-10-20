@@ -25,7 +25,7 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
 int send_time_msg(int sock_fd);
 
 // int send_schedule_msg(ArduinoSchedules a_s, int sock_fd);
-int send_schedules_msg(int sock_fd);
+int send_schedules_msg(int sock_fd, schedule* sches, int sches_size);
 
 int send_empty_msg(int sock_fd);
 

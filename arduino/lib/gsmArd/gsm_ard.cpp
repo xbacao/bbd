@@ -218,7 +218,7 @@ int Gsm_Ard::dettachGPRS(){
   return 0;
 }
 
-int Gsm_Ard::_connect_tcp_socket(){
+int Gsm_Ard::connect_tcp_socket(){
   int n;
   if(_gsm_state!=GSM_IP_STATE){
     return 1;
@@ -259,7 +259,7 @@ int Gsm_Ard::_connect_tcp_socket(){
   return 0;
 }
 
-int Gsm_Ard::_disconnect_tcp_socket(){
+int Gsm_Ard::disconnect_tcp_socket(){
   int n;
   if(_gsm_state!=GSM_TCP_STATE){
     #ifdef DEBUG
@@ -307,23 +307,6 @@ int Gsm_Ard::_send_tcp_data(char* data, uint16_t data_len){
   strcpy_P(cmd, AT_CIPSEND);
   _write_cmd(cmd);
 
-  //wait for prompt
-  // Serial.print("W8ing FOR PROMPT: ");
-  //
-  // for(int i=0;i<100 && !prompt_received;i++){
-  //   if(!_ss.available()){
-  //     delay(100);
-  //   }
-  //   else{
-  //     temp=_ss.read();
-  //     Serial.print((uint8_t) temp);
-  //     Serial.print(' ');
-  //     if(temp==AT_CIPSEND_PROMPT){
-  //       prompt_received=true;
-  //     }
-  //   }
-  // }
-  // Serial.println();
   if(_wait_for_tcp_start()){
     err=2;
     goto exit_clean;
@@ -399,14 +382,6 @@ int Gsm_Ard::_send_cmd_comp_rsp(const char* cmd, const uint16_t cmd_size, const 
 
   while(_ss.available()) _ss.read();
 
-  // #ifdef DEBUG_SS
-  // Serial.print("DB-SND: [");
-  // for(uint16_t i=0;i<cmd_size;i++){
-  //   Serial.print((uint8_t) cmd_buffer[i]);
-  //   Serial.print(" ");
-  // }
-  // Serial.println("]");
-  // #endif
   #ifdef DEBUG_SS
   dbg_print_serial_buffer(__FILE__, __LINE__, "CMD_BUFFER", cmd_buffer, cmd_size);
   #endif
@@ -467,14 +442,6 @@ int Gsm_Ard::_send_cmd_comp_several_rsp(const char* cmd, const uint16_t cmd_size
   strcpy_P(exp_rsp2_buffer, exp_rsp2);
 
   while(_ss.available()) _ss.read();
-  // #ifdef DEBUG_SS
-  // Serial.print("DB-SND: [");
-  // for(uint16_t i=0;i<cmd_size;i++){
-  //   Serial.print((uint8_t) cmd_buffer[i]);
-  //   Serial.print(" ");
-  // }
-  // Serial.println("]");
-  // #endif
 
   #ifdef DEBUG_SS
   dbg_print_serial_buffer(__FILE__, __LINE__, "CMD_BUFFER", cmd_buffer, cmd_size);
@@ -604,14 +571,6 @@ int Gsm_Ard::_recv_string(int wait_period, int max_nl){
     }
   }
 
-  // #ifdef DEBUG_SS
-  // Serial.print("RECV: [");
-  // for(unsigned int j=0;j<_recv_buff_idx;j++){
-  //   Serial.print((uint8_t)_recv_buff[j]);
-  //   Serial.print(" ");
-  // }
-  // Serial.println("]");
-  // #endif
   #ifdef DEBUG_SS
   dbg_print_serial_buffer(__FILE__, __LINE__, "RECV_BUFFER", _recv_buff,
     _recv_buff_idx);
@@ -642,7 +601,6 @@ int Gsm_Ard::_recv_string(int wait_period, int max_nl){
 }
 
 
-/*FIXME*/
 int Gsm_Ard::_recv_socket_size(int wait_period, uint16_t* rsp_size){
   uint16_t tmp;
   if(_recv_buff_state!=BUFF_READY){
@@ -744,14 +702,6 @@ int Gsm_Ard::_recv_socket(int wait_period){
     }
   }
 
-  // #ifdef DEBUG_SOCKET
-  // Serial.print("SOCK_RECV: [");
-  // for(unsigned int j=0;j<_recv_buff_idx;j++){
-  //   Serial.print((uint8_t)_recv_buff[j]);
-  //   Serial.print(" ");
-  // }
-  // Serial.println("]");
-  // #endif
   #ifdef DEBUG_SOCKET
   dbg_print_sock_buffer(__FILE__, __LINE__, "RECV_BUFF", _recv_buff,
     _recv_buff_idx);
@@ -962,7 +912,8 @@ GSM_STATE Gsm_Ard::get_gsm_state(){
 
 int Gsm_Ard::send_socket_msg(char* data, uint16_t data_len, uint16_t* rsp_len){
   int n;
-  n=_connect_tcp_socket();
+
+  n=_send_tcp_data(data, data_len);
   if(n){
     #ifdef DEBUG
     dbg_print_error(__FILE__, __LINE__,  1+10*n);
@@ -970,29 +921,12 @@ int Gsm_Ard::send_socket_msg(char* data, uint16_t data_len, uint16_t* rsp_len){
     return 1+10*n;
   }
 
-  n=_send_tcp_data(data, data_len);
+  n=_recv_tcp_data(rsp_len);
   if(n){
     #ifdef DEBUG
     dbg_print_error(__FILE__, __LINE__,  2+10*n);
     #endif
     return 2+10*n;
-  }
-
-  n=_recv_tcp_data(rsp_len);
-  if(n){
-    _disconnect_tcp_socket();
-    #ifdef DEBUG
-    dbg_print_error(__FILE__, __LINE__,  3+10*n);
-    #endif
-    return 3+10*n;
-  }
-
-  n=_disconnect_tcp_socket();
-  if(n){
-    #ifdef DEBUG
-    dbg_print_error(__FILE__, __LINE__,  4+10*n);
-    #endif
-    return 4+10*n;
   }
 
   return 0;
@@ -1006,13 +940,6 @@ int Gsm_Ard::get_socket_rsp(char** data){
     return 1;
   }
 
-  // Serial.println("SOCK BUFF=");
-  // for(unsigned int i=0;i<_sock_buff_idx;i++){
-  //   Serial.print((uint8_t) _sock_buff[i]);
-  //   Serial.print('-');
-  //   Serial.println((char)_sock_buff[i]);
-  // }
-  // Serial.println();
   dbg_print_sock_buffer(__FILE__, __LINE__, "SOCKET BUFFER", _sock_buff,
     _sock_buff_idx);
 

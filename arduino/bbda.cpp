@@ -55,12 +55,15 @@ void setup()
           #endif
           error=true;
         }
-        else{
-          started=true;//apagar
-        }
       }
       if(!error){
-
+        n=get_active_sches();
+        if(n){
+          #ifdef DEBUG
+          dbg_print_error(__FILE__, __LINE__, n);
+          #endif
+        }
+        started=true;
       }
       // if(!error){
       //   n=get_last_schedule();
@@ -143,8 +146,14 @@ int sync_time_with_server(){
   char* rsp;
   char* msg;
 
-  if(gsm.get_gsm_state()!=GSM_IP_STATE){
-    return 1;
+  n=gsm.connect_tcp_socket();
+  if(n){
+    #ifdef DEBUG
+    if(err){
+      dbg_print_error(__FILE__, __LINE__, 1+10*n);
+    }
+    #endif
+    return 1+10*n;
   }
 
   msg = new char[REQUEST_TIME_MSG_SIZE];
@@ -188,6 +197,7 @@ int sync_time_with_server(){
 exit_clean:
   delete[] msg;
   delete[] rsp;
+  gsm.disconnect_tcp_socket();
   #ifdef DEBUG
   if(err){
     dbg_print_error(__FILE__, __LINE__, err);
@@ -200,12 +210,18 @@ int get_active_sches(){
   unsigned int rsp_len;
   char* rsp;
   char* msg;
-  int err,n;
+  int err=0,n;
   schedule* sches;
   uint16_t n_sches;
 
-  if(gsm.get_gsm_state()!=GSM_IP_STATE){
-    return 1;
+  n=gsm.connect_tcp_socket();
+  if(n){
+    #ifdef DEBUG
+    if(err){
+      dbg_print_error(__FILE__, __LINE__, 1+10*n);
+    }
+    #endif
+    return 1+10*n;
   }
 
   msg = new char[REQUEST_ACTIVE_SCHES_MSG_SIZE];
@@ -228,16 +244,17 @@ int get_active_sches(){
     goto exit_clean;
   }
 
-  n_sches=(rsp_len-1)/sizeof(schedule);
+  n_sches=rsp_len/sizeof(schedule);
   sches=new schedule[n_sches];
 
+  decode_sches_rsp(rsp, rsp_len, sches);
 
-
-  /*TODO*/
+  set_active_schedules(sches, n_sches);
 
 exit_clean:
   delete[] msg;
   delete[] rsp;
+  gsm.disconnect_tcp_socket();
   #ifdef DEBUG
   dbg_print_error(__FILE__, __LINE__, err);
   #endif

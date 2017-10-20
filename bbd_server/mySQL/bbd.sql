@@ -30,32 +30,13 @@ CREATE TABLE IF NOT EXISTS bbd.schedule (
   start_time SMALLINT NOT NULL CHECK(start_time BETWEEN 0 AND 1440),
   stop_time SMALLINT NOT NULL CHECK(start_time BETWEEN 0 AND 1440),
   active BOOLEAN NOT NULL DEFAULT FALSE,
+  deactivate_request BOOLEAN NOT NULL DEFAULT FALSE,
   active_start TIMESTAMP NULL DEFAULT NULL,
   active_end TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (scheduleID)
 );
 ALTER TABLE bbd.schedule ADD FOREIGN KEY fk_valve(valveID_f) REFERENCES bbd.valve(valveID)
 ON DELETE CASCADE;
-
--- DROP PROCEDURE IF EXISTS get_unsent_schedule;
--- DELIMITER $$
--- CREATE PROCEDURE get_unsent_schedule(IN arduino_ID INT)
--- BEGIN
--- SELECT valveID, scheduleID, start_time, stop_time
--- FROM bbd.schedule_entry INNER JOIN (
---   SELECT scheduleID, valveID_f as valveID
---   FROM bbd.schedule INNER JOIN(
---     SELECT MAX(scheduleID) as max_sche_id
---     FROM bbd.schedule INNER JOIN(
---       SELECT *
---       FROM bbd.valve
---       WHERE arduinoID_f=arduino_ID
---     ) AS T1 ON valveID_f=valveID
---     GROUP BY valveID
---   ) AS T2 ON scheduleID=max_sche_id
---   WHERE scheduleID=max_sche_id and active_start IS NULL) AS T3 ON scheduleID_f=scheduleID;
--- END $$
--- DELIMITER ;
 
 DROP PROCEDURE IF EXISTS amount_of_active_schedules;
 DELIMITER $$
@@ -146,8 +127,8 @@ INSERT INTO bbd.arduino VALUES(1, "asdf");
 INSERT INTO bbd.valve VALUES(1,"asdf",1);
 INSERT INTO bbd.valve VALUES(2,"asdf",1);
 
-INSERT INTO bbd.schedule(valveID_f, start_time, stop_time, active) VALUES
-  (1, 60, 120, TRUE);
+INSERT INTO bbd.schedule(valveID_f, start_time, stop_time, active, deactivate_request) VALUES
+  (1, 60, 120, TRUE, FALSE);
 --
 -- INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
 -- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());

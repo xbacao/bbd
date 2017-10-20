@@ -38,6 +38,10 @@ public:
   int init_gsm_module();
   int attachGPRS();
   int dettachGPRS();
+  int connect_tcp_socket();
+  int disconnect_tcp_socket();
+
+
   int send_socket_msg(char* data, uint16_t data_len,uint16_t* rsp_len);
   int get_socket_rsp(char** data);
   GSM_STATE get_gsm_state();
@@ -48,10 +52,8 @@ private:
   int _no_cmd_comp_rsp(const char* exp_rsp, const uint16_t exp_rsp_size, int recv_wait_period);
 
   /* tcp */
-  int _connect_tcp_socket();
   int _send_tcp_data(char* data, uint16_t data_len);
   int _recv_tcp_data(uint16_t* data_len);
-  int _disconnect_tcp_socket();
 
   void _change_gsm_state(GSM_STATE new_state);
 

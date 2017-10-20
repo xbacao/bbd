@@ -7,10 +7,9 @@
 
 <h1>Schedule Manager</h1>
 
-<div class="col-md-4">
+<div class="col-md-1">
 	<h3>Valves</h3>
 	{% if valve_list %}
-	<ul>
 	<table border="0" class="table">
 	{% for valve in valve_list %}
 		<tr><td>
@@ -24,18 +23,16 @@
 	{% endif %}
 
 </div>
-<div class="col-md-8">
+<div class="col-md-11">
 	<h3>Schedules</h3>
 	{% if schedule_list %}
-	<ul>
 	<table border="0" class="table">
 		<tr>
 			<td>ID</td>
 			<td>Description</td>
 			<td>Created on</td>
 			<td>Active</td>
-			<td>Activity Start</td>
-			<td>Activity End</td>
+			<td>Deact. Request</td>
 			<td>View</td>
 		</tr>
 	{% for sche in schedule_list %}
@@ -50,8 +47,13 @@
 					<span class="glyphicon glyphicon-remove"></span>
 				{% endif %}
 			</td>
-			<td>{{sche.active_start}}</td>
-			<td>{{sche.active_end}}</td>
+			<td>
+				{% if sche.deactivate_request == 1 %}
+					<span class="glyphicon glyphicon-ok"></span>
+				{% else %}
+					<span class="glyphicon glyphicon-remove"></span>
+				{% endif %}
+			</td>
 			<td>
 				<form action="#" method="post">
 				{% csrf_token %}
@@ -62,22 +64,82 @@
 		</tr>
 	{% endfor %}
 	</table>
-	{% else %}
-	<a>No schedules to display</a>
-	{% endif %}
-
-	{% if valve_id %}
-	<form action="#" method="post">
-			{% csrf_token %}
-				<input type="submit" class="btn btn-default" value="add schedule" name="add_new">
-				<input type="hidden" value="{{valve_id}}" name="valve_id">
-	</form>
+	<div class="col-md-10"/>
+	<div class="col-md-2">
+		<form action="#" method="post">
+				{% csrf_token %}
+					<input type="submit" class="btn btn-default pull-right" value="add schedule" name="add_new">
+					<input type="hidden" value="{{valve_id}}" name="valve_id">
+		</form>
+	</div>
 	{% endif %}
 
 </div>
-<ul>
+</ul>
 
-{% if output_msg %}
-<a>{{output_msg}}</a>
+<ul>
+{% if sche %}
+<script>
+function pad(d) {
+	d=parseInt(d);
+	return (d < 10) ? '0' + d.toString() : d.toString();
+}
+window.onload = function() {
+	var start = document.getElementById("sche_start");
+	start.innerHTML=pad({{sche.start_time}}/60) + ':' + pad({{sche.start_time}}%60);
+	var stop = document.getElementById("sche_stop");
+	stop.innerHTML=pad({{sche.stop_time}}/60) + ':' + pad({{sche.stop_time}}%60);
+};
+</script>
+<p></p>
+<h1>Schedule Details</h1>
+<table border="0" class="table">
+  <tr>
+    <td>ID</td><td>{{sche.scheduleid}}</td>
+  </tr>
+  <tr>
+    <td>Valve</td><td>{{sche.valveid_f.valveid}}</td>
+  </tr>
+  <tr>
+    <td>Description</td><td>{{sche.description}}</td>
+  </tr>
+	<tr>
+		<td>Start watering at</td><td id="sche_start"></td>
+	</tr>
+	<tr>
+		<td>Stop watering at</td><td id="sche_stop"></td>
+	</tr>
+  <tr>
+    <td>Active</td>
+    <td>
+      {% if sche.active == 1 %}
+        <span class="glyphicon glyphicon-ok"></span>
+      {% else %}
+        <span class="glyphicon glyphicon-remove"></span>
+      {% endif %}
+    </td>
+  </tr>
+	<tr>
+		<td>Deactivate Request</td>
+		<td>
+			{% if sche.deactivate_request == 1 %}
+        <span class="glyphicon glyphicon-ok"></span>
+      {% else %}
+        <span class="glyphicon glyphicon-remove"></span>
+      {% endif %}
+		</td>
+	</tr>
+  <tr>
+    <td>Created On</td><td>{{sche.created_on}}</td>
+  </tr>
+  <tr>
+    <td>Schedule activated on</td><td id="sche_start">{{sche.active_start}}</td>
+  </tr>
+  <tr>
+    <td>Schedule deactivated on</td><td id="sche_stop">{{sche.active_end}}</td>
+  </tr>
+</table>
+</ul>
 {% endif %}
+
 {% endblock %}
