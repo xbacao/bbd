@@ -38,13 +38,13 @@ int init_gprs(){
   _serialFD = SoftwareSerial(_GSM_RXPIN_, _GSM_TXPIN_);
   _serialFD.begin(DEFAULT_SS_BAUDRATE);
 
-  n=_send_cmd_comp_rsp(AT, AT_LEN, AT_OK, AT_OK_LEN, 5000);
+  n=SendATCmdWaitResp(AT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
   if(!n){
     _change_gprs_state(GSM_ON_STATE);
   }
   for(i=0;i<8 && _gprs_state!=GSM_ON_STATE;i++){
     _serialFD.begin(_POSSIBLE_BRS[i]);
-    n=_send_cmd_comp_rsp(AT, AT_LEN, AT_OK, AT_OK_LEN, 5000);
+    n=SendATCmdWaitResp(AT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
     if(!n){
       _change_gprs_state(GSM_ON_STATE);
     }
@@ -54,7 +54,7 @@ int init_gprs(){
     return 1;
   }
 
-  n=_send_cmd_comp_several_rsp(AT_CPIN_R, AT_CPIN_R_LEN, AT_CPIN_READY, AT_CPIN_READY_LEN, AT_CPIN_SIM_PIN, AT_CPIN_SIM_PIN_LEN, 5000);
+  n=_send_cmd_comp_several_rsp(AT_CPIN_R, START_COM_TMOUT, AT_CPIN_READY, AT_CPIN_READY_LEN, AT_CPIN_SIM_PIN, AT_CPIN_SIM_PIN_LEN, 5000);
   switch(n){
     default:
       return 2+10*n;
@@ -62,20 +62,20 @@ int init_gprs(){
     case 0:
       break;
     case 1:
-      n=_send_cmd_comp_rsp(AT_CPIN_SET, AT_CPIN_SET_LEN, AT_OK, AT_OK_LEN, 5000);
+      n=SendATCmdWaitResp(AT_CPIN_SET, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
       if(n){
         return 3+10*n;
       }
       break;
   }
 
-  n=_send_cmd_comp_several_rsp(AT_CIURC_R, AT_CIURC_R_LEN, AT_CIURC_0, AT_CIURC_0_LEN, AT_CIURC_1, AT_CIURC_1_LEN, 5000);
+  n=_send_cmd_comp_several_rsp(AT_CIURC_R, START_COM_TMOUT, AT_CIURC_0, AT_CIURC_0_LEN, AT_CIURC_1, AT_CIURC_1_LEN, 5000);
   switch(n){
     default:
       return 4+10*n;
       break;
     case 0:
-      n=_send_cmd_comp_rsp(AT_CIURC_SET, AT_CIURC_SET_LEN, AT_OK, AT_OK_LEN, 5000);
+      n=SendATCmdWaitResp(AT_CIURC_SET, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
       if(n){
         return 5+10*n;
       }
@@ -101,7 +101,8 @@ int attachGPRS(){
       return 2+n*10;
       break;
     case 0:
-      n=_send_cmd_comp_rsp(AT_CGATT_SET_ON, AT_CGATT_SET_ON_LEN, AT_OK, AT_OK_LEN, 10000);
+    //10k
+      n=SendATCmdWaitResp(AT_CGATT_SET_ON, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
       if(n){
         return 3+n*10;
       }
@@ -118,19 +119,19 @@ int attachGPRS(){
     case 0:
       break;
     case 1:
-      n=_send_cmd_comp_rsp(AT_CIPMODE, AT_CIPMODE_LEN, AT_OK, AT_OK_LEN, 5000);
+      n=SendATCmdWaitResp(AT_CIPMODE, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
       if(n){
         return 5+n*10;
       }
       break;
   }
 
-  n=_send_cmd_comp_rsp(AT_CGDCONT, AT_CGDCONT_LEN, AT_OK, AT_OK_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CGDCONT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
   if(n){
     return 6+n*10;
   }
 
-  n=_send_cmd_comp_rsp(AT_CIFSR, AT_CIFSR_LEN, AT_ERROR, AT_ERROR_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CIFSR, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_ERROR, N_ATTEMPTS);
   switch(n){
     default:
       return 7+n*10;
@@ -143,13 +144,13 @@ int attachGPRS(){
       break;
   }
 
-  n=_send_cmd_comp_rsp(AT_CIPSERVER_R, AT_CIPSERVER_R_LEN, AT_CIPSERVER_RESP, AT_CIPSERVER_RESP_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CIPSERVER_R, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_CIPSERVER_RESP, N_ATTEMPTS);
   switch(n){
     default:
       return 8+n*10;
       break;
     case 1:
-      n=_send_cmd_comp_rsp(AT_CIPSERVER_SET, AT_CIPSERVER_SET_LEN, AT_OK, AT_OK_LEN, 5000);
+      n=SendATCmdWaitResp(AT_CIPSERVER_SET, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
       if(!n){
         return 9+n*10;
       }
@@ -158,17 +159,17 @@ int attachGPRS(){
       break;
   }
 
-  n=_send_cmd_comp_rsp(AT_CSTT, AT_CSTT_LEN, AT_OK, AT_OK_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CSTT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
   if(n){
     return 10;
   }
 
-  n=_send_cmd_comp_rsp(AT_CIICR, AT_CIICR_LEN, AT_OK, AT_OK_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CIICR, AT_CIICR_LEN, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
   if(n){
     return 11;
   }
 
-  n=_send_cmd_comp_rsp(AT_CIFSR, AT_CIFSR_LEN, AT_ERROR, AT_ERROR_LEN, 5000);
+  n=SendATCmdWaitResp(AT_CIFSR, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_ERROR, N_ATTEMPTS);
   if(n!=1){
     return 12;
   }
@@ -183,7 +184,8 @@ int dettachGPRS(){
     return 1;
   }
 
-  n=_send_cmd_comp_rsp(AT_CIPSHUT, AT_CIPSHUT_LEN, AT_SHUT_OK, AT_SHUT_OK_LEN, 10000);
+  //10k
+  n=SendATCmdWaitResp(AT_CIPSHUT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_SHUT_OK, N_ATTEMPTS;
   if(n){
     return 2+10*n;
   }
@@ -196,7 +198,8 @@ int dettachGPRS(){
     case 0:
       break;
     case 1:
-      n=_send_cmd_comp_rsp(AT_CGATT_SET_OFF, AT_CGATT_SET_OFF_LEN, AT_OK, AT_OK_LEN, 10000);
+    //10k
+      n=SendATCmdWaitResp(AT_CGATT_SET_OFF, START_COM_TMOUT,MAX_INTERCHAR_TMOUT, AT_OK, AN_ATTEMPTS);
       if(n){
         return 4+10*n;
       }
@@ -205,7 +208,6 @@ int dettachGPRS(){
   _change_gprs_state(GSM_PIN_STATE);
   return 0;
 }
-
 
 enum GPRS_STATE get_gprs_state(){
   return _gprs_state;
