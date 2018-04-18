@@ -28,7 +28,7 @@ void serialBegin(int baud){
 	gFD = serialOpen("/dev/ttyAMA0",baud);
 }
 
-void TurnOn(long baud_rate){
+int TurnOn(long baud_rate){
 	int i;
 	char* baud_rate_str;
 
@@ -39,180 +39,61 @@ void TurnOn(long baud_rate){
 	SetCommLineStatus(CLS_ATCMD);
 	serialBegin(baud_rate);
 
-	#ifdef DEBUG_PRINT
-	// parameter 0 - because module is off so it is not necessary
-	// to send finish AT<CR> here
-	DebugPrint("DEBUG: baud ", 0);
-	DebugPrintD(baud_rate, 0);
-	#endif
-
-	if (AT_RESP_ERR_NO_RESP == SendATCmdWaitResp("AT", 500, 100, "OK", 5))
-	{		//check power
-    	// there is no response => turn on the module
-
-		#ifdef DEBUG_PRINT
-			// parameter 0 - because module is off so it is not necessary
-			// to send finish AT<CR> here
-			DebugPrint("DEBUG: GSM module is off\r\n", 0);
-			DebugPrint("DEBUG: start the module\r\n", 0);
-		#endif
-
-		// generate turn on pulse
+	if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_ERR_NO_RESP){
+  		// generate turn on pulse
 
 		digitalWrite(GSM_ON, HIGH);
 		delay(1200);
-		//sleep(2);
 		digitalWrite(GSM_ON, LOW);
 		delay(5000);
-		//sleep(5);
-	}
-	else
-	{
-		#ifdef DEBUG_PRINT
-			// parameter 0 - because module is off so it is not necessary
-			// to send finish AT<CR> here
-			DebugPrint("DEBUG: GSM module is on\r\n", 0);
-		#endif
 	}
 
-	if (AT_RESP_ERR_DIF_RESP == SendATCmdWaitResp("AT", 500, 100, "OK", 5))
-	{		//check OK
-
-		#ifdef DEBUG_PRINT
-			// parameter 0 - because module is off so it is not necessary
-			// to send finish AT<CR> here
-			DebugPrint("DEBUG: the baud is not ok\r\n", 0);
-		#endif
-			  //SendATCmdWaitResp("AT+IPR=9600", 500, 50, "OK", 5);
-
-		for (i=1;i<7;i++)
-		{
-			switch (i)
-			{
+	if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_ERR_DIF_RESP){
+		for (i=1;i<7;i++){
+			switch (i){
 				case 1:
 					serialBegin(4800);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 4800\r\n", 0);
-					#endif
 				break;
 				case 2:
 					serialBegin(9600);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 9600\r\n", 0);
-					#endif
 				break;
 				case 3:
 					serialBegin(19200);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 19200\r\n", 0);
-					#endif
 				break;
 				case 4:
 					serialBegin(38400);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 38400\r\n", 0);
-					#endif
 				break;
 				case 5:
 					serialBegin(57600);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 57600\r\n", 0);
-					#endif
 				break;
 				case 6:
 					serialBegin(115200);
-					#ifdef DEBUG_PRINT
-						DebugPrint("DEBUG: provo Baud 115200\r\n", 0);
-					#endif
 				break;
-				// if nothing else matches, do the default
-				// default is optional
 			}
-			/*
-			p_char = strchr((char *)(comm_buf),',');
-			p_char1 = p_char+2; // we are on the first phone number character
-			p_char = strchr((char *)(p_char1),'"');
-			if (p_char != NULL) {
-			*p_char = 0; // end of string
-			strcpy(phone_number, (char *)(p_char1));
-			}
-			*/
 			sprintf(baud_rate_str,"%ld",baud_rate);
 
 			delay(100);
-			/*sprintf (buff,"AT+IPR=%f",baud_rate);
-				#ifdef DEBUG_PRINT
-					// parameter 0 - because module is off so it is not necessary
-					// to send finish AT<CR> here
-					DebugPrint("DEBUG: Stringa ", 0);
-					DebugPrint(buff, 0);
-				#endif
-				*/
+
 			serialPuts("AT+IPR=");
-			//serialPuts(baud_rate);
 			serialPuts(baud_rate_str);
 			serialPuts("\r"); // send <CR>
 			delay(500);
 			serialBegin(baud_rate);
 			delay(100);
-			if (AT_RESP_OK == SendATCmdWaitResp("AT", 500, 100, "OK", 5))
-			{
-					#ifdef DEBUG_PRINT
-						// parameter 0 - because module is off so it is not necessary
-						// to send finish AT<CR> here
-						DebugPrint("DEBUG: ricevuto ok da modulo, baud impostato: ", 0);
-						DebugPrintD(baud_rate, 0);
-					#endif
+			if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_OK){
 					break;
 			}
-
 		}
 
-			// communication line is not used yet = free
-			SetCommLineStatus(CLS_FREE);
-			// pointer is initialized to the first item of comm. buffer
-			p_comm_buf = &comm_buf[0];
-
-		if (AT_RESP_ERR_NO_RESP == SendATCmdWaitResp("AT", 500, 50, "OK", 5))
-		{
-			#ifdef DEBUG_PRINT
-				// parameter 0 - because module is off so it is not necessary
-				// to send finish AT<CR> here
-				DebugPrint("DEBUG: No answer from the module\r\n", 0);
-			#endif
-		}
-		else
-		{
-
-			#ifdef DEBUG_PRINT
-				// parameter 0 - because module is off so it is not necessary
-				// to send finish AT<CR> here
-				DebugPrint("DEBUG: 1 baud ok\r\n", 0);
-			#endif
-		}
-
-
-	}
-	else
-	{
-		#ifdef DEBUG_PRINT
-			DebugPrint("DEBUG: 2 GSM module is on and baud is ok\r\n", 0);
-		#endif
-
+		SetCommLineStatus(CLS_FREE);
+		p_comm_buf = &comm_buf[0];
 	}
 
   SetCommLineStatus(CLS_FREE);
-  // send collection of first initialization parameters for the GSM module
 
-	// check comm line
-  if (CLS_FREE != GetCommLineStatus()) return;
 
-	#ifdef DEBUG_PRINT
-		DebugPrint("DEBUG: configure the module PARAM_SET_0\r\n", 0);
-	#endif
   SetCommLineStatus(CLS_ATCMD);
 
-  // Reset to the factory settings
   SendATCmdWaitResp("AT&F", 1000, 50, "OK", 5);
   // switch off echo
   //SendATCmdWaitResp("ATE0", 500, 50, "OK", 5);
@@ -231,6 +112,8 @@ void TurnOn(long baud_rate){
   SetCommLineStatus(CLS_FREE);
 
 	free(baud_rate_str);
+
+	return 0;
 }
 
 /*
@@ -240,34 +123,30 @@ void TurnOn(long baud_rate){
 *********************************************************************************
 */
 
-int serialOpen (char *device, int baud)
-{
+int serialOpen (char *device, int baud) {
 	struct termios options ;
 	speed_t myBaud ;
 	int     status, fd ;
 
-	switch (baud)
-	{
-	case     50:	myBaud =     B50 ; break ;
-	case     75:	myBaud =     B75 ; break ;
-	case    110:	myBaud =    B110 ; break ;
-	case    134:	myBaud =    B134 ; break ;
-	case    150:	myBaud =    B150 ; break ;
-	case    200:	myBaud =    B200 ; break ;
-	case    300:	myBaud =    B300 ; break ;
-	case    600:	myBaud =    B600 ; break ;
-	case   1200:	myBaud =   B1200 ; break ;
-	case   1800:	myBaud =   B1800 ; break ;
-	case   2400:	myBaud =   B2400 ; break ;
-	case   9600:	myBaud =   B9600 ; break ;
-	case  19200:	myBaud =  B19200 ; break ;
-	case  38400:	myBaud =  B38400 ; break ;
-	case  57600:	myBaud =  B57600 ; break ;
-	case 115200:	myBaud = B115200 ; break ;
-	case 230400:	myBaud = B230400 ; break ;
-
-	default:
-	return -2 ;
+	switch (baud)	{
+		case     50:	myBaud =     B50 ; break ;
+		case     75:	myBaud =     B75 ; break ;
+		case    110:	myBaud =    B110 ; break ;
+		case    134:	myBaud =    B134 ; break ;
+		case    150:	myBaud =    B150 ; break ;
+		case    200:	myBaud =    B200 ; break ;
+		case    300:	myBaud =    B300 ; break ;
+		case    600:	myBaud =    B600 ; break ;
+		case   1200:	myBaud =   B1200 ; break ;
+		case   1800:	myBaud =   B1800 ; break ;
+		case   2400:	myBaud =   B2400 ; break ;
+		case   9600:	myBaud =   B9600 ; break ;
+		case  19200:	myBaud =  B19200 ; break ;
+		case  38400:	myBaud =  B38400 ; break ;
+		case  57600:	myBaud =  B57600 ; break ;
+		case 115200:	myBaud = B115200 ; break ;
+		case 230400:	myBaud = B230400 ; break ;
+		default:	return -2 ;
 	}
 
 	fd = open (device, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);

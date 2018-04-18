@@ -35,7 +35,7 @@ enum rx_state_enum
 };
 
 void 	serialBegin				(int baud);
-void 	TurnOn						(long baud_rate);
+int 	TurnOn						(long baud_rate);
 int   serialOpen      	(char *device, int baud);
 void  serialClose     	(void);
 void  serialFlush     	(void);

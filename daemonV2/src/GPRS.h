@@ -1,8 +1,7 @@
 #ifndef _GPRS_H_
 #define _GPRS_H_
 
-#define _GSM_RXPIN_ 7
-#define _GSM_TXPIN_ 8
+
 #define DEFAULT_SS_BAUDRATE 2400
 #define DEFAULT_RECV_WAIT_PERIOD  100    //ms
 
