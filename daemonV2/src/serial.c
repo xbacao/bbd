@@ -23,97 +23,20 @@ static unsigned long prev_time;        // previous time in msec.
 static byte comm_line_status;
 static byte comm_buf[COMM_BUF_LEN+1];
 
-void serialBegin(int baud){
+void serial_begin(int baud){
 	wiringPiSetup();
 	gFD = serialOpen("/dev/ttyAMA0",baud);
 }
 
-int TurnOn(long baud_rate){
-	int i;
-	char* baud_rate_str;
+void turn_on_signal(){
+	digitalWrite(GSM_ON, HIGH);
+	delay(1200);
+	digitalWrite(GSM_ON, LOW);
+	delay(5000);
+}
 
-	baud_rate_str=(char*) malloc(sizeof(char)*15);
+int gprs_turn_on_setup(long baud_rate){
 
-	pullUpDnControl(GSM_ON,PUD_DOWN);
-	pullUpDnControl(GSM_RESET,PUD_DOWN);
-	SetCommLineStatus(CLS_ATCMD);
-	serialBegin(baud_rate);
-
-	if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_ERR_NO_RESP){
-  		// generate turn on pulse
-
-		digitalWrite(GSM_ON, HIGH);
-		delay(1200);
-		digitalWrite(GSM_ON, LOW);
-		delay(5000);
-	}
-
-	if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_ERR_DIF_RESP){
-		for (i=1;i<7;i++){
-			switch (i){
-				case 1:
-					serialBegin(4800);
-				break;
-				case 2:
-					serialBegin(9600);
-				break;
-				case 3:
-					serialBegin(19200);
-				break;
-				case 4:
-					serialBegin(38400);
-				break;
-				case 5:
-					serialBegin(57600);
-				break;
-				case 6:
-					serialBegin(115200);
-				break;
-			}
-			sprintf(baud_rate_str,"%ld",baud_rate);
-
-			delay(100);
-
-			serialPuts("AT+IPR=");
-			serialPuts(baud_rate_str);
-			serialPuts("\r"); // send <CR>
-			delay(500);
-			serialBegin(baud_rate);
-			delay(100);
-			if (SendATCmdWaitResp("AT", 500, 100, "OK", 5)==AT_RESP_OK){
-					break;
-			}
-		}
-
-		SetCommLineStatus(CLS_FREE);
-		p_comm_buf = &comm_buf[0];
-	}
-
-  SetCommLineStatus(CLS_FREE);
-
-
-  SetCommLineStatus(CLS_ATCMD);
-
-  SendATCmdWaitResp("AT&F", 1000, 50, "OK", 5);
-  // switch off echo
-  //SendATCmdWaitResp("ATE0", 500, 50, "OK", 5);
-  // setup fixed baud rate
-  //SendATCmdWaitResp("AT+IPR=9600", 500, 50, "OK", 5);
-  // setup mode
-  //SendATCmdWaitResp("AT#SELINT=1", 500, 50, "OK", 5);
-  // Switch ON User LED - just as signalization we are here
-  //SendATCmdWaitResp("AT#GPIO=8,1,1", 500, 50, "OK", 5);
-  // Sets GPIO9 as an input = user button
-  //SendATCmdWaitResp("AT#GPIO=9,0,0", 500, 50, "OK", 5);
-  // allow audio amplifier control
-  //SendATCmdWaitResp("AT#GPIO=5,0,2", 500, 50, "OK", 5);
-  // Switch OFF User LED- just as signalization we are finished
-  //SendATCmdWaitResp("AT#GPIO=8,0,1", 500, 50, "OK", 5);
-  SetCommLineStatus(CLS_FREE);
-
-	free(baud_rate_str);
-
-	return 0;
 }
 
 /*
@@ -217,16 +140,23 @@ return comm_line_status;
 Method sends AT command and waits for response
 
 return:
-AT_RESP_ERR_NO_RESP = -1,   // no response received
-AT_RESP_ERR_DIF_RESP = 0,   // response_string is different from the response
-AT_RESP_OK = 1,             // response_string was included in the response
+AT_BUFFER_BUSY = 3  	 					// response buffer busy
+AT_RESP_ERR_NO_RESP = 2,   // no response received
+AT_RESP_ERR_DIF_RESP = 1,   // response_string is different from the response
+AT_RESP_OK = 0             					// response_string was included in the response
 **********************************************************/
-char SendATCmdWaitResp(char *AT_cmd_string,uint16_t start_comm_tmout, uint16_t max_interchar_tmout,char const *response_string,byte no_of_attempts)
+char send_at_cmd_wait_resp(char *AT_cmd_string,uint16_t start_comm_tmout, uint16_t max_interchar_tmout,char const *response_string,byte no_of_attempts)
 {
 	byte status;
 
 	char ret_val = AT_RESP_ERR_NO_RESP;
 	byte i;
+
+	if(GetCommLineStatus()!=CLS_FREE){
+		return AT_BUFFER_BUSY;
+	}
+
+	SetCommLineStatus(CLS_ATCMD);
 
 	for (i = 0; i < no_of_attempts; i++)
 	{
@@ -257,9 +187,9 @@ char SendATCmdWaitResp(char *AT_cmd_string,uint16_t start_comm_tmout, uint16_t m
 		}
 
 	}
+	SetCommLineStatus(CLS_FREE);
 
-
-return (ret_val);
+	return (ret_val);
 }
 
 int serialDataAvail (void)

@@ -16,6 +16,7 @@
 
 enum at_resp_enum
 {
+	AT_BUFFER_BUSY = 3,
 	AT_RESP_ERR_NO_RESP = 2,   // nothing received
 	AT_RESP_ERR_DIF_RESP = 1,   // response_string is different from the response
 	AT_RESP_OK = 0,             // response_string was included in the response
@@ -34,8 +35,10 @@ enum rx_state_enum
 	RX_LAST_ITEM
 };
 
-void 	serialBegin				(int baud);
-int 	TurnOn						(long baud_rate);
+void 	serial_begin				(int baud);
+void turn_on_signal();
+//mudar o conteudo (mais ou menos para GPRS.c)
+// int 	gprs_turn_on_setup						(long baud_rate);
 int   serialOpen      	(char *device, int baud);
 void  serialClose     	(void);
 void  serialFlush     	(void);
@@ -49,7 +52,16 @@ byte 	GetCommLineStatus	(void);
 void 	RxInit						(uint16_t start_comm_tmout, uint16_t max_interchar_tmout);
 byte 	IsRxFinished			(void);
 
-char 	SendATCmdWaitResp	(char *AT_cmd_string,	uint16_t start_comm_tmout,
+/**********************************************************
+Method sends AT command and waits for response
+
+return:
+AT_BUFFER_BUSY = 3  	 					// response buffer busy
+AT_RESP_ERR_NO_RESP = 2,   // no response received
+AT_RESP_ERR_DIF_RESP = 1,   // response_string is different from the response
+AT_RESP_OK = 0             					// response_string was included in the response
+**********************************************************/
+char 	send_at_cmd_wait_resp	(char *AT_cmd_string,	uint16_t start_comm_tmout,
   											uint16_t max_interchar_tmout,	char const *response_string,
   											byte no_of_attempts);
 

@@ -19,10 +19,8 @@
 
 #define DEBUG_STATES
 
-enum GPRS_STATE{GSM_OFF_STATE, GSM_ON_STATE, GSM_PIN_STATE, GSM_IP_STATE, GSM_TCP_STATE};
+enum GPRS_STATE{GPRS_OFF_STATE, GPRS_ON_STATE, GPRS_PIN_STATE, GPRS_IP_STATE, GPRS_TCP_STATE};
 enum BUFF_STATE{BUFF_READY, BUFF_USED};
-
-
 
 int init_gprs();
 int attachGPRS();
@@ -32,9 +30,6 @@ int disconnect_tcp_socket();
 
 
 
-GPRS_STATE get_gsm_state();
+enum GPRS_STATE get_gsm_state();
 
-
-
-};
 #endif
