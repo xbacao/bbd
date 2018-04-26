@@ -1,4 +1,4 @@
-#include "GPRS.h"
+#include "serial.h"
 #include <wiringPi.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -23,30 +23,36 @@ static unsigned long prev_time;        // previous time in msec.
 static byte comm_line_status;
 static byte comm_buf[COMM_BUF_LEN+1];
 
+
+static int   	serial_open      			(char *device, int baud);
+static int   	serial_data_avail 		(void);
+static int   	serial_get_char   		(void);
+
+static void 	set_comm_line_status	(byte new_status);
+static byte 	get_comm_line_status	(void);
+
+static void 	rx_init								(uint16_t start_comm_tmout, uint16_t max_interchar_tmout);
+static byte 	is_rx_finished				(void);
+
 void serial_begin(int baud){
 	wiringPiSetup();
-	gFD = serialOpen("/dev/ttyAMA0",baud);
+	gFD = serial_open("/dev/ttyAMA0",baud);
 }
 
 void turn_on_signal(){
-	digitalWrite(GSM_ON, HIGH);
+	digitalWrite(GPRS_ON, HIGH);
 	delay(1200);
-	digitalWrite(GSM_ON, LOW);
+	digitalWrite(GPRS_ON, LOW);
 	delay(5000);
 }
 
-int gprs_turn_on_setup(long baud_rate){
-
-}
-
 /*
-* serialOpen:
+* serial_open:
 *	Open and initialise the serial port, setting all the right
 *	port parameters - or as many as are required - hopefully!
 *********************************************************************************
 */
-
-int serialOpen (char *device, int baud) {
+int serial_open (char *device, int baud) {
 	struct termios options ;
 	speed_t myBaud ;
 	int     status, fd ;
@@ -103,19 +109,9 @@ int serialOpen (char *device, int baud) {
 return fd ;
 }
 
-void serialFlush (void)
-{
-	tcflush (gFD, TCIOFLUSH) ;
-}
-
 void serialClose (void)
 {
 	close (gFD) ;
-}
-
-void serialPutchar (unsigned char c)
-{
-	write (gFD, &c, 1) ;
 }
 
 void serialPuts (char *s)
@@ -126,12 +122,12 @@ void serialPuts (char *s)
 	write(gFD,i,strlen(i));
 }
 
-void SetCommLineStatus(byte new_status)
+void set_comm_line_status(byte new_status)
 {
 comm_line_status = new_status;
 }
 
-byte GetCommLineStatus(void)
+byte get_comm_line_status(void)
 {
 return comm_line_status;
 }
@@ -145,21 +141,20 @@ AT_RESP_ERR_NO_RESP = 2,   // no response received
 AT_RESP_ERR_DIF_RESP = 1,   // response_string is different from the response
 AT_RESP_OK = 0             					// response_string was included in the response
 **********************************************************/
-char send_at_cmd_wait_resp(char *AT_cmd_string,uint16_t start_comm_tmout, uint16_t max_interchar_tmout,char const *response_string,byte no_of_attempts)
-{
+char send_at_cmd_wait_resp(const char *AT_cmd_string,uint16_t start_comm_tmout,
+uint16_t max_interchar_tmout,char const *response_string,byte no_of_attempts){
 	byte status;
 
 	char ret_val = AT_RESP_ERR_NO_RESP;
 	byte i;
 
-	if(GetCommLineStatus()!=CLS_FREE){
+	if(get_comm_line_status()!=CLS_FREE){
 		return AT_BUFFER_BUSY;
 	}
 
-	SetCommLineStatus(CLS_ATCMD);
+	set_comm_line_status(CLS_ATCMD);
 
-	for (i = 0; i < no_of_attempts; i++)
-	{
+	for (i = 0; i < no_of_attempts; i++){
 	// delay 500 msec. before sending next repeated AT command
 	// so if we have no_of_attempts=1 tmout will not occurred
 		if (i > 0) delay(500);
@@ -187,12 +182,12 @@ char send_at_cmd_wait_resp(char *AT_cmd_string,uint16_t start_comm_tmout, uint16
 		}
 
 	}
-	SetCommLineStatus(CLS_FREE);
+	set_comm_line_status(CLS_FREE);
 
 	return (ret_val);
 }
 
-int serialDataAvail (void)
+int serial_data_avail (void)
 {
 	int result ;
 
@@ -202,7 +197,7 @@ int serialDataAvail (void)
 	return result ;
 }
 
-int serialGetchar (void)
+int serial_get_char (void)
 {
 	uint8_t x;
 
@@ -228,11 +223,11 @@ byte WaitResp(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 {
 	byte status;
 
-	RxInit(start_comm_tmout, max_interchar_tmout);
+	rx_init(start_comm_tmout, max_interchar_tmout);
 	// wait until response is not finished
 	do
 	{
-	status = IsRxFinished();
+	status = is_rx_finished();
 	}
 	while (status == RX_NOT_FINISHED);
 	return (status);
@@ -248,7 +243,7 @@ in msec.
 if there is no other incoming character longer then specified
 tmout(in msec) receiving process is considered as finished
 **********************************************************/
-void RxInit(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
+void rx_init(uint16_t start_comm_tmout, uint16_t max_interchar_tmout)
 {
 	rx_state = RX_NOT_STARTED;
 	start_reception_tmout = start_comm_tmout;
@@ -268,7 +263,7 @@ RX_NOT_FINISHED = 0,// not finished yet
 RX_FINISHED,        // finished - inter-character tmout occurred
 RX_TMOUT_ERR,       // initial communication tmout occurred
 **********************************************************/
-byte IsRxFinished(void)
+byte is_rx_finished(void)
 {
 	byte num_of_bytes;
 	byte ret_val = RX_NOT_FINISHED;  // default not finished
@@ -278,7 +273,7 @@ byte IsRxFinished(void)
 if (rx_state == RX_NOT_STARTED)
 {
 	// Reception is not started yet - check tmout
-	if (!serialDataAvail())
+	if (!serial_data_avail())
 	{
 	// still no character received => check timeout
 	/*
@@ -319,7 +314,7 @@ if (rx_state == RX_NOT_STARTED)
 		// Reception already started
 		// check new received bytes
 		// only in case we have place in the buffer
-		num_of_bytes = serialDataAvail();
+		num_of_bytes = serial_data_avail();
 		// if there are some received bytes postpone the timeout
 		if (num_of_bytes) prev_time = millis();
 
@@ -336,7 +331,7 @@ if (rx_state == RX_NOT_STARTED)
 				// move available bytes from circular buffer
 				// to the rx buffer
 				// printf("understand\n");
-				*p_comm_buf = serialGetchar();
+				*p_comm_buf = serial_get_char();
 
 				p_comm_buf++;
 				comm_buf_len++;
@@ -355,7 +350,7 @@ if (rx_state == RX_NOT_STARTED)
 				// so just readout character from circular RS232 buffer
 				// to find out when communication id finished(no more characters
 				// are received in inter-char timeout)
-				//*p_comm_buf = serialGetchar();
+				//*p_comm_buf = serial_get_char();
 			//}
 		}
 

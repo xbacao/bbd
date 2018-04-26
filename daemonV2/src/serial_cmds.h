@@ -6,6 +6,7 @@
 
 /*******AT COMMANDS******/
 #define AT                "AT"
+#define AT_OK             "OK"
 #define AT_CPIN_R         "AT+CPIN?"
 #define AT_CPIN_READY     "+CPIN: READY"
 

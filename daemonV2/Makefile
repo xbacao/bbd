@@ -1,7 +1,7 @@
 CFLAGS=-g -Wall -c
 LDFLAGS=-lpthread -lwiringPi
 
-SOURCES_CLIENT=GPRS client
+SOURCES_CLIENT=serial GPRS client
 OBJECTS_CLIENT=$(addprefix bin/,$(addsuffix .o, $(SOURCES_CLIENT)))
 EXECUTABLE_CLIENT=client
 

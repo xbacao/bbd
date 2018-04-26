@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "serial.h"
 #include "serial_cmds.h"
@@ -13,12 +14,24 @@ static void _change_gprs_state(enum GPRS_STATE new_state){
   _gprs_state=new_state;
 }
 
+/**********************************************************
+sends a command with 2 possible responses, if the first response is returned,
+do nothing, if the second response is obtained, send a new command with expected
+response. Used to check if configurations are already in place or required
+to be entered
+
+return:
+AT_BUFFER_BUSY = 3  	 					// response buffer busy
+AT_RESP_ERR_NO_RESP = 2,   // no response received
+AT_RESP_ERR_DIF_RESP = 1,   // response_string is different from the response
+AT_RESP_OK = 0             					// response_string was included in the response
+**********************************************************/
 static int _send_cmd_if_needed(const char* request_cmd, const char* done_ans,
-const char* action_required_ans, const char* action_cmd){
+const char* action_required_ans, const char* action_cmd, const char* action_rsp){
   int n;
 
   n=send_at_cmd_wait_resp(request_cmd, START_COM_TMOUT, MAX_INTERCHAR_TMOUT,
-     done_ans, N_ATTEMPTS);
+    done_ans, N_ATTEMPTS);
   if(n==AT_RESP_ERR_DIF_RESP){
     n=send_at_cmd_wait_resp(request_cmd, START_COM_TMOUT, MAX_INTERCHAR_TMOUT,
        action_required_ans, N_ATTEMPTS);
@@ -26,15 +39,15 @@ const char* action_required_ans, const char* action_cmd){
       #ifdef DEBUG
       log_error("none of the expected responses match");
       #endif
-      return 2+10*n;
+      return 2;
     }
     n=send_at_cmd_wait_resp(action_cmd, START_COM_TMOUT, MAX_INTERCHAR_TMOUT,
-       AT_OK, N_ATTEMPTS);
+       action_rsp, N_ATTEMPTS);
     if(n){
       #ifdef DEBUG
       log_error("gprs not accepting action command");
       #endif
-      return 3+10*n;
+      return 3;
     }
 
     return 0;
@@ -42,7 +55,7 @@ const char* action_required_ans, const char* action_cmd){
     #ifdef DEBUG
     log_error("gprs not ready for action");
     #endif
-    return 1+10*n;
+    return 1;
   }
   #ifdef DEBUG
   log_info("gprs does not require action");
@@ -131,14 +144,14 @@ int init_gprs(){
 			}
 			sprintf(baud_rate_str,"%d",DEFAULT_SS_BAUDRATE);
 
-			delay(100);
+			usleep(100000);
 
 			serialPuts("AT+IPR=");
 			serialPuts(baud_rate_str);
 			serialPuts("\r"); // send <CR>
-			delay(500);
+			usleep(500000);
 			serial_begin(DEFAULT_SS_BAUDRATE);
-			delay(100);
+			usleep(500000);
 			if (send_at_cmd_wait_resp("AT", 500, 100, "OK", 5)==AT_RESP_OK){
           _gprs_state=GPRS_ON_STATE;
 					break;
@@ -178,14 +191,11 @@ int init_gprs(){
     return 1;
   }
 
-  // n=_pin_config();
-  // if(n){
-  //   return 2+10*n;
-  // }
   #ifdef DEBUG
   log_info("checking gprs pin status");
   #endif
-  n=_send_cmd_if_needed(AT_CPIN_R, AT_CPIN_READY, AT_CPIN_SIM_PIN, AT_CPIN_SET);
+  n=_send_cmd_if_needed(AT_CPIN_R, AT_CPIN_READY, AT_CPIN_SIM_PIN, AT_CPIN_SET,
+    AT_OK);
   if(n){
     #ifdef DEBUG
     log_error("error setting gprs pin");
@@ -193,19 +203,15 @@ int init_gprs(){
     return 2+10*n;
   }
 
-  n=_send_cmd_comp_several_rsp(AT_CIURC_R, START_COM_TMOUT, AT_CIURC_0, AT_CIURC_0_LEN, AT_CIURC_1, AT_CIURC_1_LEN, 5000);
-  switch(n){
-    default:
-      return 4+10*n;
-      break;
-    case 0:
-      n=send_at_cmd_wait_resp(AT_CIURC_SET, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-      if(n){
-        return 5+10*n;
-      }
-      break;
-    case 1:
-      break;
+  #ifdef DEBUG
+  log_info("disabling urc presentation");
+  #endif
+  n=_send_cmd_if_needed(AT_CIURC_R, AT_CIURC_1, AT_CIURC_0, AT_CIURC_SET, AT_OK);
+  if(n){
+    #ifdef DEBUG
+    log_error("error disabling urc presentation");
+    #endif
+    return 3+10*n;
   }
 
   _change_gprs_state(GPRS_PIN_STATE);
@@ -213,122 +219,10 @@ int init_gprs(){
 }
 
 int attachGPRS(){
-  int n;
-
-  if(_gprs_state!=GPRS_PIN_STATE){
-    return 1;
-  }
-
-  n=_send_cmd_comp_several_rsp(AT_CGATT_R, AT_CGATT_R_LEN, AT_CGATT_0, AT_CGATT_0_LEN, AT_CGATT_1, AT_CGATT_1_LEN, 5000);
-  switch(n){
-    default:
-      return 2+n*10;
-      break;
-    case 0:
-    //10k
-      n=send_at_cmd_wait_resp(AT_CGATT_SET_ON, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-      if(n){
-        return 3+n*10;
-      }
-      break;
-    case 1:
-      break;
-  }
-
-  n=_send_cmd_comp_several_rsp(AT_CIPMODE_R, AT_CIPMODE_R_LEN, AT_CIPMODE_0, AT_CIPMODE_0_LEN, AT_CIPMODE_1, AT_CIPMODE_1_LEN, 5000);
-  switch(n){
-    default:
-      return 4+n*10;
-      break;
-    case 0:
-      break;
-    case 1:
-      n=send_at_cmd_wait_resp(AT_CIPMODE, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-      if(n){
-        return 5+n*10;
-      }
-      break;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CGDCONT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-  if(n){
-    return 6+n*10;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CIFSR, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_ERROR, N_ATTEMPTS);
-  switch(n){
-    default:
-      return 7+n*10;
-      break;
-    case 1:
-      _change_gprs_state(GPRS_IP_STATE);
-      return 0;
-      break;
-    case 0:
-      break;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CIPSERVER_R, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_CIPSERVER_RESP, N_ATTEMPTS);
-  switch(n){
-    default:
-      return 8+n*10;
-      break;
-    case 1:
-      n=send_at_cmd_wait_resp(AT_CIPSERVER_SET, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-      if(!n){
-        return 9+n*10;
-      }
-      break;
-    case 0:
-      break;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CSTT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-  if(n){
-    return 10;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CIICR, AT_CIICR_LEN, MAX_INTERCHAR_TMOUT, AT_OK, N_ATTEMPTS);
-  if(n){
-    return 11;
-  }
-
-  n=send_at_cmd_wait_resp(AT_CIFSR, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_ERROR, N_ATTEMPTS);
-  if(n!=1){
-    return 12;
-  }
-
-  _change_gprs_state(GPRS_IP_STATE);
   return 0;
 }
 
 int dettachGPRS(){
-  if(_gprs_state!=GPRS_IP_STATE){
-    return 1;
-  }
-
-  //10k
-  n=send_at_cmd_wait_resp(AT_CIPSHUT, START_COM_TMOUT, MAX_INTERCHAR_TMOUT, AT_SHUT_OK, N_ATTEMPTS;
-  if(n){
-    return 2+10*n;
-  }
-
-  n=_send_cmd_comp_several_rsp(AT_CGATT_R, AT_CGATT_R_LEN, AT_CGATT_0, AT_CGATT_0_LEN, AT_CGATT_1, AT_CGATT_1_LEN, 5000);
-  switch(n){
-    default:
-      return 3+10*n;
-      break;
-    case 0:
-      break;
-    case 1:
-    //10k
-      n=send_at_cmd_wait_resp(AT_CGATT_SET_OFF, START_COM_TMOUT,MAX_INTERCHAR_TMOUT, AT_OK, AN_ATTEMPTS);
-      if(n){
-        return 4+10*n;
-      }
-      break;
-  }
-  _change_gprs_state(GPRS_PIN_STATE);
   return 0;
 }
 
