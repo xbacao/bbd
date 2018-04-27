@@ -23,11 +23,6 @@ enum GPRS_STATE{GPRS_OFF_STATE, GPRS_ON_STATE, GPRS_PIN_STATE};
 enum BUFF_STATE{BUFF_READY, BUFF_USED};
 
 int init_gprs();
-int attachGPRS();
-int dettachGPRS();
-int connect_tcp_socket();
-int disconnect_tcp_socket();
-
 
 
 enum GPRS_STATE get_gsm_state();

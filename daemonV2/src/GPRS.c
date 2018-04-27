@@ -218,14 +218,6 @@ int init_gprs(){
   return 0;
 }
 
-int attachGPRS(){
-  return 0;
-}
-
-int dettachGPRS(){
-  return 0;
-}
-
 enum GPRS_STATE get_gprs_state(){
   return _gprs_state;
 }

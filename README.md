@@ -34,3 +34,9 @@ change N_VALVES from static in main.cpp
 BUGS
 
 .----. 1 byte a mais a ser enviado pelo server
+
+
+TODO:
+-meter 1 proto a funcar
+-cross-compiler docker
+-migrar para diet-pi
