@@ -25,7 +25,7 @@ SECRET_KEY = '6b7g4cs1i_ud%tgq+c76*np2n(l!cmc66o)so4w#a*3^b_-pev'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['178.62.6.44']
+ALLOWED_HOSTS = ['localhost']
 
 
 # Application definition
@@ -77,11 +77,15 @@ WSGI_APPLICATION = 'bbd_web.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'USER':'bbduser',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'bbd',
+        'USER':'root',
         'PASSWORD':'morcao123',
         'HOST':'127.0.0.1',
-        'NAME': 'bbd',
+        'PORT': '',
+        'OPTIONS': {
+            'options': '-c search_path=bbd'
+        }
     }
 }
 

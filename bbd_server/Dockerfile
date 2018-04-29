@@ -1,17 +1,26 @@
 FROM debian:latest
-MAINTAINER JoaoRibeiro
+MAINTAINER JLR
 RUN apt-get update
 RUN apt-get install -y \
   postgresql \
   postgresql-client \
+  libpqxx-dev \
   apache2-dev \
   python-virtualenv \
-  python-dev python3-dev \
+  python-dev\
+  python3-dev \
   apache2 \
   python-pip \
   python-psycopg2 \
-  libapache2-mod-wsgi
+  libapache2-mod-wsgi \
+  w3m \
+  pkg-config \
+  supervisor
 
+RUN mkdir /opt/bbd
+ADD daemon /tmp/daemon
+RUN make -C /tmp/daemon bbd_daemon
+RUN make -C /tmp/daemon install
 
 #database
 ENV POSTGRES_DB bbd
@@ -34,11 +43,14 @@ COPY web_server/install/apache2.conf /etc/apache2/apache2.conf
 COPY web_server/install/requirements.txt /tmp/requirements.text
 RUN pip install -r /tmp/requirements.text
 RUN service postgresql start && \
-  /usr/bin/python2 /opt/bbd/web_server/src/manage.py makemigrations && \
-  /usr/bin/python2 /opt/bbd/web_server/src/manage.py migrate && \
-  service postgresql stop
+ /usr/bin/python2 /opt/bbd/web_server/src/manage.py makemigrations && \
+ /usr/bin/python2 /opt/bbd/web_server/src/manage.py migrate && \
+ service postgresql stop
 
+#supervisord
+COPY docker_assets/supervisord.conf /opt/bbd/supervisord.conf
+COPY docker_assets/supervisor_confs/ /opt/bbd/supervisor.conf.d/
 
-expose 80
+expose 80 443 7777
 
-CMD /bin/bash
+CMD supervisord -c /opt/bbd/supervisord.conf && tail -f /dev/null

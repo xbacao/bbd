@@ -11,7 +11,7 @@ from django.db import models
 
 
 class Arduino(models.Model):
-    arduinoid = models.IntegerField(db_column='arduinoID', primary_key=True)  # Field name made lowercase.
+    arduinoid = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
@@ -51,13 +51,13 @@ class AuthPermission(models.Model):
 class AuthUser(models.Model):
     password = models.CharField(max_length=128)
     last_login = models.DateTimeField(blank=True, null=True)
-    is_superuser = models.IntegerField()
+    is_superuser = models.BooleanField()
     username = models.CharField(unique=True, max_length=150)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     email = models.CharField(max_length=254)
-    is_staff = models.IntegerField()
-    is_active = models.IntegerField()
+    is_staff = models.BooleanField()
+    is_active = models.BooleanField()
     date_joined = models.DateTimeField()
 
     class Meta:
@@ -130,14 +130,14 @@ class DjangoSession(models.Model):
 
 
 class Schedule(models.Model):
-    scheduleid = models.AutoField(db_column='scheduleID', primary_key=True)  # Field name made lowercase.
-    valveid_f = models.ForeignKey('Valve', models.DO_NOTHING, db_column='valveID_f')  # Field name made lowercase.
+    scheduleid = models.AutoField(primary_key=True)
+    valveid_f = models.ForeignKey('Valve', models.DO_NOTHING, db_column='valveid_f')
     description = models.CharField(max_length=100, blank=True, null=True)
     created_on = models.DateTimeField()
     start_time = models.SmallIntegerField()
     stop_time = models.SmallIntegerField()
-    active = models.IntegerField()
-    deactivate_request = models.IntegerField()
+    active = models.BooleanField()
+    deactivate_request = models.BooleanField()
     active_start = models.DateTimeField(blank=True, null=True)
     active_end = models.DateTimeField(blank=True, null=True)
 
@@ -147,9 +147,9 @@ class Schedule(models.Model):
 
 
 class Valve(models.Model):
-    valveid = models.IntegerField(db_column='valveID', primary_key=True)  # Field name made lowercase.
+    valveid = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=100, blank=True, null=True)
-    arduinoid_f = models.ForeignKey(Arduino, models.DO_NOTHING, db_column='arduinoID_f')  # Field name made lowercase.
+    arduinoid_f = models.ForeignKey(Arduino, models.DO_NOTHING, db_column='arduinoid_f')
 
     class Meta:
         managed = False

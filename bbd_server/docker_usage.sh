@@ -23,16 +23,17 @@ function build {
 }
 
 function delete {
+  docker kill bbd_server
   docker rm bbd_server || exit_on_error || "error deleting docker container!"
   #docker rmi -f bbd_server:latest || exit_on_error "error deleting docker images!"
 }
 
 function run {
-  docker run -it --name bbd_server -p 80:80 bbd_server || exit_on_error "error running docker image!"
+  docker run -dit --name bbd_server -p 80:80 -p 443:443 -p 7777:7777 bbd_server || exit_on_error "error running docker image!"
 }
 
 function attach {
-  docker attach --name bbd_server || exit_on_error "error attaching to docker container!"
+  docker exec -it bbd_server /bin/bash || exit_on_error "error attaching to docker container!"
 }
 
 if [ "$#" -ne 1 ]; then
@@ -40,7 +41,7 @@ if [ "$#" -ne 1 ]; then
   exit_on_error "bad amount of arguments!"
 fi
 
-while getopts brsd arg; do
+while getopts bdra arg; do
   case $arg in
     b)
     build
@@ -50,6 +51,9 @@ while getopts brsd arg; do
     ;;
     r)
     run
+    ;;
+    a)
+    attach
     ;;
     *)
       usage

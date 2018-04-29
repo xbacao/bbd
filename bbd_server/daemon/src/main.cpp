@@ -10,7 +10,7 @@
 #include "db.h"
 #include "log.h"
 
-#define PID_FILE        "/opt/bbd_server/run/bbda_server.pid"
+#define PID_FILE        "/var/run/bbda_server.pid"
 
 #define SERVER_PORT     7777
 #define N_VALVES        5     //ESTATICO, POSSIVEL MUDAR PRA DB
@@ -97,7 +97,7 @@ static int _run_server(){
           {
             schedule* sches;
             uint16_t n_sches;
-            n=get_active_sches_amount(arduino_id, &n_sches);
+            n=amount_of_active_schedules(arduino_id, &n_sches);
             if(n){
               log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES AMOUNT "<<n<<endl;
               break;

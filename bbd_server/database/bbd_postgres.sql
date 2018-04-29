@@ -35,7 +35,7 @@ ON DELETE CASCADE;
 
 CREATE FUNCTION amount_of_active_schedules(IN arduino_ID INT) RETURNS INT AS $$
 BEGIN
-  SELECT count(*)
+  SELECT count(*) as n_active_schedules
   FROM bbd.schedule INNER JOIN (
     SELECT valveID
     FROM bbd.valve
@@ -95,3 +95,46 @@ BEGIN
   INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES (scheID, start_time, stop_time);
 END
 $$ LANGUAGE plpgsql;
+
+INSERT INTO bbd.arduino(arduinoID, description) VALUES(1, "asdf");
+INSERT INTO bbd.valve(valveID, description, arduinoID_f) VALUES(1,"asdf",1),(2,"asdf",1);
+
+INSERT INTO bbd.schedule(valveID_f, start_time, stop_time, active, deactivate_request) VALUES
+  (1, 60, 120, TRUE, FALSE);
+
+-- INSERT INTO bbd.arduino VALUES(1, "asdf");
+-- INSERT INTO bbd.valve VALUES(1,"asdf",1);
+-- INSERT INTO bbd.valve VALUES(2,"asdf",1);
+--
+-- INSERT INTO bbd.schedule(valveID_f, start_time, stop_time, active, deactivate_request) VALUES
+--   (1, 60, 120, TRUE, FALSE);
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "AAAAA");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(1, CURTIME(),CURTIME());
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (1, "TEST SENT");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(2, CURTIME(),CURTIME());
+--
+-- INSERT INTO bbd.schedule(valveID_f, description) VALUES (2, "TEST SENT");
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- INSERT INTO bbd.schedule_entry(scheduleID_f, start_time, stop_time) VALUES(3, CURTIME(),CURTIME());
+-- SELECT set_schedule_active(1);
+-- SELECT set_schedule_active(2);
+--
+-- SELECT get_valve_schedule(1);
+--
+-- SELECT set_schedule_sent(1);
+--
+--
+-- SELECT new_valve_schedule(1, "WTFFF");
+--
+-- SELECT new_schedule_entry(2, CURTIME(), CURTIME());
+-- SELECT new_schedule_entry(2, CURTIME(), CURTIME());
