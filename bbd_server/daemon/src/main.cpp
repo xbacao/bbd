@@ -5,10 +5,10 @@
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
-#include "daemon.h"
-#include "socket_data.h"
-#include "db.h"
-#include "log.h"
+#include "daemon/daemon.h"
+#include "socket_data/socket_data.h"
+#include "db/db.h"
+#include "log/log.h"
 
 #define PID_FILE        "/var/run/bbda_server.pid"
 

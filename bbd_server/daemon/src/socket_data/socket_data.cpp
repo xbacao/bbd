@@ -1,8 +1,9 @@
 #include "socket_data.h"
 #include <arpa/inet.h>
 #include <iostream>
-#include "log.h"
 #include <string.h>
+#include "log/log.h"
+
 
 using namespace std;
 
@@ -77,7 +78,7 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
 		return 4;
 	}
 
-  if(*trans_type!=SYNC_TIME_MSG && *trans_type!=ACTIVE_SCHES_MSG && *trans_type!=CHECKIN_MSG && *trans_type!=SCHE_ACT_MSG){
+  if(*trans_type!=SYNC_TIME_MSG && *trans_type!=GET_ACTIVE_SCHES_MSG && *trans_type!=CHECKIN_MSG && *trans_type!=SCHE_ACT_MSG){
     return 5;
   }
 

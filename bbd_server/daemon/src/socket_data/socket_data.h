@@ -1,7 +1,7 @@
 #ifndef _SOCKET_DATA_H
 #define _SOCKET_DATA_H
 
-#include "schedule.h"
+#include "schedule/schedule.h"
 
 #include <vector>
 

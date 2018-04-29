@@ -1,6 +1,6 @@
 #include "db.h"
 #include <pqxx/pqxx>
-#include "log.h"
+#include "log/log.h"
 #include <sstream>
 
 using namespace std;

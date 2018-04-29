@@ -1,7 +1,7 @@
 #include "schedule.h"
 #include <string.h>
 #include <arpa/inet.h>
-#include "socket_data.h"
+#include "socket_data/socket_data.h"
 
 void encode_schedule(char* msg, schedule sche){
   uint16_t temp;

@@ -2,20 +2,20 @@ CXX=g++
 CXXFLAGS=-g -Wall -c -std=c++14
 
 LDFLAGS=$(shell pkg-config --libs libpqxx)
-INCLUDES=-I"include"
-SOURCES=schedule daemon socket_data db log main
-OBJECTS=$(addsuffix .o, $(SOURCES))
-O_OBJECTS=$(addprefix bin/, $(OBJECTS))
+INCLUDES=-I"src"
+SOURCES=main schedule/schedule daemon/daemon socket_data/socket_data db/db log/log
+OBJECTS=$(addprefix bin/, $(addsuffix .o, $(SOURCES)))
 EXECUTABLE=bbd_daemon
 BINS=$(wildcard bin/*.o) $(wildcard $(EXECUTABLE))
 
 SOURCES_T=test log socket_data schedule
 OBJECTS_T=$(addsuffix .o, $(SOURCES_T))
-O_OBJECTS_T=$(addprefix bin/, $(OBJECTS_T))
+O_OBJECTS_T=$(addprefix $(BIN_DIR)/, $(OBJECTS_T))
 EXECUTABLE_T=test
 
 INSTALL=install
 INSTALL_DIR=/opt/bbd
+BIN_DIR=bin
 
 .PHONY: start
 start:
@@ -29,7 +29,7 @@ start:
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(O_OBJECTS) -o $@ $(LDFLAGS) $(INCLUDES)
+	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS) $(INCLUDES)
 
 $(INSTALL):
 	@if [ ! -d $(INSTALL_DIR) ]; then mkdir -p $(INSTALL_DIR); fi
@@ -40,8 +40,9 @@ $(EXECUTABLE_T): $(OBJECTS_T)
 
 db.o: CXXFLAGS += $(shell pkg-config --cflags libpqxx)
 
-%.o: src/%.cpp
-	$(CXX) $(CXXFLAGS) -o bin/$@ $< $(INCLUDES)
+$(BIN_DIR)/%.o: src/%.cpp
+	@if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
+	$(CXX) $(CXXFLAGS) -o $@ $< $(INCLUDES)
 
 
 .PHONY: clean

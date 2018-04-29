@@ -1,7 +1,7 @@
 #ifndef _DB_H_
 #define _DB_H_
 
-#include "schedule.h"
+#include "schedule/schedule.h"
 
 #include <vector>
 
