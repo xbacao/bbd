@@ -6,7 +6,8 @@ INCLUDES=-I"src"
 SOURCES=main schedule/schedule daemon/daemon socket_data/socket_data db/db log/log
 OBJECTS=$(addprefix bin/, $(addsuffix .o, $(SOURCES)))
 EXECUTABLE=bbd_daemon
-BINS=$(wildcard bin/*.o) $(wildcard $(EXECUTABLE))
+BINS=$(wildcard bin/*.o bin/*/*.o $(EXECUTABLE))
+BIN_SUBDIRS=$(filter-out $(BIN_DIR)/,$(dir $(wildcard bin/*/)))
 
 SOURCES_T=test log socket_data schedule
 OBJECTS_T=$(addsuffix .o, $(SOURCES_T))
@@ -46,10 +47,12 @@ $(BIN_DIR)/%.o: src/%.cpp
 
 
 .PHONY: clean
-ifneq	"$(BINS)" "  "
+ifneq	"$(BINS)" ""
 clean:
 	@echo $(BINS)
 	rm $(BINS)
+	rmdir $(BIN_SUBDIRS)
+	rmdir $(BIN_DIR)
 else
 clean:;@echo 'Nothing to clean!'
 endif
