@@ -79,27 +79,44 @@ using namespace std;
 // 	return 0;
 // }
 
-int amount_of_active_schedules(uint16_t arduino_id, uint16_t* n_sches){
+// int amount_of_active_schedules(uint16_t arduino_id, uint16_t* n_sches){
+// 	pqxx::connection c(CONN_INFO);
+// 	pqxx::result res;
+//   pqxx::work txn(c);
+//
+// 	try{
+// 		c.prepare("amount_of_active_schedules", "SELECT amount_of_active_schedules ($1)");
+// 		res=txn.prepared("amount_of_active_schedules")(arduino_id).exec();
+// 	}	catch(const std::exception &e) {
+//       std::cerr << e.what() << std::endl;
+//       return 1;
+//   }
+//
+// 	*n_sches=res[0][0].as<uint16_t>();
+//
+// 	return 0;
+// }
+
+
+int db_get_active_schedules(uint16_t arduino_id, vector<schedule>& sches){
 	pqxx::connection c(CONN_INFO);
 	pqxx::result res;
-  pqxx::work txn(c);
+	pqxx::work txn(c);
 
 	try{
-		c.prepare("amount_of_active_schedules", "SELECT amount_of_active_schedules ($1)");
+		c.prepare("get_active_schedules", "SELECT get_active_schedules ($1)");
 		res=txn.prepared("amount_of_active_schedules")(arduino_id).exec();
+
+		for (pqxx::result::const_iterator row=res.begin();row != res.end();++row){
+			sches.push_back({(*row)[0].as<uint16_t>(), (*row)[1].as<uint16_t>(),
+				(*row)[2].as<uint16_t>(), (*row)[3].as<uint16_t>()});
+	  }
 	}	catch(const std::exception &e) {
-      std::cerr << e.what() << std::endl;
-      return 1;
-  }
-	
-	*n_sches=res[0][0].as<uint16_t>();
+			std::cerr << e.what() << std::endl;
+			return 1;
+	}
 
 	return 0;
-}
-
-/*TODO*/
-int get_active_schedules(uint16_t arduino_id, schedule** sches,
-uint16_t n_sches){
 	// int n_rows;
 	// stringstream ss;
 	// char* temp_str;

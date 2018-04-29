@@ -136,8 +136,9 @@ int send_time_msg(int sock_fd){
 	return n;
 }
 
-int send_schedules_msg(int sock_fd, schedule* sches, int sches_size){
+int send_schedules_msg(int sock_fd, vector<schedule> sches){
 	int n;
+	uint16_t sches_size=sches.size();
 	uint16_t msg_len=sizeof(schedule)*sches_size;
 	char* msg = new char[msg_len];
 

@@ -93,23 +93,15 @@ static int _run_server(){
               log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
             }
             break;
-          case ACTIVE_SCHES_MSG:
+          case GET_ACTIVE_SCHES_MSG:
           {
-            schedule* sches;
-            uint16_t n_sches;
-            n=amount_of_active_schedules(arduino_id, &n_sches);
-            if(n){
-              log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES AMOUNT "<<n<<endl;
-              break;
-            }
-
-            sches = new schedule[n_sches];
-            n=get_active_schedules(arduino_id, &sches, n_sches);
+            vector<schedule> sches;
+            n=db_get_active_schedules(arduino_id, sches);
             if(n){
               log_file<<time(nullptr)<<": ERROR GETTING ACTIVE SCHES "<<n<<endl;
             }
 
-            n=send_schedules_msg(newsockfd, sches, n_sches);
+            n=send_schedules_msg(newsockfd, sches);
             if(n){
               log_file<<time(nullptr)<<": ERROR SENDING SCHES MSG "<<n<<endl;
             }
@@ -118,43 +110,12 @@ static int _run_server(){
           }
           case CHECKIN_MSG:
           {
-            // ArduinoSchedules a_s(arduino_id);
-            //
-          	// n=get_unsent_schedule(&a_s);
-          	// if(n){
-          	// 	log_file<<time(nullptr)<<": ERROR GETTING LAST SCHEDULE "<<n<<endl;
-          	// 	break;
-          	// }
-            //
-            // n=send_schedule_msg(a_s, newsockfd);
-            // if(n){
-            //   log_file<<time(nullptr)<<": ERROR SENDING LAST SCHEDULE MESSAGE "<< n<<endl;
-            // }
+            //TODO
             break;
           }
           case SCHE_ACT_MSG:
           {
-            // uint16_t msg_size;
-            // n=recv_sche_act_msg_size(newsockfd, &msg_size);
-            // if(n){
-            //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE SIZE "<< n<<endl;
-            //   break;
-            // }
-            //
-            // uint16_t* sche_ids = new uint16_t[msg_size];
-            // n=recv_sche_act_msg(newsockfd, msg_size,&sche_ids);
-            // if(n){
-            //   log_file<<time(nullptr)<<": ERROR RECV ACT MESSAGE "<< n<<endl;
-            //   break;
-            // }
-            //
-            // for(uint16_t i=0;i<msg_size;i++){
-            //   n=set_schedule_sent(sche_ids[i]);
-            //   if(n){
-            //     log_file<<time(nullptr)<<": ERROR SETTING SCHE SENT AT DB "<< n<<endl;
-            //     break;
-            //   }
-            // }
+            //TODO
             break;
           }
         }

@@ -40,23 +40,7 @@ int main(void){
 	}
 	_send_header(sock);
 
-	ArduinoSchedules a_s(1);
-	uint16_t size;
-	n=recv(sock, &size, sizeof(uint16_t), MSG_WAITALL);
-	if(n<0) return 2;
-	size=ntohs(size);
-	char* buff= new char[size];
-	n=recv(sock, buff, size, MSG_WAITALL);
-	if(n<0){
-		return 3;
-	}
-	n=a_s.decode_message(buff, size);
-	if(n<0){
-		std::cout << "ERROR "<<n<<std::endl;
-	}
-	else{
-		std::cout << "SUCCESS "<<a_s<<std::endl;
-	}
+
 
 	return 0;
 }
