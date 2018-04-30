@@ -10,7 +10,7 @@ TEST_OBJECTS=$(addprefix $(BIN_DIR)/, $(addsuffix .o, $(TEST_SOURCES)))
 
 INSTALL=install
 INSTALL_DIR=/opt/bbd
-BINS=$(wildcard $(BIN_DIR)/*.o $(BIN_DIR)/*/*.o $(EXECUTABLE))
+BINS=$(wildcard $(BIN_DIR)/*.o $(BIN_DIR)/*/*.o $(EXECUTABLE) $(TEST_EXECUTABLE))
 BIN_DIR=bin
 BIN_SUBDIRS=$(filter-out $(BIN_DIR)/,$(dir $(wildcard bin/*/)))
 
