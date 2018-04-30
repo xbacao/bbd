@@ -56,15 +56,16 @@ static int _recv_16(void* data, int sock_fd){
 	return 0;
 }
 
-int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, uint8_t* trans_size){
+int recv_socket_header(int sock_fd, uint16_t magic_number, uint8_t* arduino_id,
+uint8_t* trans_type, uint8_t* trans_size){
   uint16_t temp_16;
   int n;
   n= _recv_16(&temp_16, sock_fd);
   if(n!=0){
     return 1;
   }
-  if(temp_16 != SOCKET_HEADER){
-		log_file<<time(nullptr)<<"ERROR: bad header:"<<temp_16<<endl;
+  if(temp_16 != magic_number){
+		log_error("magic numbers do not match");
     return 2;
   }
 
@@ -78,7 +79,10 @@ int recv_socket_header(int sock_fd, uint8_t* arduino_id, uint8_t* trans_type, ui
 		return 4;
 	}
 
-  if(*trans_type!=SYNC_TIME_MSG && *trans_type!=GET_ACTIVE_SCHES_MSG && *trans_type!=CHECKIN_MSG && *trans_type!=SCHE_ACT_MSG){
+  if(*trans_type!=SYNC_TIME_MSG
+		&& *trans_type!=GET_ACTIVE_SCHES_MSG
+		&& *trans_type!=CHECKIN_MSG
+		&& *trans_type!=SCHE_ACT_MSG){
     return 5;
   }
 
@@ -107,14 +111,6 @@ static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size
 
 	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+BUFFER_SIZE_16
 			+reply_msg_size);
-
-	#ifdef DEBUG_SOCKET
-	log_file<<"SENDING: [";
-	for(uint16_t i=0;i<total_reply_msg_size;i++){
-		log_file<<unsigned((uint8_t) total_reply_msg[i])<<" ";
-	}
-	log_file<<"]"<<endl;
-	#endif
 
 	n=send(sock_fd, total_reply_msg, total_reply_msg_size, 0)<0;
 
@@ -149,14 +145,6 @@ int send_schedules_msg(int sock_fd, vector<schedule> sches){
 	}
 
 	_prep_to_send_8(&END_TRANS_CHAR, msg+msg_len-BUFFER_SIZE_8);
-
-	#ifdef DEBUG_SOCKET
-	log_file << time(nullptr) << ": DB-SOCK [ ";
-	for(uint16_t i=0; i<sches_size;i++){
-		log_file << unsigned(msg[i]) << " ";
-	}
-	log_file << "]"<<endl;
-	#endif
 
 	n=_send_reply_msg(sock_fd, msg, msg_len);
 

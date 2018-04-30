@@ -6,14 +6,10 @@ RUN apt-get install -y \
   postgresql-client \
   libpqxx-dev \
   apache2-dev \
-  python-virtualenv \
   python-dev\
-  python3-dev \
   apache2 \
   python-pip \
-  python-psycopg2 \
   libapache2-mod-wsgi \
-  w3m \
   pkg-config \
   supervisor
 
