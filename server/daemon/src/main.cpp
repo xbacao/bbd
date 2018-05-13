@@ -20,14 +20,6 @@
 
 using namespace std;
 
-static bool _stop_flag=false;
-
-// static void _signal_callback_handler(int signum){
-//    log_info("caught end life signal");
-//
-//    _stop_flag=true;
-// }
-
 static int _start_socket_server(int* sockfd){
   struct sockaddr_in serv_addr;
   struct timeval tv;
@@ -59,21 +51,24 @@ static int _run_server(){
   socklen_t clilen;
   struct sockaddr_in cli_addr;
   uint8_t msg_size, msg_type, device_id;
-
-  init_logs_file(LOG_FILE_PATH);
-
   int sockfd;
+
+  n=init_logs_file(LOG_FILE_PATH);
+  if(n){
+    return 1;
+  }
+
   do{
     n=_start_socket_server(&sockfd);
     if(n){
       log_error("starting server");
+      usleep(1000000);
     }
-    usleep(1000000);
-  } while(n && !_stop_flag);
+  } while(n);
 
-  log_info("server initialized");
+  log_info("server started");
 
-  while(!_stop_flag){
+  while(true){
     log_info("waiting for new connection");
     clilen = sizeof(cli_addr);
     newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
@@ -90,12 +85,6 @@ static int _run_server(){
         switch(msg_type){
           default:
             break;
-          // case SYNC_TIME_MSG:
-          //   n=send_time_msg(newsockfd);
-          //   if(n){
-          //     log_file<<time(nullptr)<<": ERROR SENDING TIME MESSAGE"<<endl;
-          //   }
-          //   break;
           case GET_ACTIVE_SCHES_MSG:
           {
             vector<schedule> sches;
@@ -108,7 +97,6 @@ static int _run_server(){
             if(n){
               log_error("sending GET_ACTIVE_SCHES_MSG response");
             }
-
             break;
           }
           case CHECKIN_MSG:

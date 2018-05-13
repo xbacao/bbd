@@ -29,7 +29,7 @@ function delete {
 }
 
 function run {
-  docker run -dit --name bbd_server -p 80:80 -p 443:443 -p 7777:7777 bbd_server || exit_on_error "error running docker image!"
+  docker run -dit --cap-add=SYS_PTRACE --name bbd_server -p 80:80 -p 443:443 -p 7777:7777 bbd_server || exit_on_error "error running docker image!"
 }
 
 function attach {

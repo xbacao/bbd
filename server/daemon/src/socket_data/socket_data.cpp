@@ -103,7 +103,7 @@ static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size
 	char* total_reply_msg;
 	uint16_t total_reply_msg_size = BUFFER_SIZE_16+reply_msg_size+BUFFER_SIZE_8;
 
-	total_reply_msg=new char[total_reply_msg_size];
+	total_reply_msg= (char*) malloc(total_reply_msg_size);
 
 	_prep_to_send_16(&reply_msg_size, total_reply_msg);
 
@@ -114,41 +114,40 @@ static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size
 
 	n=send(sock_fd, total_reply_msg, total_reply_msg_size, 0)<0;
 
-	delete[] total_reply_msg;
+	free(total_reply_msg);
 	return n;
 }
 
-int send_time_msg(int sock_fd){
-	char* reply_msg;
-	int n;
-	uint32_t curr_time=time(nullptr);
+// int send_time_msg(int sock_fd){
+// 	char* reply_msg;
+// 	int n;
+// 	uint32_t curr_time=time(nullptr);
+//
+// 	reply_msg=new char[TIME_RSP_SIZE];
+//
+// 	_prep_to_send_32(&curr_time, reply_msg);
+//
+// 	n=_send_reply_msg(sock_fd, reply_msg, TIME_RSP_SIZE);
+//
+// 	delete[] reply_msg;
+// 	return n;
+// }
 
-	reply_msg=new char[TIME_RSP_SIZE];
-
-	_prep_to_send_32(&curr_time, reply_msg);
-
-	n=_send_reply_msg(sock_fd, reply_msg, TIME_RSP_SIZE);
-
-	delete[] reply_msg;
-	return n;
-}
-
+/*TODO AS ESCRITAS TEEM OS TAMANHOS TDS COMIDOS*/
+/* the 2 bytes required for sending the message size are not included in message size */
 int send_schedules_msg(int sock_fd, vector<schedule> sches){
 	int n;
 	uint16_t sches_size=sches.size();
 	uint16_t msg_len=sizeof(schedule)*sches_size;
-	char* msg = new char[msg_len];
+	char* msg = (char*) malloc(msg_len);
 
-	_prep_to_send_16(&msg_len, msg);
 	for(uint16_t i=0;i<sches_size;i++){
 		encode_schedule(msg+sizeof(schedule)*i, sches[i]);
 	}
 
-	_prep_to_send_8(&END_TRANS_CHAR, msg+msg_len-BUFFER_SIZE_8);
-
 	n=_send_reply_msg(sock_fd, msg, msg_len);
 
-	delete[] msg;
+	free(msg);
 	return n;
 }
 

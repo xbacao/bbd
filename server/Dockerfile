@@ -11,7 +11,8 @@ RUN apt-get install -y \
   python-pip \
   libapache2-mod-wsgi \
   pkg-config \
-  supervisor
+  supervisor \
+  gdb
 
 RUN mkdir /opt/bbd
 ADD daemon /tmp/daemon
@@ -22,7 +23,7 @@ RUN make -C /tmp/daemon install
 ENV POSTGRES_DB bbd
 ENV POSTGRES_USER root
 ENV POSTGRES_PASSWORD morcao123
-COPY database/bbd_postgres.sql /tmp/db.sql
+COPY database/bbd.sql /tmp/db.sql
 RUN service postgresql start && \
   su -c "psql -c \"SET TIME ZONE 'Europe/Lisbon'\"" postgres && \
   su -c "psql -c \"CREATE USER ${POSTGRES_USER} PASSWORD '${POSTGRES_PASSWORD}'\"" postgres && \
