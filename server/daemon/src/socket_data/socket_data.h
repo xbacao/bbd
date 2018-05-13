@@ -5,13 +5,6 @@
 
 #include <vector>
 
-#define DEBUG_SOCKET
-
-#define BUFFER_SIZE_8   sizeof(uint8_t)
-#define BUFFER_SIZE_16	sizeof(uint16_t)
-#define BUFFER_SIZE_32	sizeof(uint32_t)
-// #define BUFFER_SIZE_64	sizeof(uint64_t)
-
 const uint8_t END_TRANS_CHAR = 0xff;
 const uint16_t TIME_RSP_SIZE = sizeof(uint32_t);
 
@@ -20,6 +13,8 @@ const uint16_t TIME_RSP_SIZE = sizeof(uint32_t);
 #define CHECKIN_MSG             0x3
 #define SCHE_ACT_MSG            0x4
 // #define END_MSG				0x4
+
+char* req_type_to_str(uint8_t req_type);
 
 int recv_socket_header(int sock_fd, uint16_t magic_number, uint8_t* arduino_id,
   uint8_t* trans_type, uint8_t* trans_size);

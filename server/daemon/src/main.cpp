@@ -5,7 +5,6 @@
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
-#include "daemon/daemon.h"
 #include "socket_data/socket_data.h"
 #include "db/db.h"
 #include "log/log.h"
@@ -52,6 +51,8 @@ static int _run_server(){
   struct sockaddr_in cli_addr;
   uint8_t msg_size, msg_type, device_id;
   int sockfd;
+  char* client_ip_address;
+  char* request_type_str;
 
   n=init_logs_file(LOG_FILE_PATH);
   if(n){
@@ -80,8 +81,10 @@ static int _run_server(){
       n=recv_socket_header(newsockfd, MAGIC_NUMER, &device_id, &msg_type,
         &msg_size);
       if(n==0){
+        client_ip_address=inet_ntoa(cli_addr.sin_addr);
+        request_type_str=req_type_to_str(msg_type);
         log_info("request received");
-        log_request(inet_ntoa(cli_addr.sin_addr), device_id, msg_type, msg_size);
+        log_request(client_ip_address, device_id, request_type_str, msg_size);
         switch(msg_type){
           default:
             break;
@@ -93,9 +96,13 @@ static int _run_server(){
               log_error("receiving GET_ACTIVE_SCHES_MSG");
             }
 
+            log_db_response<schedule>(sches);
+
             n=send_schedules_msg(newsockfd, sches);
             if(n){
               log_error("sending GET_ACTIVE_SCHES_MSG response");
+            } else {
+              log_response(client_ip_address, device_id, request_type_str);
             }
             break;
           }
@@ -110,6 +117,8 @@ static int _run_server(){
             break;
           }
         }
+        free(client_ip_address);
+        free(request_type_str);
       }
       else{
         log_error("receiving message request header");

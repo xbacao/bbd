@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define SIZE_CH sizeof(char)
+
 // static void _prep_to_send_8(const void* in_data, void* out_data);
 // static void _prep_to_send_16(const void* in_data, void* out_data);
 // static void _prep_to_send_32(const void* in_data, void* out_data);
@@ -41,24 +43,28 @@ static int _connect_socket(const char* address, uint16_t port, int* sockfd){
 
 int _send_socket_header(int sockfd, uint16_t magic_number, uint8_t device_id,
 uint8_t msg_type, uint8_t msg_size){
-	int n=0;
+	char* msg;
+	msg=(char*) malloc(5*SIZE_CH);
+
 	magic_number=htons(magic_number);
-	n|=write(sockfd, &magic_number, sizeof(magic_number));
-	n|=write(sockfd, &device_id, 1);
-	n|=write(sockfd, &msg_type, 1);
-	n|=write(sockfd, &msg_size, 1);
-	return !(n==0);
+
+	memcpy(msg, &magic_number, 2*SIZE_CH);
+	memcpy(msg+2*SIZE_CH, &device_id, SIZE_CH);
+	memcpy(msg+3*SIZE_CH, &msg_type, SIZE_CH);
+	memcpy(msg+4*SIZE_CH, &msg_size, SIZE_CH);
+
+	return send(sockfd, msg, 5*SIZE_CH, MSG_WAITALL)<0;
 }
 
 // static void _prep_to_send_8(const void* in_data, void* out_data){
-// 	memcpy(out_data, in_data, BUFFER_SIZE_8);
+// 	memcpy(out_data, in_data, SIZE_CH);
 // }
 //
 // static void _prep_to_send_16(const void* in_data, void* out_data){
 //   uint16_t temp_16;
-//   memcpy(&temp_16, in_data, BUFFER_SIZE_16);
+//   memcpy(&temp_16, in_data, 2*SIZE_CH);
 //   temp_16 = htons(temp_16);
-//   memcpy(out_data, &temp_16, BUFFER_SIZE_16);
+//   memcpy(out_data, &temp_16, 2*SIZE_CH);
 // }
 //
 // static void _prep_to_send_32(const void* in_data, void* out_data){
@@ -70,32 +76,32 @@ uint8_t msg_type, uint8_t msg_size){
 
 // static int _recv_8(void* data, int sock_fd){
 // 	int n;
-// 	char buffer_8[BUFFER_SIZE_8];
+// 	char buffer_8[SIZE_CH];
 //
-// 	memset(data, 0, BUFFER_SIZE_8);
-// 	n=recv(sock_fd, buffer_8, BUFFER_SIZE_8, MSG_WAITALL);
+// 	memset(data, 0, SIZE_CH);
+// 	n=recv(sock_fd, buffer_8, SIZE_CH, MSG_WAITALL);
 // 	if(n<0){
 // 		return n;
 // 	}
 //
-// 	memcpy(data, &buffer_8, BUFFER_SIZE_8);
+// 	memcpy(data, &buffer_8, SIZE_CH);
 // 	return 0;
 // }
 
 static int _recv_16(void* data, int sock_fd){
 	int n;
-	char buffer_16[BUFFER_SIZE_16];
+	char buffer_16[2*SIZE_CH];
 	uint16_t temp_16;
 
-	memset(data, 0, BUFFER_SIZE_16);
-	n=recv(sock_fd, buffer_16, BUFFER_SIZE_16, MSG_WAITALL);
+	memset(data, 0, 2*SIZE_CH);
+	n=recv(sock_fd, buffer_16, 2*SIZE_CH, MSG_WAITALL);
 	if(n<0){
 		return n;
 	}
 
-	memcpy(&temp_16, buffer_16, BUFFER_SIZE_16);
+	memcpy(&temp_16, buffer_16, 2*SIZE_CH);
 	temp_16 = ntohs(temp_16);
-	memcpy(data, &temp_16, BUFFER_SIZE_16);
+	memcpy(data, &temp_16, 2*SIZE_CH);
 	return 0;
 }
 
@@ -110,15 +116,15 @@ static int _recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
 // static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size){
 // 	int n;
 // 	char* total_reply_msg;
-// 	uint16_t total_reply_msg_size = BUFFER_SIZE_16+reply_msg_size+BUFFER_SIZE_8;
+// 	uint16_t total_reply_msg_size = 2*SIZE_CH+reply_msg_size+SIZE_CH;
 //
 // 	total_reply_msg=(char*) malloc(sizeof(char)*total_reply_msg_size);
 //
 // 	_prep_to_send_16(&reply_msg_size, total_reply_msg);
 //
-// 	memcpy(total_reply_msg+BUFFER_SIZE_16, reply_msg, reply_msg_size);
+// 	memcpy(total_reply_msg+2*SIZE_CH, reply_msg, reply_msg_size);
 //
-// 	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+BUFFER_SIZE_16
+// 	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+2*SIZE_CH
 // 			+reply_msg_size);
 //
 // 	n=send(sock_fd, total_reply_msg, total_reply_msg_size, 0)<0;
@@ -144,11 +150,10 @@ static int _recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
 
 int send_empty_msg(int sock_fd){
 	char tmp=END_TRANS_CHAR;
-	return send(sock_fd, &tmp, BUFFER_SIZE_8, 0)<0;
+	return send(sock_fd, &tmp, SIZE_CH, 0)<0;
 }
 
 
-/*caller responsible for deallocating array*/
 int req_get_active_sches_msg(const char* address, uint16_t port,
 uint16_t magic_number, uint8_t device_id, struct schedule* rsp_sches,
 uint16_t* sches_len){

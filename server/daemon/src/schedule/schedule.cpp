@@ -3,20 +3,22 @@
 #include <arpa/inet.h>
 #include "socket_data/socket_data.h"
 
+#define SIZE_CH sizeof(char)
+
 void encode_schedule(char* msg, schedule sche){
   uint16_t temp;
 
   temp=htons(sche.schedule_id);
-  memcpy(msg, &temp, BUFFER_SIZE_16);
+  memcpy(msg, &temp, 2*SIZE_CH);
 
   temp=htons(sche.valve_id);
-  memcpy(msg+BUFFER_SIZE_16, &temp, BUFFER_SIZE_16);
+  memcpy(msg+2*SIZE_CH, &temp, 2*SIZE_CH);
 
   temp=htons(sche.start);
-  memcpy(msg+2*BUFFER_SIZE_16, &temp, BUFFER_SIZE_16);
+  memcpy(msg+2*2*SIZE_CH, &temp, 2*SIZE_CH);
 
   temp=htons(sche.start);
-  memcpy(msg+3*BUFFER_SIZE_16, &temp, BUFFER_SIZE_16);
+  memcpy(msg+3*2*SIZE_CH, &temp, 2*SIZE_CH);
 }
 
 std::ostream& operator<< (std::ostream& os, const schedule& sche){

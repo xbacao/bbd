@@ -3,17 +3,19 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "schedule/schedule.h"
 
 #define GREEN_C   "\e[0;32m"
 #define RED_C     "\033[0;31m"
 #define YELLOW_C  "\033[1;33m"
+#define BLUE_C    "\033[0;34m"
+#define PURPLE_C  "\033[0;35m"
 #define NC        "\033[0m"
 
 static FILE* log_fd;
-static bool log_to_stdout=false;
 
 void init_logs_stdout(){
-    log_to_stdout=true;
+  log_fd=stdout;
 }
 
 int init_logs_file(const char* log_file){
@@ -26,50 +28,48 @@ int init_logs_file(const char* log_file){
 }
 
 void log_info(const char* str){
-  if(log_to_stdout){
-    printf("[%lu] %sinfo%s: %s\n", time(NULL), GREEN_C, NC, str);
-    fflush(stdout);
-  }else {
-    fprintf(log_fd, "[%lu] %sinfo%s: %s\n", time(NULL), GREEN_C, NC, str);
-    fflush(log_fd);
-  }
+  fprintf(log_fd, "[%lu] %sinfo%s: %s\n", time(NULL), GREEN_C, NC, str);
+  fflush(log_fd);
 }
 
 void log_error(const char* str){
-  if(log_to_stdout){
-    printf("[%lu] %serror%s: %s\n", time(NULL), RED_C, NC, str);
-    fflush(stdout);
-  } else {
-    fprintf(log_fd, "[%lu] %serror%s: %s\n", time(NULL), RED_C, NC, str);
-    fflush(log_fd);
-  }
+  fprintf(log_fd, "[%lu] %serror%s: %s\n", time(NULL), RED_C, NC, str);
+  fflush(log_fd);
 }
 
 void log_error(const char* descr, const char* error){
-  if(log_to_stdout){
-    printf("[%lu] %serror while %s%s: %s\n", time(NULL), RED_C, descr, NC, error);
-    fflush(stdout);
-  } else {
-    fprintf(log_fd, "[%lu] %serror while %s%s: %s\n", time(NULL), RED_C, descr, NC, error);
-    fflush(log_fd);
+  fprintf(log_fd, "[%lu] %serror while %s%s: %s\n", time(NULL), RED_C, descr, NC, error);
+  fflush(log_fd);
+}
+
+void log_request(const char* ip, uint16_t device_id, const char* msg_type,
+uint16_t msg_size){
+  fprintf(log_fd, "[%lu] %sreq%s: [from_ip:%s, dev_id:%u, msg_type:%s, msg_size:%u]\n",
+    time(NULL), YELLOW_C, NC, ip, device_id, msg_type, msg_size);
+  fflush(log_fd);
+}
+
+void log_response(const char* ip, uint16_t device_id, const char* msg_type){
+  fprintf(log_fd, "[%lu] %srsp%s: [to_ip:%s, dev_id:%u, msg_type:%s]\n",
+    time(NULL), BLUE_C, NC, ip, device_id, msg_type);
+  fflush(log_fd);
+}
+
+template <typename T> void log_db_response(std::vector<T>){
+}
+
+template<> void log_db_response<schedule>(std::vector<schedule> vec){
+  fprintf(log_fd, "[%lu] %sdb_fetch%s:\n[%11s %11s %11s %11s]\n", time(NULL),
+    PURPLE_C, NC, "schedule_id", "valve_id", "start", "stop");
+  for(auto itr=vec.begin();itr!=vec.end();itr++){
+    fprintf(log_fd, "[%11u %11u %11u %11u]\n", itr->schedule_id, itr->valve_id,
+      itr->start, itr->stop);
   }
 }
 
-void log_request(const char* ip, uint16_t device_id, uint16_t msg_type,
-uint16_t msg_size){
-  if(log_to_stdout) {
-    printf("[%lu] %sreq: [ip:%s dev_id:%u msg_type:%u msg_size:%u]\n%s",time(NULL),
-      YELLOW_C, ip, device_id, msg_type, msg_size, NC);
-    fflush(stdout);
-  } else {
-    fprintf(log_fd, "[%lu] %sreq: [ip:%s dev_id:%u msg_type:%u msg_size:%u]\n%s",
-      time(NULL), YELLOW_C, ip, device_id, msg_type, msg_size, NC);
-    fflush(log_fd);
-  }
-}
 
 void close_logs(){
-  if(!log_to_stdout){
+  if(log_fd!=stdout){
     fclose(log_fd);
   }
 }

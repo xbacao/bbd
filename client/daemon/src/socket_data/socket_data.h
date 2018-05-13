@@ -5,11 +5,6 @@
 
 #include <stdint.h>
 
-#define BUFFER_SIZE_8   sizeof(uint8_t)
-#define BUFFER_SIZE_16	sizeof(uint16_t)
-#define BUFFER_SIZE_32	sizeof(uint32_t)
-// #define BUFFER_SIZE_64	sizeof(uint64_t)
-
 // const uint16_t SOCKET_HEADER = 38017;
 #define END_TRANS_CHAR 0xff;
 #define TIME_RSP_SIZE sizeof(uint32_t);

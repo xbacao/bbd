@@ -44,6 +44,6 @@ int main(void){
   }
 
   close_logs();
-  printf("tests succeeded!");
+  printf("tests succeeded!\n");
   return 0;
 }

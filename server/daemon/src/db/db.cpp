@@ -103,18 +103,21 @@ int db_get_active_schedules(uint16_t arduino_id, vector<schedule>& sches){
 	pqxx::result res;
 	pqxx::work txn(c);
 
+	log_info("requesting get_active_schedules from db");
+
 	try{
-		c.prepare("get_active_schedules", "SELECT get_active_schedules ($1)");
+		c.prepare("get_active_schedules", "SELECT * FROM get_active_schedules ($1)");
 		res=txn.prepared("get_active_schedules")(arduino_id).exec();
 
 		for (pqxx::result::const_iterator row=res.begin();row != res.end();++row){
-			sches.push_back({(*row)[0].as<uint16_t>(), (*row)[1].as<uint16_t>(),
-				(*row)[2].as<uint16_t>(), (*row)[3].as<uint16_t>()});
+			sches.push_back({row[0].as<uint16_t>(), row[1].as<uint16_t>(),
+				row[2].as<uint16_t>(), row[3].as<uint16_t>()});
 	  }
 	}	catch(const std::exception &e) {
 			log_error(__func__, e.what());
 			return 1;
 	}
+
 
 	return 0;
 	// int n_rows;

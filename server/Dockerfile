@@ -15,9 +15,6 @@ RUN apt-get install -y \
   gdb
 
 RUN mkdir /opt/bbd
-ADD daemon /tmp/daemon
-RUN make -C /tmp/daemon bbd_daemon
-RUN make -C /tmp/daemon install
 
 #database
 ENV POSTGRES_DB bbd
@@ -43,6 +40,10 @@ RUN service postgresql start && \
  /usr/bin/python2 /opt/bbd/web_server/src/manage.py makemigrations && \
  /usr/bin/python2 /opt/bbd/web_server/src/manage.py migrate && \
  service postgresql stop
+
+ADD daemon /tmp/daemon
+RUN make -C /tmp/daemon bbd_daemon
+RUN make -C /tmp/daemon install
 
 #supervisord
 COPY docker_assets/supervisord.conf /opt/bbd/supervisord.conf
