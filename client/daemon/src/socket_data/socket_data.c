@@ -18,8 +18,7 @@ static int _send_socket_header(int sockfd, uint16_t magic_number,
 // static int _recv_8(void* data, int sock_fd);
 static int _recv_16(void* data, int sock_fd);
 // static int _recv_32(void* data, int sock_fd);
-static int _recv_rsp_len(int sockfd, uint16_t* rsp_len);
-static int _recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp);
+
 
 static int _connect_socket(const char* address, uint16_t port, int* sockfd){
 	struct sockaddr_in server;
@@ -105,93 +104,34 @@ static int _recv_16(void* data, int sock_fd){
 	return 0;
 }
 
-static int _recv_rsp_len(int sockfd, uint16_t* rsp_len){
+int recv_rsp_len(int sockfd, uint16_t* rsp_len){
 	return _recv_16(&rsp_len, sockfd);
 }
 
-static int _recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
+int recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
 	return recv(sockfd, rsp, rsp_len, MSG_WAITALL);
 }
 
-// static int _send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size){
-// 	int n;
-// 	char* total_reply_msg;
-// 	uint16_t total_reply_msg_size = 2*SIZE_CH+reply_msg_size+SIZE_CH;
-//
-// 	total_reply_msg=(char*) malloc(sizeof(char)*total_reply_msg_size);
-//
-// 	_prep_to_send_16(&reply_msg_size, total_reply_msg);
-//
-// 	memcpy(total_reply_msg+2*SIZE_CH, reply_msg, reply_msg_size);
-//
-// 	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+2*SIZE_CH
-// 			+reply_msg_size);
-//
-// 	n=send(sock_fd, total_reply_msg, total_reply_msg_size, 0)<0;
-//
-// 	free(total_reply_msg);
-// 	return n;
+// int send_empty_msg(int sock_fd){
+// 	char tmp=END_TRANS_CHAR;
+// 	return send(sock_fd, &tmp, SIZE_CH, 0)<0;
 // }
 
-// int send_time_msg(int sock_fd){
-// 	char* reply_msg;
-// 	int n;
-// 	uint32_t curr_time=time(NULL);
-//
-// 	reply_msg=(char*) malloc(sizeof(char)*TIME_RSP_SIZE);
-//
-// 	_prep_to_send_32(&curr_time, reply_msg);
-//
-// 	n=_send_reply_msg(sock_fd, reply_msg, TIME_RSP_SIZE);
-//
-// 	free(reply_msg);
-// 	return n;
-// }
 
-int send_empty_msg(int sock_fd){
-	char tmp=END_TRANS_CHAR;
-	return send(sock_fd, &tmp, SIZE_CH, 0)<0;
-}
+int send_req_get_active_sches(const char* address, uint16_t port, uint16_t magic_number,
+uint8_t device_id,  int* sockfd){
+	int n;
 
-
-int req_get_active_sches_msg(const char* address, uint16_t port,
-uint16_t magic_number, uint8_t device_id, struct schedule* rsp_sches,
-uint16_t* sches_len){
-	int sockfd, n;
-	uint16_t rsp_len;
-	char* rsp;
-
-	n=_connect_socket(address, port, &sockfd);
+	n=_connect_socket(address, port, sockfd);
 	if(n){
 		log_error("connecting socket");
 		return 1;
 	}
-	n=_send_socket_header(sockfd, magic_number, device_id, GET_ACTIVE_SCHES_MSG,0);
+	n=_send_socket_header(*sockfd, magic_number, device_id, GET_ACTIVE_SCHES_MSG,0);
 	if(n){
 		log_error("sending message header");
 		return 2;
 	}
-	n=_recv_rsp_len(sockfd, &rsp_len);
-	if(n){
-		log_error("receiving response length");
-		return 3;
-	}
 
-	rsp=(char*) malloc(sizeof(char)*rsp_len);
-	n=_recv_rsp_msg(sockfd, rsp_len, rsp);
-	if(n){
-		log_error("receiving response message");
-		free(rsp);
-		return 4;
-	}
-
-	*sches_len=rsp_len/sizeof(struct schedule);
-
-	rsp_sches=(struct schedule*) malloc(rsp_len);
-	for(uint16_t i=0;i<*sches_len;i++){
-		decode_schedule(rsp+i*sizeof(struct schedule), rsp_sches+i);
-	}
-
-	free(rsp);
 	return 0;
 }

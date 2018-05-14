@@ -5,7 +5,7 @@ LDFLAGS=
 INCLUDES=-I"src"
 
 TEST_EXECUTABLE=test_server
-TEST_SOURCES=socket_data/socket_data schedule/schedule log/log $(TEST_EXECUTABLE)
+TEST_SOURCES=client_controller socket_data/socket_data schedule/schedule log/log $(TEST_EXECUTABLE)
 TEST_OBJECTS=$(addprefix $(BIN_DIR)/, $(addsuffix .o, $(TEST_SOURCES)))
 
 INSTALL=install

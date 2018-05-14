@@ -19,15 +19,16 @@
 // int send_time_msg(int sock_fd);
 
 
-int send_empty_msg(int sock_fd);
+// int send_empty_msg(int sock_fd);
 
 // int recv_sche_act_msg_size(int sock_fd, uint16_t* size);
 //
 // int recv_sche_act_msg(int sock_fd, uint16_t size, uint16_t **sche_ids);
+int recv_rsp_len(int sockfd, uint16_t* rsp_len);
+int recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp);
 
-int req_get_active_sches_msg(const char* address, uint16_t port,
-  uint16_t magic_number, uint8_t device_id, struct schedule* rsp_sches,
-  uint16_t* sches_len);
+int send_req_get_active_sches(const char* address, uint16_t port,
+  uint16_t magic_number, uint8_t device_id, int* sockfd);
 
 
 #endif
