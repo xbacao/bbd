@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "schedule/schedule.h"
+#include "socket_data/socket_data.h"
 
 #define GREEN_C   "\e[0;32m"
 #define RED_C     "\033[0;31m"
@@ -42,16 +43,15 @@ void log_error(const char* descr, const char* error){
   fflush(log_fd);
 }
 
-void log_request(const char* ip, uint16_t device_id, const char* msg_type,
-uint16_t msg_size){
-  fprintf(log_fd, "[%lu] %sreq%s: [from_ip:%s, dev_id:%u, msg_type:%s, msg_size:%u]\n",
-    time(NULL), YELLOW_C, NC, ip, device_id, msg_type, msg_size);
+void log_request(const char* ip, uint16_t device_id, uint16_t msg_type){
+  fprintf(log_fd, "[%lu] %sreq%s: [from_ip:%s, dev_id:%u, msg_type:%s]\n",
+    time(NULL), YELLOW_C, NC, ip, device_id, req_type_to_str(msg_type));
   fflush(log_fd);
 }
 
-void log_response(const char* ip, uint16_t device_id, const char* msg_type){
-  fprintf(log_fd, "[%lu] %srsp%s: [to_ip:%s, dev_id:%u, msg_type:%s]\n",
-    time(NULL), BLUE_C, NC, ip, device_id, msg_type);
+void log_response(const char* ip, uint16_t device_id, uint16_t msg_type, uint16_t msg_len){
+  fprintf(log_fd, "[%lu] %srsp%s: [to_ip:%s, dev_id:%u, msg_type:%s, msg_len:%u]\n",
+    time(NULL), BLUE_C, NC, ip, device_id, req_type_to_str(msg_type), msg_len);
   fflush(log_fd);
 }
 

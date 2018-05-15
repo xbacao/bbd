@@ -49,20 +49,20 @@ static int _run_server(){
   int newsockfd,n;
   socklen_t clilen;
   struct sockaddr_in cli_addr;
-  uint8_t msg_size, msg_type, device_id;
+  uint8_t msg_type, device_id;
+  uint16_t msg_size;
   int sockfd;
   char* client_ip_address;
-  char* request_type_str;
 
-  n=init_logs_file(LOG_FILE_PATH);
-  if(n){
-    return 1;
-  }
+  // n=init_logs_file(LOG_FILE_PATH);
+  // if(n){
+  //   return 1;
+  // }
+  init_logs_stdout();
 
   do{
     n=_start_socket_server(&sockfd);
     if(n){
-      log_error("starting server");
       usleep(1000000);
     }
   } while(n);
@@ -82,28 +82,40 @@ static int _run_server(){
         &msg_size);
       if(n==0){
         client_ip_address=inet_ntoa(cli_addr.sin_addr);
-        request_type_str=req_type_to_str(msg_type);
         log_info("request received");
-        log_request(client_ip_address, device_id, request_type_str, msg_size);
+        log_request(client_ip_address, device_id, msg_type);
         switch(msg_type){
           default:
             break;
           case GET_ACTIVE_SCHES_MSG:
           {
             vector<schedule> sches;
+            uint16_t rsp_len;
+            char* rsp;
+
             n=db_get_active_schedules(device_id, sches);
             if(n){
               log_error("receiving GET_ACTIVE_SCHES_MSG");
             }
 
             log_db_response<schedule>(sches);
+            rsp_len=sizeof(schedule)*sches.size();
 
-            n=send_schedules_msg(newsockfd, sches);
+            rsp=craft_active_schedules_rsp(sches);
+            // if(n){
+            //   log_error("sending GET_ACTIVE_SCHES_MSG response");
+            // } else {
+            //   log_response(client_ip_address, device_id, msg_type);
+            // }
+
+            n=send_reply_msg(newsockfd, rsp, rsp_len);
             if(n){
               log_error("sending GET_ACTIVE_SCHES_MSG response");
             } else {
-              log_response(client_ip_address, device_id, request_type_str);
+              log_response(client_ip_address, device_id, msg_type, rsp_len);
             }
+
+            free(rsp);
             break;
           }
           case CHECKIN_MSG:
@@ -117,8 +129,6 @@ static int _run_server(){
             break;
           }
         }
-        free(client_ip_address);
-        free(request_type_str);
       }
       else{
         log_error("receiving message request header");

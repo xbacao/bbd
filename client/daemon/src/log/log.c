@@ -4,10 +4,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define GREEN_C   "\e[0;32m"
-#define RED_C     "\033[0;31m"
-#define YELLOW_C  "\033[1;33m"
-#define NC        "\033[0m"
+#include "socket_data/socket_data.h"
+
+#define GREEN_C      "\033[0;32m"
+#define RED_C           "\033[0;31m"
+#define YELLOW_C    "\033[1;33m"
+#define BLUE_C          "\033[0;34m"
+#define NC                  "\033[0m"
 
 static FILE* log_fd;
 
@@ -34,10 +37,15 @@ void log_error(const char* str){
   fflush(log_fd);
 }
 
-void log_request(const char* ip, uint16_t device_id, uint16_t msg_type,
-uint16_t msg_size){
-  fprintf(log_fd, "[%lu] %sreq: [ip:%s dev_id:%u msg_type:%u msg_size:%u]\n%s",
-    time(NULL), YELLOW_C, ip, device_id, msg_type, msg_size, NC);
+void log_request(const char* ip, uint16_t port, uint16_t msg_type){
+  fprintf(log_fd, "[%lu] %sreq%s: [to:%s, port:%u, msg_type:%s]\n",
+    time(NULL), YELLOW_C, NC, ip, port, req_type_to_str(msg_type));
+  fflush(log_fd);
+}
+
+void log_response(const char* ip, uint16_t msg_type, uint16_t rsp_len){
+  fprintf(log_fd, "[%lu] %srsp%s: [from_ip:%s, msg_type:%s, rsp_len:%u]\n",
+    time(NULL), BLUE_C, NC, ip, req_type_to_str(msg_type), rsp_len);
   fflush(log_fd);
 }
 

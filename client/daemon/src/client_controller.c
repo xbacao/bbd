@@ -19,6 +19,8 @@ int update_active_schedules(){
     return 1;
   }
 
+  log_request(IP, PORT, GET_ACTIVE_SCHES_MSG);
+
   n=recv_rsp_len(sockfd, &rsp_len);
 	if(n){
 		log_error("receiving response length");
@@ -32,6 +34,8 @@ int update_active_schedules(){
 		free(rsp);
 		return 4;
 	}
+
+  log_response(IP, GET_ACTIVE_SCHES_MSG, rsp_len);
 
 	sches_len=rsp_len/sizeof(struct schedule);
 

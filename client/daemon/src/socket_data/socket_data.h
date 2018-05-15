@@ -24,6 +24,9 @@
 // int recv_sche_act_msg_size(int sock_fd, uint16_t* size);
 //
 // int recv_sche_act_msg(int sock_fd, uint16_t size, uint16_t **sche_ids);
+char* req_type_to_str(uint8_t req_type);
+
+
 int recv_rsp_len(int sockfd, uint16_t* rsp_len);
 int recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp);
 
