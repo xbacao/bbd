@@ -33,5 +33,6 @@ int recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp);
 int send_req_get_active_sches(const char* address, uint16_t port,
   uint16_t magic_number, uint8_t device_id, int* sockfd);
 
+void decode_schedule(char* msg, struct schedule* sche);
 
 #endif

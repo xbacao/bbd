@@ -16,20 +16,13 @@ const uint16_t TIME_RSP_SIZE = sizeof(uint32_t);
 
 char* req_type_to_str(uint8_t req_type);
 
-int recv_socket_header(int sockfd, uint16_t magic_number, uint8_t* arduino_id,
+int recv_socket_header(int sockfd, uint16_t* magic_number, uint8_t* device_id,
   uint8_t* msg_type, uint16_t* msg_size);
 
-int send_reply_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size);
+int send_rsp_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size);
 
-// int send_time_msg(int sock_fd);
-
-// int send_schedule_msg(ArduinoSchedules a_s, int sock_fd);
 char* craft_active_schedules_rsp(std::vector<schedule> sches);
 
-int send_empty_msg(int sock_fd);
-
-// int recv_sche_act_msg_size(int sock_fd, uint16_t* size);
-//
-// int recv_sche_act_msg(int sock_fd, uint16_t size, uint16_t **sche_ids);
+void encode_schedule(char* msg, schedule sche);
 
 #endif

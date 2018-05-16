@@ -10,6 +10,4 @@ struct schedule{
 	uint16_t stop;
 };
 
-void decode_schedule(char* msg, struct schedule* sche);
-
 #endif

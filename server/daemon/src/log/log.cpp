@@ -39,7 +39,7 @@ void log_error(const char* str){
 }
 
 void log_error(const char* descr, const char* error){
-  fprintf(log_fd, "[%lu] %serror while %s%s: %s\n", time(NULL), RED_C, descr, NC, error);
+  fprintf(log_fd, "[%lu] %serror %s%s: %s\n", time(NULL), RED_C, descr, NC, error);
   fflush(log_fd);
 }
 

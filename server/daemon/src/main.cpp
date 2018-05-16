@@ -12,8 +12,7 @@
 #define PID_FILE        "/var/run/bbd_server.pid"
 #define LOG_FILE_PATH   "/var/log/bbd_server_daemon.log"
 
-#define SERVER_PORT     7777
-
+#define SERVER_PORT       7777
 #define MAGIC_NUMER     38017
 
 
@@ -50,7 +49,7 @@ static int _run_server(){
   socklen_t clilen;
   struct sockaddr_in cli_addr;
   uint8_t msg_type, device_id;
-  uint16_t msg_size;
+  uint16_t msg_size, magic_number;
   int sockfd;
   char* client_ip_address;
 
@@ -78,55 +77,59 @@ static int _run_server(){
     }
     else{
 
-      n=recv_socket_header(newsockfd, MAGIC_NUMER, &device_id, &msg_type,
-        &msg_size);
+      n=recv_socket_header(newsockfd,&magic_number,&device_id,&msg_type,&msg_size);
       if(n==0){
         client_ip_address=inet_ntoa(cli_addr.sin_addr);
-        log_info("request received");
-        log_request(client_ip_address, device_id, msg_type);
-        switch(msg_type){
-          default:
-            break;
-          case GET_ACTIVE_SCHES_MSG:
-          {
-            vector<schedule> sches;
-            uint16_t rsp_len;
-            char* rsp;
+        if(magic_number!=MAGIC_NUMER){
+          log_error(client_ip_address, "bad magic number!");
+          log_request(client_ip_address, device_id, msg_type);
+        } else {
+          log_info("request received");
+          log_request(client_ip_address, device_id, msg_type);
+          switch(msg_type){
+            default:
+              break;
+            case GET_ACTIVE_SCHES_MSG:
+            {
+              vector<schedule> sches;
+              uint16_t rsp_len;
+              char* rsp;
 
-            n=db_get_active_schedules(device_id, sches);
-            if(n){
-              log_error("receiving GET_ACTIVE_SCHES_MSG");
+              n=db_get_active_schedules(device_id, sches);
+              if(n){
+                log_error("receiving GET_ACTIVE_SCHES_MSG");
+              }
+
+              log_db_response<schedule>(sches);
+              rsp_len=sizeof(schedule)*sches.size();
+
+              rsp=craft_active_schedules_rsp(sches);
+              // if(n){
+              //   log_error("sending GET_ACTIVE_SCHES_MSG response");
+              // } else {
+              //   log_response(client_ip_address, device_id, msg_type);
+              // }
+
+              n=send_rsp_msg(newsockfd, rsp, rsp_len);
+              if(n){
+                log_error("sending GET_ACTIVE_SCHES_MSG response");
+              } else {
+                log_response(client_ip_address, device_id, msg_type, rsp_len);
+              }
+
+              free(rsp);
+              break;
             }
-
-            log_db_response<schedule>(sches);
-            rsp_len=sizeof(schedule)*sches.size();
-
-            rsp=craft_active_schedules_rsp(sches);
-            // if(n){
-            //   log_error("sending GET_ACTIVE_SCHES_MSG response");
-            // } else {
-            //   log_response(client_ip_address, device_id, msg_type);
-            // }
-
-            n=send_reply_msg(newsockfd, rsp, rsp_len);
-            if(n){
-              log_error("sending GET_ACTIVE_SCHES_MSG response");
-            } else {
-              log_response(client_ip_address, device_id, msg_type, rsp_len);
+            case CHECKIN_MSG:
+            {
+              //TODO
+              break;
             }
-
-            free(rsp);
-            break;
-          }
-          case CHECKIN_MSG:
-          {
-            //TODO
-            break;
-          }
-          case SCHE_ACT_MSG:
-          {
-            //TODO
-            break;
+            case SCHE_ACT_MSG:
+            {
+              //TODO
+              break;
+            }
           }
         }
       }

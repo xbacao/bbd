@@ -7,6 +7,38 @@
 using namespace std;
 
 #define SIZE_CH sizeof(char)
+#define HEADER_SIZE 6*SIZE_CH
+
+/*** SOCKET SERIALIZATION ***/
+static void _prep_to_send_8(const void* in_data, void* out_data);
+static void _prep_to_send_16(const void* in_data, void* out_data);
+
+static void _prep_recved_8(const void* in_data, void* out_data);
+static void _prep_recved_16(const void* in_data, void* out_data);
+
+
+
+static void _prep_to_send_8(const void* in_data, void* out_data){
+	memcpy(out_data, in_data, SIZE_CH);
+}
+
+static void _prep_to_send_16(const void* in_data, void* out_data){
+  uint16_t temp_16;
+  memcpy(&temp_16, in_data, 2*SIZE_CH);
+  temp_16 = htons(temp_16);
+  memcpy(out_data, &temp_16, 2*SIZE_CH);
+}
+
+static void _prep_recved_8(const void* in_data, void* out_data){
+	memcpy(out_data, in_data, SIZE_CH);
+}
+
+static void _prep_recved_16(const void* in_data, void* out_data){
+	uint16_t temp_16;
+	memcpy(&temp_16, in_data, 2*SIZE_CH);
+	temp_16 = ntohs(temp_16);
+	memcpy(out_data, &temp_16, 2*SIZE_CH);
+}
 
 char* req_type_to_str(uint8_t req_type){
 	const char* cst_str;
@@ -32,17 +64,6 @@ char* req_type_to_str(uint8_t req_type){
 	return res;
 }
 
-static void _prep_to_send_8(const void* in_data, void* out_data){
-	memcpy(out_data, in_data, SIZE_CH);
-}
-
-static void _prep_to_send_16(const void* in_data, void* out_data){
-  uint16_t temp_16;
-  memcpy(&temp_16, in_data, 2*SIZE_CH);
-  temp_16 = htons(temp_16);
-  memcpy(out_data, &temp_16, 2*SIZE_CH);
-}
-
 // static void _prep_to_send_32(const void* in_data, void* out_data){
 // 	uint32_t temp_32;
 // 	memcpy(&temp_32, in_data, 4*SIZE_CH);
@@ -50,69 +71,28 @@ static void _prep_to_send_16(const void* in_data, void* out_data){
 // 	memcpy(out_data, &temp_32, 4*SIZE_CH);
 // }
 
-static int _recv_8(void* data, int sockfd){
-	int n;
-	char buffer_8[SIZE_CH];
 
-	memset(data, 0, SIZE_CH);
-	n=recv(sockfd, buffer_8, SIZE_CH, MSG_WAITALL);
-	if(n<0){
-		return n;
-	}
-
-	memcpy(data, &buffer_8, SIZE_CH);
-	return 0;
-}
-
-static int _recv_16(void* data, int sockfd){
-	int n;
-	char buffer_16[2*SIZE_CH];
-	uint16_t temp_16;
-
-	memset(data, 0, 2*SIZE_CH);
-	n=recv(sockfd, buffer_16, 2*SIZE_CH, MSG_WAITALL);
-	if(n<0){
-		return n;
-	}
-
-	memcpy(&temp_16, buffer_16, 2*SIZE_CH);
-	temp_16 = ntohs(temp_16);
-	memcpy(data, &temp_16, 2*SIZE_CH);
-	return 0;
-}
-
-int recv_socket_header(int sockfd, uint16_t magic_number, uint8_t* arduino_id,
+int recv_socket_header(int sockfd, uint16_t* magic_number, uint8_t* device_id,
 uint8_t* msg_type, uint16_t* msg_size){
-  uint16_t temp_16;
-  int n;
-  n= _recv_16(&temp_16, sockfd);
-  if(n!=0){
-    return 1;
-  }
-  if(temp_16 != magic_number){
-		log_error("magic numbers do not match");
-    return 2;
-  }
+	int n;
+	char* msg;
 
-	n=_recv_8(arduino_id, sockfd);
-	if(n){
-		return 3;
+	msg=(char*) malloc(HEADER_SIZE);
+	n=recv(sockfd, msg, HEADER_SIZE, MSG_WAITALL);
+	if(n<=0){
+		return 1;
 	}
 
-	n=_recv_8(msg_type, sockfd);
-	if(n){
-		return 4;
-	}
+	_prep_recved_16(msg, magic_number);
+	_prep_recved_8(msg+2*SIZE_CH, device_id);
+	_prep_recved_8(msg+3*SIZE_CH, msg_type);
+	_prep_recved_16(msg+4*SIZE_CH, msg_size);
 
-	n=_recv_16(msg_size, sockfd);
-	if(n){
-		return 6;
-	}
-
+	free(msg);
   return 0;
 }
 
-int send_reply_msg(int sockfd, char* reply_msg, uint16_t reply_msg_size){
+int send_rsp_msg(int sockfd, char* reply_msg, uint16_t reply_msg_size){
 	int n;
 	char* total_reply_msg;
 	uint16_t total_reply_msg_size = 2*SIZE_CH+reply_msg_size+SIZE_CH;
@@ -132,21 +112,6 @@ int send_reply_msg(int sockfd, char* reply_msg, uint16_t reply_msg_size){
 	return n;
 }
 
-// int send_time_msg(int sockfd){
-// 	char* reply_msg;
-// 	int n;
-// 	uint32_t curr_time=time(nullptr);
-//
-// 	reply_msg=new char[TIME_RSP_SIZE];
-//
-// 	_prep_to_send_32(&curr_time, reply_msg);
-//
-// 	n=_send_reply_msg(sockfd, reply_msg, TIME_RSP_SIZE);
-//
-// 	delete[] reply_msg;
-// 	return n;
-// }
-
 /* the 2 bytes required for sending the message size are not included in message size */
 char* craft_active_schedules_rsp(vector<schedule> sches){
 	uint16_t sches_size=sches.size();
@@ -160,6 +125,9 @@ char* craft_active_schedules_rsp(vector<schedule> sches){
 	return msg;
 }
 
-int send_empty_msg(int sockfd){
-	return send(sockfd, &END_TRANS_CHAR, SIZE_CH, 0)<0;
+void encode_schedule(char* msg, struct schedule sche){
+	_prep_to_send_16(&(sche.schedule_id), msg);
+	_prep_to_send_16(&(sche.valve_id), msg+2*SIZE_CH);
+	_prep_to_send_16(&(sche.start), msg+4*SIZE_CH);
+	_prep_to_send_16(&(sche.stop), msg+6*SIZE_CH);
 }

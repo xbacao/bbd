@@ -10,8 +10,6 @@ struct schedule{
 	uint16_t stop;
 };
 
-void encode_schedule(char* msg, schedule sche);
-
 std::ostream& operator<< (std::ostream& os, const schedule& sche);
 
 

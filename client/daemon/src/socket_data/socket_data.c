@@ -8,22 +8,21 @@
 #include <stdio.h>
 
 #define SIZE_CH sizeof(char)
+#define HEADER_SIZE 6*SIZE_CH
 
+/*** SOCKET SERIALIZATION ***/
 static void _prep_to_send_8(const void* in_data, void* out_data);
 static void _prep_to_send_16(const void* in_data, void* out_data);
-// static void _prep_to_send_32(const void* in_data, void* out_data);
 
-// static int _recv_8(void* data, int sock_fd);
-static int _recv_16(void* data, int sock_fd);
-// static int _recv_32(void* data, int sock_fd);
+static void _prep_recved_8(const void* in_data, void* out_data);
+static void _prep_recved_16(const void* in_data, void* out_data);
 
-
+/*** SOCKET USAGE ***/
 static int _connect_socket(const char* address, uint16_t port, int* sockfd);
 static int _send_socket_header(int sockfd, uint16_t magic_number, uint8_t device_id,
 	uint8_t msg_type, uint16_t msg_size);
 
-
-
+/*** SOCKET SERIALIZATION ***/
 static void _prep_to_send_8(const void* in_data, void* out_data){
 	memcpy(out_data, in_data, SIZE_CH);
 }
@@ -35,7 +34,18 @@ static void _prep_to_send_16(const void* in_data, void* out_data){
   memcpy(out_data, &temp_16, 2*SIZE_CH);
 }
 
+static void _prep_recved_8(const void* in_data, void* out_data){
+	memcpy(out_data, in_data, SIZE_CH);
+}
 
+static void _prep_recved_16(const void* in_data, void* out_data){
+	uint16_t temp_16;
+	memcpy(&temp_16, in_data, 2*SIZE_CH);
+	temp_16 = ntohs(temp_16);
+	memcpy(out_data, &temp_16, 2*SIZE_CH);
+}
+
+/*** SOCKET USAGE ***/
 static int _connect_socket(const char* address, uint16_t port, int* sockfd){
 	struct sockaddr_in server;
 	*sockfd = socket(AF_INET , SOCK_STREAM , 0);
@@ -60,56 +70,16 @@ static int _send_socket_header(int sockfd, uint16_t magic_number, uint8_t device
 uint8_t msg_type, uint16_t msg_size){
 	int ret;
 	char* msg;
-	msg=(char*) malloc(6*SIZE_CH);
+	msg=(char*) malloc(HEADER_SIZE);
 
 	_prep_to_send_16(&magic_number, msg);
 	_prep_to_send_8(&device_id, msg+2*SIZE_CH);
 	_prep_to_send_8(&msg_type, msg+3*SIZE_CH);
 	_prep_to_send_16(&msg_size, msg+4*SIZE_CH);
 
-	ret=send(sockfd, msg, 6*SIZE_CH, MSG_WAITALL)<0;
+	ret=send(sockfd, msg, HEADER_SIZE, MSG_WAITALL)<0;
 	free(msg);
 	return ret;
-}
-
-
-//
-// static void _prep_to_send_32(const void* in_data, void* out_data){
-// 	uint32_t temp_32;
-// 	memcpy(&temp_32, in_data, BUFFER_SIZE_32);
-// 	temp_32=htonl(temp_32);
-// 	memcpy(out_data, &temp_32, BUFFER_SIZE_32);
-// }
-
-// static int _recv_8(void* data, int sock_fd){
-// 	int n;
-// 	char buffer_8[SIZE_CH];
-//
-// 	memset(data, 0, SIZE_CH);
-// 	n=recv(sock_fd, buffer_8, SIZE_CH, MSG_WAITALL);
-// 	if(n<0){
-// 		return n;
-// 	}
-//
-// 	memcpy(data, &buffer_8, SIZE_CH);
-// 	return 0;
-// }
-
-static int _recv_16(void* data, int sock_fd){
-	int n;
-	char buffer_16[2*SIZE_CH];
-	uint16_t temp_16;
-
-	memset(data, 0, 2*SIZE_CH);
-	n=recv(sock_fd, buffer_16, 2*SIZE_CH, MSG_WAITALL);
-	if(n<0){
-		return n;
-	}
-
-	memcpy(&temp_16, buffer_16, 2*SIZE_CH);
-	temp_16 = ntohs(temp_16);
-	memcpy(data, &temp_16, 2*SIZE_CH);
-	return 0;
 }
 
 char* req_type_to_str(uint8_t req_type){
@@ -137,17 +107,21 @@ char* req_type_to_str(uint8_t req_type){
 }
 
 int recv_rsp_len(int sockfd, uint16_t* rsp_len){
-	return _recv_16(rsp_len, sockfd);
+	int n;
+	uint16_t tmp;
+
+	n=recv(sockfd, &tmp, 2*SIZE_CH, MSG_WAITALL);
+	if(n<=0){
+		return 1;
+	}
+
+	_prep_recved_16(&tmp, rsp_len);
+	return 0;
 }
 
 int recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
 	return recv(sockfd, rsp, rsp_len, MSG_WAITALL)<=0;
 }
-
-// int send_empty_msg(int sock_fd){
-// 	char tmp=END_TRANS_CHAR;
-// 	return send(sock_fd, &tmp, SIZE_CH, 0)<0;
-// }
 
 int send_req_get_active_sches(const char* address, uint16_t port, uint16_t magic_number,
 uint8_t device_id,  int* sockfd){
@@ -165,4 +139,18 @@ uint8_t device_id,  int* sockfd){
 	}
 
 	return 0;
+}
+
+void decode_schedule(char* msg, struct schedule* sche){
+  uint16_t schedule_id;
+	uint16_t valve_id;
+	uint16_t start;
+	uint16_t stop;
+
+	_prep_recved_16(msg, &schedule_id);
+	_prep_recved_16(msg+2*SIZE_CH, &valve_id);
+	_prep_recved_16(msg+4*SIZE_CH, &start);
+	_prep_recved_16(msg+6*SIZE_CH, &stop);
+
+  *sche=(struct schedule) {schedule_id, valve_id, start, stop};
 }
