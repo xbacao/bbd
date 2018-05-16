@@ -118,7 +118,7 @@ int db_get_active_schedules(uint16_t arduino_id, vector<schedule>& sches){
 	// 		return 1;
 	// }
 
-	sches.push_back({0,0,0,0});
+	sches.push_back({1,1,1,1});
 	sches.push_back({1,1,1,1});
 	sches.push_back({3333,3333,3333,3333});
 	sches.push_back({4444,5555,3333,9});

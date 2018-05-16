@@ -51,8 +51,8 @@ int update_active_schedules(){
 
   for(uint16_t i=0;i<sches_len;i++){
     printf("rcved sche:  sche_id:%u valve_id:%u  start:%u  stop:%u\n",
-      rsp_sches->schedule_id, rsp_sches->valve_id, rsp_sches->start,
-      rsp_sches->stop);
+      rsp_sches[i].schedule_id, rsp_sches[i].valve_id, rsp_sches[i].start,
+      rsp_sches[i].stop);
   }
 
   free(rsp_sches);
