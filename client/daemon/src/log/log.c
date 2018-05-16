@@ -39,13 +39,13 @@ void log_error(const char* str){
 
 void log_request(const char* ip, uint16_t port, uint16_t msg_type){
   fprintf(log_fd, "[%lu] %sreq%s: [to:%s, port:%u, msg_type:%s]\n",
-    time(NULL), YELLOW_C, NC, ip, port, req_type_to_str(msg_type));
+    time(NULL), YELLOW_C, NC, ip, port, sd_req_type_to_str(msg_type));
   fflush(log_fd);
 }
 
 void log_response(const char* ip, uint16_t msg_type, uint16_t rsp_len){
   fprintf(log_fd, "[%lu] %srsp%s: [from_ip:%s, msg_type:%s, rsp_len:%u]\n",
-    time(NULL), BLUE_C, NC, ip, req_type_to_str(msg_type), rsp_len);
+    time(NULL), BLUE_C, NC, ip, sd_req_type_to_str(msg_type), rsp_len);
   fflush(log_fd);
 }
 

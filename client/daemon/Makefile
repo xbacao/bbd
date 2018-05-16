@@ -1,11 +1,16 @@
 CC=gcc
-CFLAGS=-g -Wall -c -std=gnu99
+CFLAGS=-g -Wall -c -std=c11
 
-LDFLAGS=
+LDFLAGS=-pthread
 INCLUDES=-I"src"
 
 TEST_EXECUTABLE=test_server
-TEST_SOURCES=client_controller socket_data/socket_data schedule/schedule log/log $(TEST_EXECUTABLE)
+TEST_SOURCES=client_controller \
+															socket_data/socket_data \
+															log/log \
+															schedule_manager/schedule_manager \
+															$(TEST_EXECUTABLE)
+
 TEST_OBJECTS=$(addprefix $(BIN_DIR)/, $(addsuffix .o, $(TEST_SOURCES)))
 
 INSTALL=install

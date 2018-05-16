@@ -12,7 +12,7 @@ int main(void){
 
   init_logs_stdout();
 
-  n=update_active_schedules();
+  n=cc_update_active_schedules();
   if(n){
     printf("test_req_get_active_sches failed: %u\n",n);
     return 1;
