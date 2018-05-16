@@ -9,6 +9,7 @@ TEST_SOURCES=client_controller \
 															socket_data/socket_data \
 															log/log \
 															schedule_manager/schedule_manager \
+															valve_manager/valve_manager \
 															$(TEST_EXECUTABLE)
 
 TEST_OBJECTS=$(addprefix $(BIN_DIR)/, $(addsuffix .o, $(TEST_SOURCES)))

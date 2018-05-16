@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "log/log.h"
+
 static struct schedule* device_schedules;
 static bool schedules_set=false;
 
@@ -15,12 +17,14 @@ static void* _sm_run_scheduler_thread();
 
 static void* _sm_run_scheduler_thread(){
   while(true){
-    ;;
+    //TODO
   }
 
   return NULL;
 }
 
+
+//FIXME
 void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
   uint16_t sches_bytesize=sizeof(struct schedule)*schedules_len;
 
@@ -35,6 +39,9 @@ void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
   memcpy(device_schedules, sches, sches_bytesize);
 
   pthread_mutex_unlock(schedules_mtx);
+
+  log_info("schedule manager set new schedules");
+  log_new_schedules(sches, schedules_len);
 }
 
 int sm_start_scheduler(){
@@ -44,6 +51,8 @@ int sm_start_scheduler(){
   if(pthread_create(scheduler_thread, NULL, &_sm_run_scheduler_thread, NULL)!=0){
     return 2;
   }
+
+  log_info("schedule manager started");
   return 0;
 }
 

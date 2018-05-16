@@ -54,3 +54,11 @@ void close_logs(){
     fclose(log_fd);
   }
 }
+
+void log_valve_newstate(uint16_t valve_id, enum valve_state v_state){
+  //TODO
+}
+
+void log_new_schedules(struct schedule* sches, uint16_t sches_len){
+  //TODO
+}
