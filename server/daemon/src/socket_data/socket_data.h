@@ -5,16 +5,12 @@
 
 #include <vector>
 
-const uint8_t END_TRANS_CHAR = 0xff;
-const uint16_t TIME_RSP_SIZE = sizeof(uint32_t);
+enum request_type {
+  GET_DEVICE_VALVES_MSG =    0x0,
+  GET_ACTIVE_SCHES_MSG =      0x1
+};
 
-#define SYNC_TIME_MSG           0x1
-#define GET_ACTIVE_SCHES_MSG    0x2
-#define CHECKIN_MSG             0x3
-#define SCHE_ACT_MSG            0x4
-// #define END_MSG				0x4
-
-char* req_type_to_str(uint8_t req_type);
+char* sd_req_type_to_str(enum request_type req_type);
 
 int recv_socket_header(int sockfd, uint16_t* magic_number, uint8_t* device_id,
   uint8_t* msg_type, uint16_t* msg_size);
@@ -22,6 +18,7 @@ int recv_socket_header(int sockfd, uint16_t* magic_number, uint8_t* device_id,
 int send_rsp_msg(int sock_fd, char* reply_msg, uint16_t reply_msg_size);
 
 char* craft_active_schedules_rsp(std::vector<schedule> sches);
+char* craft_device_valves_rsp(std::vector<uint16_t> valve_ids);
 
 void encode_schedule(char* msg, schedule sche);
 

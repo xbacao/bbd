@@ -82,21 +82,15 @@ uint8_t msg_type, uint16_t msg_size){
 	return ret;
 }
 
-char* sd_req_type_to_str(uint8_t req_type){
+char* sd_req_type_to_str(enum request_type req_type){
 	const char* cst_str;
 	char* res=(char*) malloc(sizeof(char)*30);
   switch(req_type){
-    case SYNC_TIME_MSG:
-      cst_str="SYNC_TIME_MSG";
-      break;
     case GET_ACTIVE_SCHES_MSG:
       cst_str="GET_ACTIVE_SCHES_MSG";
       break;
-    case CHECKIN_MSG:
-      cst_str="CHECKIN_MSG";
-      break;
-    case SCHE_ACT_MSG:
-      cst_str="SCHE_ACT_MSG";
+    case GET_DEVICE_VALVES_MSG:
+      cst_str="GET_DEVICE_VALVES_MSG";
       break;
     default:
       cst_str="UNIDENTIFIED";
@@ -123,8 +117,8 @@ int sd_recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp){
 	return recv(sockfd, rsp, rsp_len, MSG_WAITALL)<=0;
 }
 
-int sd_send_req_get_active_sches(const char* address, uint16_t port, uint16_t magic_number,
-uint8_t device_id,  int* sockfd){
+int sd_send_request(const char* address, uint16_t port, uint16_t magic_number,
+uint8_t device_id, enum request_type request,  int* sockfd){
 	int n;
 
 	n=_sd_connect_socket(address, port, sockfd);
@@ -132,7 +126,7 @@ uint8_t device_id,  int* sockfd){
 		log_error("connecting socket");
 		return 1;
 	}
-	n=_sd_send_socket_header(*sockfd, magic_number, device_id, GET_ACTIVE_SCHES_MSG,0);
+	n=_sd_send_socket_header(*sockfd, magic_number, device_id, request,0);
 	if(n){
 		log_error("sending message header");
 		return 2;

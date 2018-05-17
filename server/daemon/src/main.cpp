@@ -48,10 +48,11 @@ static int _run_server(){
   int newsockfd,n;
   socklen_t clilen;
   struct sockaddr_in cli_addr;
-  uint8_t msg_type, device_id;
+  uint8_t msg_type_int, device_id;
   uint16_t msg_size, magic_number;
   int sockfd;
   char* client_ip_address;
+  enum request_type msg_type;
 
   // n=init_logs_file(LOG_FILE_PATH);
   // if(n){
@@ -77,7 +78,9 @@ static int _run_server(){
     }
     else{
 
-      n=recv_socket_header(newsockfd,&magic_number,&device_id,&msg_type,&msg_size);
+      n=recv_socket_header(newsockfd, &magic_number, &device_id, &msg_type_int,
+        &msg_size);
+      msg_type=(enum request_type) msg_type_int;
       if(n==0){
         client_ip_address=inet_ntoa(cli_addr.sin_addr);
         if(magic_number!=MAGIC_NUMER){
@@ -97,7 +100,8 @@ static int _run_server(){
 
               n=db_get_active_schedules(device_id, sches);
               if(n){
-                log_error("receiving GET_ACTIVE_SCHES_MSG");
+                log_error("db fetch GET_ACTIVE_SCHES_MSG");
+                break;
               }
 
               log_db_response<schedule>(sches);
@@ -120,14 +124,30 @@ static int _run_server(){
               free(rsp);
               break;
             }
-            case CHECKIN_MSG:
+            case GET_DEVICE_VALVES_MSG:
             {
-              //TODO
-              break;
-            }
-            case SCHE_ACT_MSG:
-            {
-              //TODO
+              uint16_t rsp_len;
+              char* rsp;
+              vector<uint16_t> valve_ids;
+
+              n=db_get_device_valves(device_id, valve_ids);
+              if(n){
+                log_error("db fetch GET_DEVICE_VALVES_MSG");
+                break;
+              }
+
+              rsp=craft_device_valves_rsp(valve_ids);
+              rsp_len=sizeof(uint16_t)*valve_ids.size();
+
+              n=send_rsp_msg(newsockfd, rsp, rsp_len);
+              if(n){
+                log_error("sending GET_DEVICE_VALVES_MSG response");
+              } else {
+                log_response(client_ip_address, device_id, msg_type, rsp_len);
+              }
+
+              free(rsp);
+
               break;
             }
           }

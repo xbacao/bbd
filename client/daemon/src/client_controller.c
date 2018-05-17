@@ -9,13 +9,18 @@
 #include "schedule_manager/schedule_manager.h"
 #include "log/log.h"
 
+int cc_set_valve_info(){
+  
+}
+
 int cc_update_active_schedules(){
   struct schedule* rsp_sches;
   int sockfd, n;
   char* rsp;
   uint16_t sches_len, rsp_len;
 
-  n=sd_send_req_get_active_sches(IP,PORT,MAGIC_NUMBER,DEVICE_ID, &sockfd);
+  n=sd_send_request(IP,PORT,MAGIC_NUMBER,DEVICE_ID, GET_ACTIVE_SCHES_MSG,
+    &sockfd);
   if(n){
     return 1;
   }

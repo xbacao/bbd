@@ -40,21 +40,15 @@ static void _prep_recved_16(const void* in_data, void* out_data){
 	memcpy(out_data, &temp_16, 2*SIZE_CH);
 }
 
-char* req_type_to_str(uint8_t req_type){
+char* sd_req_type_to_str(enum request_type req_type){
 	const char* cst_str;
 	char* res=(char*) malloc(sizeof(char)*30);
   switch(req_type){
-    case SYNC_TIME_MSG:
-      cst_str="SYNC_TIME_MSG";
-      break;
     case GET_ACTIVE_SCHES_MSG:
       cst_str="GET_ACTIVE_SCHES_MSG";
       break;
-    case CHECKIN_MSG:
-      cst_str="CHECKIN_MSG";
-      break;
-    case SCHE_ACT_MSG:
-      cst_str="SCHE_ACT_MSG";
+    case GET_DEVICE_VALVES_MSG:
+      cst_str="GET_DEVICE_VALVES_MSG";
       break;
     default:
       cst_str="UNIDENTIFIED";
@@ -95,7 +89,7 @@ uint8_t* msg_type, uint16_t* msg_size){
 int send_rsp_msg(int sockfd, char* reply_msg, uint16_t reply_msg_size){
 	int n;
 	char* total_reply_msg;
-	uint16_t total_reply_msg_size = 2*SIZE_CH+reply_msg_size+SIZE_CH;
+	uint16_t total_reply_msg_size = 2*SIZE_CH+reply_msg_size;
 
 	total_reply_msg= (char*) malloc(total_reply_msg_size);
 
@@ -103,16 +97,12 @@ int send_rsp_msg(int sockfd, char* reply_msg, uint16_t reply_msg_size){
 
 	memcpy(total_reply_msg+2*SIZE_CH, reply_msg, reply_msg_size);
 
-	_prep_to_send_8(&END_TRANS_CHAR, total_reply_msg+2*SIZE_CH
-			+reply_msg_size);
-
 	n=send(sockfd, total_reply_msg, total_reply_msg_size, 0)<0;
 
 	free(total_reply_msg);
 	return n;
 }
 
-/* the 2 bytes required for sending the message size are not included in message size */
 char* craft_active_schedules_rsp(vector<schedule> sches){
 	uint16_t sches_size=sches.size();
 	uint16_t msg_len=sizeof(schedule)*sches_size;
@@ -120,6 +110,18 @@ char* craft_active_schedules_rsp(vector<schedule> sches){
 
 	for(uint16_t i=0;i<sches_size;i++){
 		encode_schedule(msg+sizeof(schedule)*i, sches[i]);
+	}
+
+	return msg;
+}
+
+char* craft_device_valves_rsp(vector<uint16_t> valve_ids){
+	uint16_t valve_ids_size=valve_ids.size();
+	uint16_t msg_len=sizeof(uint16_t)*valve_ids_size;
+	char* msg = (char*) malloc(msg_len);
+
+	for(uint16_t i=0;i<valve_ids_size;i++){
+		_prep_to_send_16(&(valve_ids[i]), msg+i*(2*SIZE_CH));
 	}
 
 	return msg;

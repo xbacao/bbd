@@ -5,11 +5,10 @@
 
 #include <vector>
 
-// int get_unsent_schedule(ArduinoSchedules* data);
-// int get_last_schedule(ArduinoSchedules* data);
-int amount_of_active_schedules(uint16_t arduino_id, uint16_t* n_sches);
-int db_get_active_schedules(uint16_t arduino_id, std::vector<schedule>& sches);
+int db_get_device_valves(uint16_t device_id, std::vector<uint16_t> &valve_ids);
 
-int set_schedule_sent(int scheduleID);
+int db_get_active_schedules(uint16_t device_id, std::vector<schedule>& sches);
+
+int set_schedule_sent(int scheduleID);      //TODO
 
 #endif
