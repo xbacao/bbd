@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -Wall -c -std=c11
+CFLAGS=-g -Wall -c -std=gnu11
 
 LDFLAGS=-pthread
 INCLUDES=-I"src"
