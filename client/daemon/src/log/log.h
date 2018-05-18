@@ -16,7 +16,9 @@ void log_error(const char* str);
 void log_request(const char* ip, uint16_t port, uint16_t msg_type);
 void log_response(const char* ip, uint16_t msg_type, uint16_t rsp_len);
 
+void log_set_valves(uint16_t* valve_ids, uint16_t valve_ids_len);
+void log_set_schedules(struct schedule* sches, uint16_t sches_len);
+
 void log_valve_newstate(uint16_t valve_id, enum valve_state v_state);
-void log_new_schedules(struct schedule* sches, uint16_t sches_len);
 
 #endif

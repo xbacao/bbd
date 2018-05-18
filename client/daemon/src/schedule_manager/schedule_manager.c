@@ -73,8 +73,8 @@ void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
 
   pthread_mutex_unlock(&_schedules_mtx);
 
+  log_set_schedules(sches, schedules_len);
   log_info("schedule manager set new schedules");
-  log_new_schedules(sches, schedules_len);
 }
 
 int sm_init_scheduler(){

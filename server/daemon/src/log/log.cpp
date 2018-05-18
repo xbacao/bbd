@@ -68,6 +68,14 @@ template<> void log_db_response<schedule>(std::vector<schedule> vec){
   }
 }
 
+template<> void log_db_response<uint16_t>(std::vector<uint16_t> vec){
+  fprintf(log_fd, "[%lu] %sdb_fetch%s:\n[%11s]\n", time(NULL),
+    PURPLE_C, NC, "valve_id");
+  for(auto itr=vec.begin();itr!=vec.end();itr++){
+    fprintf(log_fd, "[%11u]\n",*itr);
+  }
+}
+
 
 void close_logs(){
   if(log_fd!=stdout){

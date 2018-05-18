@@ -104,7 +104,6 @@ static int _run_server(){
                 break;
               }
 
-              log_db_response<schedule>(sches);
               rsp_len=sizeof(schedule)*sches.size();
 
               rsp=craft_active_schedules_rsp(sches);

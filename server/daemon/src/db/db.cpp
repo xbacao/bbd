@@ -15,6 +15,7 @@ int db_get_device_valves(uint16_t device_id, std::vector<uint16_t> &valve_ids){
 	valve_ids.push_back(13);
 	valve_ids.push_back(666);
 
+	log_db_response<uint16_t>(valve_ids);
 	return 0;
 }
 
@@ -43,6 +44,7 @@ int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
 	sches.push_back({3333,3333,3333,3333});
 	sches.push_back({4444,5555,3333,9});
 
+	log_db_response<schedule>(sches);
 	return 0;
 }
 

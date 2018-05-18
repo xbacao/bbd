@@ -6,10 +6,11 @@
 
 #include "socket_data/socket_data.h"
 
-#define GREEN_C      "\033[0;32m"
-#define RED_C           "\033[0;31m"
-#define YELLOW_C    "\033[1;33m"
+#define GREEN_C       "\033[0;32m"
+#define RED_C            "\033[0;31m"
+#define YELLOW_C     "\033[1;33m"
 #define BLUE_C          "\033[0;34m"
+#define PURPLE_C     "\033[0;35m"
 #define NC                  "\033[0m"
 
 static FILE* log_fd;
@@ -55,10 +56,26 @@ void close_logs(){
   }
 }
 
-void log_valve_newstate(uint16_t valve_id, enum valve_state v_state){
-  //TODO
+void log_set_valves(uint16_t* valve_ids, uint16_t valve_ids_len){
+  fprintf(log_fd, "[%lu] %sset_valves%s: [", time(NULL), PURPLE_C, NC);
+  for(uint16_t i=0;i<valve_ids_len;i++){
+    fprintf(log_fd, "%u",valve_ids[i]);
+    if(i<valve_ids_len-1){
+      fprintf(log_fd, " ");
+    }
+  }
+  fprintf(log_fd, "]\n");
 }
 
-void log_new_schedules(struct schedule* sches, uint16_t sches_len){
+void log_set_schedules(struct schedule* sches, uint16_t sches_len){
+  fprintf(log_fd, "[%lu] %sset_schedules%s:\n[%11s %11s %11s %11s]", time(NULL),
+    PURPLE_C, NC,"schedule_id", "valve_id", "start", "stop");
+  for(uint16_t i=0;i<sches_len;i++){
+    fprintf(log_fd, "[%11u %11u %11u %11u]\n", sches[i].schedule_id, sches[i].valve_id,
+      sches[i].start, sches[i].stop);
+  }
+}
+
+void log_valve_newstate(uint16_t valve_id, enum valve_state v_state){
   //TODO
 }

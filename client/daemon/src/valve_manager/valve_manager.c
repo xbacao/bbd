@@ -20,6 +20,7 @@ void vm_init_valve_manager(uint16_t* valve_ids, uint16_t n_valves){
     _valves_map[i]=(struct valve_map_entry) {valve_ids[i], VALVE_CLOSED};
   }
 
+  log_set_valves(valve_ids, n_valves);
   log_info("valve manager initialized");
 }
 
