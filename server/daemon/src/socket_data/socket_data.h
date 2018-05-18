@@ -6,8 +6,8 @@
 #include <vector>
 
 enum request_type {
-  GET_DEVICE_VALVES_MSG =    0x0,
-  GET_ACTIVE_SCHES_MSG =      0x1
+  GET_DEVICE_VALVES_MSG =    0x1,
+  GET_ACTIVE_SCHES_MSG =      0x2
 };
 
 char* sd_req_type_to_str(enum request_type req_type);

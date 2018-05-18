@@ -7,6 +7,8 @@
 
 void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len);
 
+int sm_init_scheduler();
+
 int sm_start_scheduler();
 // devera ter 1 thread separado
 

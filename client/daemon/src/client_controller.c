@@ -10,7 +10,44 @@
 #include "log/log.h"
 
 int cc_set_valve_info(){
-  
+  int sockfd, n;
+  char* rsp;
+  uint16_t valve_ids_len, rsp_len;
+  uint16_t* valve_ids;
+
+  n=sd_send_request(IP,PORT,MAGIC_NUMBER,DEVICE_ID, GET_DEVICE_VALVES_MSG,
+    &sockfd);
+  if(n){
+    return 1;
+  }
+
+  log_request(IP, PORT, GET_DEVICE_VALVES_MSG);
+
+  n=sd_recv_rsp_len(sockfd, &rsp_len);
+	if(n){
+		log_error("receiving response length");
+		return 3;
+	}
+
+	rsp=(char*) malloc(sizeof(char)*rsp_len);
+	n=sd_recv_rsp_msg(sockfd, rsp_len, rsp);
+	if(n){
+		log_error("receiving response message");
+		free(rsp);
+		return 4;
+	}
+
+  log_response(IP, GET_DEVICE_VALVES_MSG, rsp_len);
+
+  valve_ids=(uint16_t*) malloc(rsp_len);
+  valve_ids_len=rsp_len/sizeof(uint16_t);
+
+  vm_init_valve_manager(valve_ids, valve_ids_len);
+
+  free(valve_ids);
+  free(rsp);
+
+  return 0;
 }
 
 int cc_update_active_schedules(){
