@@ -72,91 +72,91 @@ static int _run_server(){
   while(true){
     log_info("waiting for new connection");
     clilen = sizeof(cli_addr);
-    newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
-    if (newsockfd < 0){
-      log_error("accepting connection!");
-    }
-    else{
+    do{
+      newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
+      if (newsockfd < 0 && errno != EAGAIN){
+        log_error("accepting connection!");
+      }
+    } while(newsockfd<0);
+    n=recv_socket_header(newsockfd, &magic_number, &device_id, &msg_type_int,
+      &msg_size);
+    msg_type=(enum request_type) msg_type_int;
+    if(n==0){
+      client_ip_address=inet_ntoa(cli_addr.sin_addr);
+      if(magic_number!=MAGIC_NUMER){
+        log_error(client_ip_address, "bad magic number!");
+        log_request(client_ip_address, device_id, msg_type);
+      } else {
+        log_info("request received");
+        log_request(client_ip_address, device_id, msg_type);
+        switch(msg_type){
+          default:
+            break;
+          case GET_ACTIVE_SCHES_MSG:
+          {
+            vector<schedule> sches;
+            uint16_t rsp_len;
+            char* rsp;
 
-      n=recv_socket_header(newsockfd, &magic_number, &device_id, &msg_type_int,
-        &msg_size);
-      msg_type=(enum request_type) msg_type_int;
-      if(n==0){
-        client_ip_address=inet_ntoa(cli_addr.sin_addr);
-        if(magic_number!=MAGIC_NUMER){
-          log_error(client_ip_address, "bad magic number!");
-          log_request(client_ip_address, device_id, msg_type);
-        } else {
-          log_info("request received");
-          log_request(client_ip_address, device_id, msg_type);
-          switch(msg_type){
-            default:
-              break;
-            case GET_ACTIVE_SCHES_MSG:
-            {
-              vector<schedule> sches;
-              uint16_t rsp_len;
-              char* rsp;
-
-              n=db_get_active_schedules(device_id, sches);
-              if(n){
-                log_error("db fetch GET_ACTIVE_SCHES_MSG");
-                break;
-              }
-
-              rsp_len=sizeof(schedule)*sches.size();
-
-              rsp=craft_active_schedules_rsp(sches);
-              // if(n){
-              //   log_error("sending GET_ACTIVE_SCHES_MSG response");
-              // } else {
-              //   log_response(client_ip_address, device_id, msg_type);
-              // }
-
-              n=send_rsp_msg(newsockfd, rsp, rsp_len);
-              if(n){
-                log_error("sending GET_ACTIVE_SCHES_MSG response");
-              } else {
-                log_response(client_ip_address, device_id, msg_type, rsp_len);
-              }
-
-              free(rsp);
+            n=db_get_active_schedules(device_id, sches);
+            if(n){
+              log_error("db fetch GET_ACTIVE_SCHES_MSG");
               break;
             }
-            case GET_DEVICE_VALVES_MSG:
-            {
-              uint16_t rsp_len;
-              char* rsp;
-              vector<uint16_t> valve_ids;
 
-              n=db_get_device_valves(device_id, valve_ids);
-              if(n){
-                log_error("db fetch GET_DEVICE_VALVES_MSG");
-                break;
-              }
+            rsp_len=sizeof(schedule)*sches.size();
 
-              rsp=craft_device_valves_rsp(valve_ids);
-              rsp_len=sizeof(uint16_t)*valve_ids.size();
+            rsp=craft_active_schedules_rsp(sches);
+            // if(n){
+            //   log_error("sending GET_ACTIVE_SCHES_MSG response");
+            // } else {
+            //   log_response(client_ip_address, device_id, msg_type);
+            // }
 
-              n=send_rsp_msg(newsockfd, rsp, rsp_len);
-              if(n){
-                log_error("sending GET_DEVICE_VALVES_MSG response");
-              } else {
-                log_response(client_ip_address, device_id, msg_type, rsp_len);
-              }
+            n=send_rsp_msg(newsockfd, rsp, rsp_len);
+            if(n){
+              log_error("sending GET_ACTIVE_SCHES_MSG response");
+            } else {
+              log_response(client_ip_address, device_id, msg_type, rsp_len);
+            }
 
-              free(rsp);
+            free(rsp);
+            break;
+          }
+          case GET_DEVICE_VALVES_MSG:
+          {
+            uint16_t rsp_len;
+            char* rsp;
+            vector<uint16_t> valve_ids;
 
+            n=db_get_device_valves(device_id, valve_ids);
+            if(n){
+              log_error("db fetch GET_DEVICE_VALVES_MSG");
               break;
             }
+
+            rsp=craft_device_valves_rsp(valve_ids);
+            rsp_len=sizeof(uint16_t)*valve_ids.size();
+
+            n=send_rsp_msg(newsockfd, rsp, rsp_len);
+            if(n){
+              log_error("sending GET_DEVICE_VALVES_MSG response");
+            } else {
+              log_response(client_ip_address, device_id, msg_type, rsp_len);
+            }
+
+            free(rsp);
+
+            break;
           }
         }
       }
-      else{
-        log_error("receiving message request header");
-      }
-      close(newsockfd);
     }
+    else{
+      log_error("receiving message request header");
+    }
+    close(newsockfd);
+
   }
   close(sockfd);
   close_logs();
