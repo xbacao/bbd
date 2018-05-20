@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Valve, Schedule
+from .models import Device, Valve, Schedule
 from django.forms.formsets import formset_factory
 from .forms import CicleForm, BaseCicleFormSet
 import datetime
@@ -10,6 +10,10 @@ from rest_framework import status
 def bbd_index(request):
 	context={}
 	return render(request, 'bbd/bbd_index.html',context)
+
+def devices_index(request):
+	context={'device_list': Device.objects.all()}
+	return render(request, 'bbd/devices_index.html',context)
 
 def valves_index(request):
 	valve_list = Valve.objects.order_by('-valveid')

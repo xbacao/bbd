@@ -63,7 +63,7 @@ static int _run_server(){
   do{
     n=_start_socket_server(&sockfd);
     if(n){
-      usleep(1000000);
+      usleep(5000000);
     }
   } while(n);
 

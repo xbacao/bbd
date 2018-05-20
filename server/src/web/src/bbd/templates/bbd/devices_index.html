@@ -1,0 +1,26 @@
+{% extends 'bbd/base.html' %}
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+{% block content %}
+<ul>
+
+<h1>Devices</h1>
+
+{% if device_list %}
+<table class="table table-striped table-hover">
+  <thead>
+    <th>id</th>
+    <th>description</th>
+  </thead>
+  <tbody>
+    {% for device in device_list %}
+    <tr>
+      <td>{{device.deviceid}}</td>
+      <td>{{device.description}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

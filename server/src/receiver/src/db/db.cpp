@@ -5,16 +5,16 @@
 
 using namespace std;
 
-#define CONN_INFO           "user=root password=morcao123 dbname=bbd hostaddr=127.0.0.1 port=5432"
+#define CONN_INFO           "user=root password=morcao123 dbname=bbd host=bbd_db.bbd_network port=5432"
 
 int db_get_device_valves(uint16_t device_id, std::vector<uint16_t> &valve_ids){
-	pqxx::connection c(CONN_INFO);
-	pqxx::result res;
-	pqxx::work txn(c);
-
 	log_info("requesting get_device_valves from db");
 
 	try{
+		pqxx::connection c(CONN_INFO);
+		pqxx::result res;
+		pqxx::work txn(c);
+
 		c.prepare("get_device_valves", "SELECT * FROM get_device_valves ($1)");
 		res=txn.prepared("get_device_valves")(device_id).exec();
 
@@ -31,13 +31,13 @@ int db_get_device_valves(uint16_t device_id, std::vector<uint16_t> &valve_ids){
 }
 
 int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
-	pqxx::connection c(CONN_INFO);
-	pqxx::result res;
-	pqxx::work txn(c);
-
 	log_info("requesting get_active_schedules from db");
 
 	try{
+		pqxx::connection c(CONN_INFO);
+		pqxx::result res;
+		pqxx::work txn(c);
+
 		c.prepare("get_active_schedules", "SELECT * FROM get_active_schedules ($1)");
 		res=txn.prepared("get_active_schedules")(device_id).exec();
 
@@ -49,11 +49,6 @@ int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
 			log_error(__func__, e.what());
 			return 1;
 	}
-
-	// sches.push_back({1,1,1,1});
-	// sches.push_back({1,1,1,1});
-	// sches.push_back({3333,3333,3333,3333});
-	// sches.push_back({4444,5555,3333,9});
 
 	log_db_response<schedule>(sches);
 	return 0;
