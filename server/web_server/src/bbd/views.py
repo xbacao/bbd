@@ -8,6 +8,10 @@ from rest_framework.response import Response
 from rest_framework import status
 
 def bbd_index(request):
+	context={}
+	return render(request, 'bbd/bbd_index.html',context)
+
+def valves_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
 	context = {
 		'valve_list': valve_list,
@@ -36,7 +40,7 @@ def bbd_index(request):
 			valve_obj.save()
 			output_msg="Valve created succesfully"
 		context.update({'output_msg':output_msg})
-	return render(request, 'bbd/bbd_index.html',context)
+	return render(request, 'bbd/valves_index.html',context)
 
 def schedules_index(request):
 	valve_list = Valve.objects.order_by('-valveid')

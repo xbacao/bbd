@@ -10,7 +10,7 @@ using namespace std;
 #define HEADER_SIZE 6*SIZE_CH
 
 /*** SOCKET SERIALIZATION ***/
-static void _prep_to_send_8(const void* in_data, void* out_data);
+// static void _prep_to_send_8(const void* in_data, void* out_data);
 static void _prep_to_send_16(const void* in_data, void* out_data);
 
 static void _prep_recved_8(const void* in_data, void* out_data);
@@ -18,9 +18,9 @@ static void _prep_recved_16(const void* in_data, void* out_data);
 
 
 
-static void _prep_to_send_8(const void* in_data, void* out_data){
-	memcpy(out_data, in_data, SIZE_CH);
-}
+// static void _prep_to_send_8(const void* in_data, void* out_data){
+// 	memcpy(out_data, in_data, SIZE_CH);
+// }
 
 static void _prep_to_send_16(const void* in_data, void* out_data){
   uint16_t temp_16;

@@ -8,7 +8,7 @@
 <h1>Schedule Manager</h1>
 
 <div class="col-md-1">
-	<h3>bbd</h3>
+	<h3>Valves</h3>
 	{% if valve_list %}
 	<table border="0" class="table">
 	{% for valve in valve_list %}
@@ -64,6 +64,7 @@
 		</tr>
 	{% endfor %}
 	</table>
+	{% endif %}
 	<div class="col-md-10"/>
 	<div class="col-md-2">
 		<form action="#" method="post">
@@ -72,7 +73,6 @@
 					<input type="hidden" value="{{valve_id}}" name="valve_id">
 		</form>
 	</div>
-	{% endif %}
 
 </div>
 </ul>
