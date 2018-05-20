@@ -10,7 +10,7 @@
 <div class="col-md-1">
 	<h3>Valves</h3>
 	{% if valve_list %}
-	<table border="0" class="table">
+	<table border="0" class="table table-striped table-hover">
 	{% for valve in valve_list %}
 		<tr><td>
 			<form action="#" method="post">
@@ -26,7 +26,7 @@
 <div class="col-md-11">
 	<h3>Schedules</h3>
 	{% if schedule_list %}
-	<table border="0" class="table">
+	<table border="0" class="table table-striped table-hover">
 		<tr>
 			<td>ID</td>
 			<td>Description</td>
@@ -93,7 +93,7 @@ window.onload = function() {
 </script>
 <p></p>
 <h1>Schedule Details</h1>
-<table border="0" class="table">
+<table border="0" class="table table-striped table-hover">
   <tr>
     <td>ID</td><td>{{sche.scheduleid}}</td>
   </tr>
