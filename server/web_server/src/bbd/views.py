@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-def valves_index(request):
+def bbd_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
 	context = {
 		'valve_list': valve_list,
@@ -36,7 +36,7 @@ def valves_index(request):
 			valve_obj.save()
 			output_msg="Valve created succesfully"
 		context.update({'output_msg':output_msg})
-	return render(request, 'valves/valves_index.html',context)
+	return render(request, 'bbd/bbd_index.html',context)
 
 def schedules_index(request):
 	valve_list = Valve.objects.order_by('-valveid')
@@ -62,11 +62,11 @@ def schedules_index(request):
 	if 'sche_id' in request.session:
 	 	sche_obj = Schedule.objects.get(scheduleid=request.session.get('sche_id',''))
 	 	context.update({'sche':sche_obj})
-	return render(request, 'valves/schedules_index.html',context)
+	return render(request, 'bbd/schedules_index.html',context)
 
 def add_schedule(request):
 	context = {'valve_id':request.session.get('valve_id','')}
-	return render(request, 'valves/add_schedule.html',context)
+	return render(request, 'bbd/add_schedule.html',context)
 
 @api_view(['POST'])
 def create_new_schedule(request):

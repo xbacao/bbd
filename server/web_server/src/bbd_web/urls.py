@@ -21,6 +21,6 @@ urlpatterns = [
 ]
 
 urlpatterns = [
-    url(r'^valves/', include('valves.urls')),
+    url(r'^bbd/', include('bbd.urls')),
     url(r'^admin/', admin.site.urls),
 ]

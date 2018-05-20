@@ -1,4 +1,4 @@
-{% extends 'valves/base.html' %}
+{% extends 'bbd/base.html' %}
 {% load staticfiles %}
 
 {% block content %}
@@ -31,7 +31,7 @@ $(document).ready(function() {
        $("#form_sche").submit(function(event){
             $.ajax({
                  type:"POST",
-                 url:"/valves/create_new_schedule/",
+                 url:"/bbd/create_new_schedule/",
                  data: {
                         'valveID_f': $('#valveID_f').val(),
                         'description': $('#description').val(),
@@ -42,7 +42,7 @@ $(document).ready(function() {
                         },
                  success: function(){
                     alert("New schedule succesfully added!");
-                    window.location.replace("/valves/schedules/");
+                    window.location.replace("/bbd/schedules/");
                  },
                  error: function(XMLHttpRequest, textStatus, errorThrown) {
                     alert("Error adding schedule!");
