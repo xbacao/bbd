@@ -6,18 +6,9 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import unicode_literals
+
 from django.db import models
 from datetime import datetime
-
-
-class Arduino(models.Model):
-    arduinoid = models.IntegerField(primary_key=True)
-    description = models.CharField(max_length=100, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'arduino'
-
 
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=80)
@@ -85,6 +76,15 @@ class AuthUserUserPermissions(models.Model):
         unique_together = (('user', 'permission'),)
 
 
+class Device(models.Model):
+    deviceid = models.IntegerField(primary_key=True)
+    description = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'device'
+
+
 class DjangoAdminLog(models.Model):
     action_time = models.DateTimeField()
     object_id = models.TextField(blank=True, null=True)
@@ -149,7 +149,7 @@ class Schedule(models.Model):
 class Valve(models.Model):
     valveid = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=100, blank=True, null=True)
-    arduinoid_f = models.ForeignKey(Arduino, models.DO_NOTHING, db_column='arduinoid_f')
+    deviceid_f = models.ForeignKey(Device, models.DO_NOTHING, db_column='deviceid_f')
 
     class Meta:
         managed = False

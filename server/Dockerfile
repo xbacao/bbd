@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:stretch
 MAINTAINER JLR
 RUN apt-get update
 RUN apt-get install -y \

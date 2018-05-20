@@ -10,8 +10,15 @@
 
 #define SCHEDULER_SLEEP_INTERVAL      100000 //us
 
-static struct schedule* _device_schedules;
-static uint16_t _schedules_len;
+struct schedule_status{
+  struct schedule sche;
+  bool is_active;
+};
+
+
+
+static struct schedule_status* _ss;
+static uint16_t _ss_len;
 static bool _schedules_set=false;
 
 static pthread_mutex_t _schedules_mtx;
@@ -29,23 +36,23 @@ static void* _sm_run_scheduler_thread(){
     timeinfo=localtime(&rawtime);
     curr_mins=timeinfo->tm_hour*60+timeinfo->tm_min;
 
-    for(uint16_t i=0;i<_schedules_len;i++){
+    for(uint16_t i=0;i<_ss_len;i++){
 
       //activate schedule
-      if(!_device_schedules[i].is_active && _device_schedules[i].start <= curr_mins &&
-          _device_schedules[i].stop >= curr_mins){
+      if(!_ss[i].is_active && _ss[i].sche.start <= curr_mins &&
+          _ss[i].sche.stop >= curr_mins){
         pthread_mutex_lock(&_schedules_mtx);
-        vm_set_valve_state(_device_schedules[i].valve_id, VALVE_OPEN);
-        _device_schedules[i].is_active=true;
+        vm_set_valve_state(_ss[i].sche.valve_id, VALVE_OPEN);
+        _ss[i].is_active=true;
         pthread_mutex_unlock(&_schedules_mtx);
       }
 
       //deactivate schedule
-      if(_device_schedules[i].is_active && (curr_mins < _device_schedules[i].start ||
-          curr_mins > _device_schedules[i].stop)){
+      if(_ss[i].is_active && (curr_mins < _ss[i].sche.start ||
+          curr_mins > _ss[i].sche.stop)){
         pthread_mutex_lock(&_schedules_mtx);
-        vm_set_valve_state(_device_schedules[i].valve_id, VALVE_CLOSED);
-        _device_schedules[i].is_active=false;
+        vm_set_valve_state(_ss[i].sche.valve_id, VALVE_CLOSED);
+        _ss[i].is_active=false;
         pthread_mutex_unlock(&_schedules_mtx);
       }
 
@@ -57,19 +64,23 @@ static void* _sm_run_scheduler_thread(){
 
 //FIXME
 void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
-  uint16_t sches_bytesize=sizeof(struct schedule)*schedules_len;
+  uint16_t ss_bytesize=sizeof(struct schedule_status)*schedules_len;
 
   //TODO ADD CHECK IF SCHEDULES ARE VALID
 
   pthread_mutex_lock(&_schedules_mtx);
 
   if(_schedules_set){
-    free(_device_schedules);
+    free(_ss);
   }
 
-  _device_schedules=(struct schedule*) malloc(sches_bytesize);
-  memcpy(_device_schedules, sches, sches_bytesize);
-  _schedules_len=schedules_len;
+  _ss=(struct schedule_status*) malloc(ss_bytesize);
+  for(uint16_t i=0;i<schedules_len;i++){
+    _ss[i].sche=sches[i];
+    _ss[i].is_active=false;
+  }
+  // memcpy(_ss, sches, ss_bytesize);
+  _ss_len=schedules_len;
 
   pthread_mutex_unlock(&_schedules_mtx);
 

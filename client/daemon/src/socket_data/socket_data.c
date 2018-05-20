@@ -146,5 +146,5 @@ void sd_decode_schedule(char* msg, struct schedule* sche){
 	_sd_prep_recved_16(msg+4*SIZE_CH, &start);
 	_sd_prep_recved_16(msg+6*SIZE_CH, &stop);
 
-  *sche=(struct schedule) {schedule_id, valve_id, start, stop, false};
+  *sche=(struct schedule) {schedule_id, valve_id, start, stop};
 }

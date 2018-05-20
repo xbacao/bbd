@@ -71,9 +71,10 @@ void log_set_schedules(struct schedule* sches, uint16_t sches_len){
   fprintf(log_fd, "[%lu] %sset_schedules%s:\n[%11s %11s %11s %11s]", time(NULL),
     PURPLE_C, NC,"schedule_id", "valve_id", "start", "stop");
   for(uint16_t i=0;i<sches_len;i++){
-    fprintf(log_fd, "[%11u %11u %11u %11u]\n", sches[i].schedule_id, sches[i].valve_id,
+    fprintf(log_fd, "\n[%11u %11u %11u %11u]", sches[i].schedule_id, sches[i].valve_id,
       sches[i].start, sches[i].stop);
   }
+  fprintf(log_fd, "\n");
 }
 
 void log_valve_newstate(uint16_t valve_id, enum valve_state v_state){

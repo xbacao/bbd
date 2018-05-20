@@ -2,19 +2,19 @@ SET TIME ZONE 'Europe/Lisbon';
 
 CREATE SCHEMA bbd;
 
-CREATE TABLE bbd.arduino (
-  arduinoID INT NOT NULL,
+CREATE TABLE bbd.device (
+  deviceID INT NOT NULL,
   description VARCHAR(100),
-  PRIMARY KEY(arduinoID)
+  PRIMARY KEY(deviceID)
 );
 
 CREATE TABLE bbd.valve (
   valveID INT NOT NULL,
   description VARCHAR(100),
-  arduinoID_f INT NOT NULL,
+  deviceID_f INT NOT NULL,
   PRIMARY KEY (valveID)
 );
-ALTER TABLE bbd.valve ADD CONSTRAINT fk_arduino FOREIGN KEY (arduinoID_f) REFERENCES bbd.arduino(arduinoID)
+ALTER TABLE bbd.valve ADD CONSTRAINT fk_device FOREIGN KEY (deviceID_f) REFERENCES bbd.device(deviceID)
 ON DELETE CASCADE;
 
 CREATE TABLE bbd.schedule (
@@ -33,19 +33,31 @@ CREATE TABLE bbd.schedule (
 ALTER TABLE bbd.schedule ADD CONSTRAINT fk_valve FOREIGN KEY (valveID_f) REFERENCES bbd.valve(valveID)
 ON DELETE CASCADE;
 
--- CREATE FUNCTION amount_of_active_schedules(IN arduino_ID INT) RETURNS INT AS $$
+-- CREATE FUNCTION amount_of_active_schedules(IN device_id INT) RETURNS INT AS $$
 -- BEGIN
 --   SELECT count(*) as n_active_schedules
 --   FROM bbd.schedule INNER JOIN (
 --     SELECT valveID
 --     FROM bbd.valve
---     WHERE arduinoID_f = arduino_ID
+--     WHERE deviceID_f = device_id
 --   ) AS T1 on valveID_f = valveID
 --   WHERE ACTIVE = TRUE;
 -- END
 -- $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION get_active_schedules(IN arduino_ID INT)
+CREATE FUNCTION get_device_valves(IN device_id INT)
+RETURNS TABLE(
+  valveID_o INT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT valveID
+  FROM bbd.valve
+  WHERE deviceID_f = device_id;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION get_active_schedules(IN device_id INT)
 RETURNS TABLE(
   scheduleID_o INT,
   valveID_o INT,
@@ -58,13 +70,13 @@ BEGIN
   FROM bbd.schedule INNER JOIN (
     SELECT valveID
     FROM bbd.valve
-    WHERE arduinoID_f = arduino_ID
+    WHERE deviceID_f = device_id
   ) AS T1 on valveID_f = valveID
   WHERE ACTIVE = TRUE;
 END
 $$ LANGUAGE plpgsql;
 
--- CREATE FUNCTION get_last_schedule(IN arduino_ID INT) RETURNS TABLE(valveID INT, scheduleID INT, start_time SMALLINT, stop_time SMALLINT) AS $$
+-- CREATE FUNCTION get_last_schedule(IN device_id INT) RETURNS TABLE(valveID INT, scheduleID INT, start_time SMALLINT, stop_time SMALLINT) AS $$
 -- BEGIN
 --   SELECT valveID, scheduleID, start_time, stop_time
 --   FROM bbd.schedule_entry INNER JOIN (
@@ -74,7 +86,7 @@ $$ LANGUAGE plpgsql;
 --       FROM bbd.schedule INNER JOIN(
 --         SELECT *
 --         FROM bbd.valve
---         WHERE arduinoID_f=arduino_ID
+--         WHERE deviceID_f=device_id
 --       ) AS T1 ON valveID_f=valveID
 --       GROUP BY valveID
 --     ) AS T2 ON scheduleID=max_sche_id
@@ -103,13 +115,14 @@ $$ LANGUAGE plpgsql;
 -- END
 -- $$ LANGUAGE plpgsql;
 
-INSERT INTO bbd.arduino(arduinoID,description) VALUES(1,'asdf');
-INSERT INTO bbd.valve(valveID, description, arduinoID_f)VALUES(1,'asdf',1),(2,'asdf',1);
+INSERT INTO bbd.device(deviceID,description) VALUES(1,'asdf');
+INSERT INTO bbd.valve(valveID, description, deviceID_f)VALUES(1,'test_valve1',1),(2,'test_valve2',1);
+
 
 INSERT INTO bbd.schedule(valveID_f, start_time, stop_time, active, deactivate_request) VALUES
   (1, 60, 120, TRUE, FALSE);
 
--- INSERT INTO bbd.arduino VALUES(1, "asdf");
+-- INSERT INTO bbd.device VALUES(1, "asdf");
 -- INSERT INTO bbd.valve VALUES(1,"asdf",1);
 -- INSERT INTO bbd.valve VALUES(2,"asdf",1);
 --

@@ -9,7 +9,6 @@ struct schedule{
 	uint16_t valve_id;
 	uint16_t start;
 	uint16_t stop;
-	bool is_active;
 };
 
 #endif

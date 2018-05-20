@@ -18,7 +18,6 @@ int sd_recv_rsp_msg(int sockfd, uint16_t rsp_len, char* rsp);
 int sd_send_request(const char* address, uint16_t port,
   uint16_t magic_number, uint8_t device_id, enum request_type request, int* sockfd);
 
-
 void sd_decode_schedule(char* msg, struct schedule* sche);
 
 #endif
