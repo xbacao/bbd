@@ -19,5 +19,6 @@ int sd_send_request(const char* address, uint16_t port,
   uint16_t magic_number, uint8_t device_id, enum request_type request, int* sockfd);
 
 void sd_decode_schedule(char* msg, struct schedule* sche);
+void sd_decode_valve_id(char* msg, uint16_t* valve_id);
 
 #endif

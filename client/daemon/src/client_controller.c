@@ -41,6 +41,9 @@ int cc_set_valve_info(){
 
   valve_ids=(uint16_t*) malloc(rsp_len);
   valve_ids_len=rsp_len/sizeof(uint16_t);
+  for(uint16_t i=0;i<valve_ids_len;i++){
+    sd_decode_valve_id(rsp+sizeof(uint16_t), valve_ids+i);
+  }
 
   vm_init_valve_manager(valve_ids, valve_ids_len);
 
