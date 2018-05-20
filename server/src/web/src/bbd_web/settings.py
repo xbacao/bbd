@@ -81,7 +81,7 @@ DATABASES = {
         'NAME': 'bbd',
         'USER':'root',
         'PASSWORD':'morcao123',
-        'HOST':'127.0.0.1',
+        'HOST':'bbd_db',
         'PORT': '',
         'OPTIONS': {
             'options': '-c search_path=bbd'

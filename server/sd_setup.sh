@@ -42,7 +42,7 @@ function run {
       docker run -dit --name bbd_$1 --net=bbd_network bbd_$1 || exit_on_error "error running docker image!"
       ;;
     web)
-      docker run -dit --name bbd_$1 --net=bbd_network bbd_$1 -p 80:80 || exit_on_error "error running docker image!"
+      docker run -dit --name bbd_$1 --net=bbd_network -p 80:80 bbd_$1 || exit_on_error "error running docker image!"
       ;;
     *)
       usage; exit 1
