@@ -5,8 +5,32 @@
 {% block content %}
 <ul>
 
-<h1>Schedule Manager</h1>
+<h1>Schedules</h1>
+{% if schedule_list %}
+<table class="table table-striped table-hover">
+  <thead>
+    <th>id</th>
+		<th>valve</th>
+    <th>description</th>
+    <th>active</th>
+    <th>schedule details</th>
+  </thead>
+  <tbody>
+    {% for schedule in schedule_list %}
+    <tr>
+      <td>{{schedule.0}}</td>
+      <td>{{schedule.1}}</td>
+      <td>{{schedule.2}}</td>
+			<td>{{schedule.9}}</td>
+      <td><button class="btn btn-default glyphicon glyphicon-arrow-right"></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<button class="btn btn-default" onclick="window.location.href='{% url 'add_schedule' %}'">add schedule</button>
 
+<!--
 <div class="col-md-1">
 	<h3>Valves</h3>
 	{% if valve_list %}
@@ -140,6 +164,6 @@ window.onload = function() {
   </tr>
 </table>
 </ul>
-{% endif %}
+{% endif %} -->
 
 {% endblock %}

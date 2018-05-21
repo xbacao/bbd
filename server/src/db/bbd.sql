@@ -34,7 +34,9 @@ CREATE TABLE bbd.schedule (
 ALTER TABLE bbd.schedule ADD CONSTRAINT fk_valve FOREIGN KEY (valveID_f) REFERENCES bbd.valve(valveID)
 ON DELETE CASCADE;
 
-CREATE FUNCTION get_device_valves(IN device_id INT)
+----------------------receiver----------------------
+
+CREATE FUNCTION bbd.rcv_get_device_valves(IN device_id INT)
 RETURNS TABLE(
   valveID_o INT
 ) AS $$
@@ -46,7 +48,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION get_active_schedules(IN device_id INT)
+CREATE FUNCTION bbd.rcv_get_active_schedules(IN device_id INT)
 RETURNS TABLE(
   scheduleID_o INT,
   valveID_o INT,
@@ -61,12 +63,12 @@ BEGIN
     SELECT valveID
     FROM bbd.valve
     WHERE deviceID_f = device_id
-  ) AS T1 on valveID_f = valveID
+  ) AS T1 ON valveID_f = valveID
   WHERE ACTIVE = TRUE;
 END
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION set_schedule_sent(IN schedule_id INT)
+CREATE FUNCTION bbd.rcv_set_schedule_sent(IN schedule_id INT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE bbd.schedule
@@ -77,3 +79,88 @@ $$ LANGUAGE plpgsql;
 
 INSERT INTO bbd.device(deviceID,description) VALUES(1,'asdf');
 INSERT INTO bbd.valve(valveID, description, deviceID_f)VALUES(1,'test_valve1',1),(2,'test_valve2',1);
+
+----------------------web----------------------
+CREATE FUNCTION bbd.web_get_devices()
+RETURNS TABLE(
+  id INT,
+  description VARCHAR(100),
+  n_valves BIGINT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT deviceID as id, device.description, count(valveID)
+  FROM bbd.device INNER JOIN bbd.valve ON device.deviceID=valve.deviceID_f
+  GROUP BY deviceID;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION bbd.web_get_valves()
+RETURNS TABLE(
+  id INT,
+  description VARCHAR(100),
+  deviceid INT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM bbd.valve;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION bbd.web_get_valves(IN device_id INT)
+RETURNS TABLE(
+  id INT,
+  description VARCHAR(100),
+  deviceid INT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM bbd.valve
+  WHERE deviceID_f=device_id;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION bbd.web_get_schedules()
+RETURNS TABLE(
+  scheduleID_o INT,
+  valveID_f_o INT,
+  description_o VARCHAR(100),
+  created_on_o TIMESTAMP,
+  start_time_o SMALLINT,
+  stop_time_o SMALLINT,
+  sent_o BOOLEAN,
+  sent_on_o TIMESTAMP,
+  active_o BOOLEAN,
+  active_start_o TIMESTAMP,
+  active_end_o TIMESTAMP
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM bbd.schedule;
+END
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION bbd.web_get_schedules(IN valveid INT)
+RETURNS TABLE(
+  scheduleID_o INT,
+  valveID_f_o INT,
+  description_o VARCHAR(100),
+  created_on_o TIMESTAMP,
+  start_time_o SMALLINT,
+  stop_time_o SMALLINT,
+  sent_o BOOLEAN,
+  sent_on_o TIMESTAMP,
+  active_o BOOLEAN,
+  active_start_o TIMESTAMP,
+  active_end_o TIMESTAMP
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM bbd.schedule
+  WHERE valveID_f=valveid;
+END
+$$ LANGUAGE plpgsql;

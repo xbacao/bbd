@@ -12,12 +12,16 @@
   <thead>
     <th>id</th>
     <th>description</th>
+    <th>valves</th>
+    <th>valve details</th>
   </thead>
   <tbody>
     {% for device in device_list %}
     <tr>
-      <td>{{device.deviceid}}</td>
-      <td>{{device.description}}</td>
+      <td>{{device.0}}</td>
+      <td>{{device.1}}</td>
+      <td>{{device.2}}</td>
+      <td><button class="btn btn-default glyphicon glyphicon-arrow-right"></td>
     </tr>
     {% endfor %}
   </tbody>
