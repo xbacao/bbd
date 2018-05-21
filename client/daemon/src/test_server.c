@@ -6,8 +6,6 @@
 #include "client_controller.h"
 #include "schedule_manager/schedule_manager.h"
 
-
-
 int main(void){
   int n;
 
@@ -17,18 +15,25 @@ int main(void){
     return 99;
   }
 
-  printf("testing cc_update_active_schedules..\n");
-  n=cc_update_active_schedules();
-  if(n){
-    printf("cc_update_active_schedules failed: %u\n",n);
-    return 1;
-  }
-
   printf("testing cc_set_valve_info..\n");
   n=cc_set_valve_info();
   if(n){
     printf("cc_set_valve_info failed: %u\n",n);
+    return 1;
+  }
+
+  printf("testing cc_set_active_schedules..\n");
+  n=cc_set_active_schedules();
+  if(n){
+    printf("cc_set_active_schedules failed: %u\n",n);
     return 2;
+  }
+
+  printf("testing cc_check_new_schedules..\n");
+  n=cc_check_new_schedules();
+  if(n){
+    printf("cc_check_new_schedules failed: %u\n",n);
+    return 3;
   }
 
   close_logs();

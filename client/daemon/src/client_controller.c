@@ -53,7 +53,7 @@ int cc_set_valve_info(){
   return 0;
 }
 
-int cc_update_active_schedules(){
+int cc_set_active_schedules(){
   struct schedule* rsp_sches;
   int sockfd, n;
   char* rsp;
@@ -73,27 +73,80 @@ int cc_update_active_schedules(){
 		return 3;
 	}
 
-	rsp=(char*) malloc(sizeof(char)*rsp_len);
-	n=sd_recv_rsp_msg(sockfd, rsp_len, rsp);
+  if(rsp_len){
+  	rsp=(char*) malloc(sizeof(char)*rsp_len);
+  	n=sd_recv_rsp_msg(sockfd, rsp_len, rsp);
+  	if(n){
+  		log_error("receiving response message");
+  		free(rsp);
+  		return 4;
+  	}
+
+    log_response(IP, GET_ACTIVE_SCHES_MSG, rsp_len);
+
+  	sches_len=rsp_len/sizeof(struct schedule);
+
+  	rsp_sches=(struct schedule*) malloc(rsp_len);
+  	for(uint16_t i=0;i<sches_len;i++){
+  		sd_decode_schedule(rsp+i*sizeof(struct schedule), rsp_sches+i);
+  	}
+
+  	free(rsp);
+
+    //do something with schedules
+    sm_set_new_schedules(rsp_sches, sches_len);
+    free(rsp_sches);
+  } else {
+    log_response(IP, GET_ACTIVE_SCHES_MSG, rsp_len);
+  }
+  return 0;
+}
+
+int cc_check_new_schedules(){
+  struct schedule* rsp_sches;
+  int sockfd, n;
+  char* rsp;
+  uint16_t sches_len, rsp_len;
+
+  n=sd_send_request(IP,PORT,MAGIC_NUMBER,DEVICE_ID, CHECK_NEW_SCHEDULES_MSG,
+    &sockfd);
+  if(n){
+    return 1;
+  }
+
+  log_request(IP, PORT, CHECK_NEW_SCHEDULES_MSG);
+
+  n=sd_recv_rsp_len(sockfd, &rsp_len);
 	if(n){
-		log_error("receiving response message");
-		free(rsp);
-		return 4;
+		log_error("receiving response length");
+		return 3;
 	}
 
-  log_response(IP, GET_ACTIVE_SCHES_MSG, rsp_len);
+  if(rsp_len>0){
+    	rsp=(char*) malloc(sizeof(char)*rsp_len);
+    	n=sd_recv_rsp_msg(sockfd, rsp_len, rsp);
+    	if(n){
+    		log_error("receiving response message");
+    		free(rsp);
+    		return 4;
+    	}
 
-	sches_len=rsp_len/sizeof(struct schedule);
+      log_response(IP, CHECK_NEW_SCHEDULES_MSG, rsp_len);
 
-	rsp_sches=(struct schedule*) malloc(rsp_len);
-	for(uint16_t i=0;i<sches_len;i++){
-		sd_decode_schedule(rsp+i*sizeof(struct schedule), rsp_sches+i);
-	}
+    	sches_len=rsp_len/sizeof(struct schedule);
 
-	free(rsp);
+    	rsp_sches=(struct schedule*) malloc(rsp_len);
+    	for(uint16_t i=0;i<sches_len;i++){
+    		sd_decode_schedule(rsp+i*sizeof(struct schedule), rsp_sches+i);
+    	}
 
-  //do something with schedules
-  sm_set_new_schedules(rsp_sches, sches_len);
-  free(rsp_sches);
+    	free(rsp);
+
+      //do something with schedules
+      sm_set_new_schedules(rsp_sches, sches_len);
+      free(rsp_sches);
+  } else {
+    log_response(IP, GET_ACTIVE_SCHES_MSG, rsp_len);
+  }
   return 0;
 }

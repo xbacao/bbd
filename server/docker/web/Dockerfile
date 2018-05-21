@@ -15,15 +15,17 @@ RUN mkdir /opt/bbd
 #web server
 RUN mkdir -p /opt/bbd/web_server/src /opt/bbd/web_server/venv \
   /tmp/web_server_install
-ADD src/web/src /opt/bbd/web_server/src
-COPY src/web/install/apache2.conf /etc/apache2/apache2.conf
+
 COPY src/web/install/requirements.txt /tmp/requirements.text
 RUN pip install -r /tmp/requirements.text
 
+COPY src/web/install/apache2.conf /etc/apache2/apache2.conf
 
 #supervisord
 COPY docker/web/docker_assets/supervisord.conf /opt/bbd/supervisord.conf
 COPY docker/web/docker_assets/supervisor_confs/ /opt/bbd/supervisor.conf.d/
+
+ADD src/web/src /opt/bbd/web_server/src
 
 expose 80
 

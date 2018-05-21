@@ -32,6 +32,7 @@ BIN_SUBDIRS=$(filter-out $(BIN_DIR)/,$(dir $(wildcard bin/*/)))
 .PHONY: start
 start:
 	$(info no target selected)
+	$(info make $(CLIENT_EXECUTABLE))
 	$(info make $(TEST_EXECUTABLE))
 
 

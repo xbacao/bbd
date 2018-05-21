@@ -92,7 +92,10 @@ char* sd_req_type_to_str(enum request_type req_type){
     case GET_DEVICE_VALVES_MSG:
       cst_str="GET_DEVICE_VALVES_MSG";
       break;
-    default:
+		case CHECK_NEW_SCHEDULES_MSG:
+			cst_str="CHECK_NEW_SCHEDULES_MSG";
+			break;
+		default:
       cst_str="UNIDENTIFIED";
       break;
   }

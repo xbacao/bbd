@@ -11,6 +11,7 @@
 #define YELLOW_C     "\033[1;33m"
 #define BLUE_C          "\033[0;34m"
 #define PURPLE_C     "\033[0;35m"
+#define CYAN_C         "\033[0;35m"
 #define NC                  "\033[0m"
 
 static FILE* log_fd;
@@ -65,6 +66,7 @@ void log_set_valves(uint16_t* valve_ids, uint16_t valve_ids_len){
     }
   }
   fprintf(log_fd, "]\n");
+  fflush(log_fd);
 }
 
 void log_set_schedules(struct schedule* sches, uint16_t sches_len){
@@ -75,8 +77,11 @@ void log_set_schedules(struct schedule* sches, uint16_t sches_len){
       sches[i].start, sches[i].stop);
   }
   fprintf(log_fd, "\n");
+  fflush(log_fd);
 }
 
 void log_valve_newstate(uint16_t valve_id, enum valve_state v_state){
-  //TODO
+  fprintf(log_fd, "[%lu] %svalve_newstate%s: [valve_id:%u newstate:%d]\n", time(NULL),
+    CYAN_C, NC, valve_id, v_state);
+  fflush(log_fd);
 }

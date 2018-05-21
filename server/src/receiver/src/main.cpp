@@ -91,37 +91,6 @@ static int _run_server(){
         switch(msg_type){
           default:
             break;
-          case GET_ACTIVE_SCHES_MSG:
-          {
-            vector<schedule> sches;
-            uint16_t rsp_len;
-            char* rsp;
-
-            n=db_get_active_schedules(device_id, sches);
-            if(n){
-              log_error("db fetch GET_ACTIVE_SCHES_MSG");
-              break;
-            }
-
-            rsp_len=sizeof(schedule)*sches.size();
-
-            rsp=craft_active_schedules_rsp(sches);
-            // if(n){
-            //   log_error("sending GET_ACTIVE_SCHES_MSG response");
-            // } else {
-            //   log_response(client_ip_address, device_id, msg_type);
-            // }
-
-            n=send_rsp_msg(newsockfd, rsp, rsp_len);
-            if(n){
-              log_error("sending GET_ACTIVE_SCHES_MSG response");
-            } else {
-              log_response(client_ip_address, device_id, msg_type, rsp_len);
-            }
-
-            free(rsp);
-            break;
-          }
           case GET_DEVICE_VALVES_MSG:
           {
             uint16_t rsp_len;
@@ -146,6 +115,81 @@ static int _run_server(){
 
             free(rsp);
 
+            break;
+          }
+          case GET_ACTIVE_SCHES_MSG:
+          {
+            vector<schedule> sches;
+            vector<bool> sents;
+            uint16_t rsp_len;
+            char* rsp;
+
+            n=db_get_active_schedules(device_id, sches, sents);
+            if(n){
+              log_error("db fetch GET_ACTIVE_SCHES_MSG");
+              break;
+            }
+
+            rsp_len=sizeof(schedule)*sches.size();
+
+            rsp=craft_active_schedules_rsp(sches);
+
+            n=send_rsp_msg(newsockfd, rsp, rsp_len);
+            if(n){
+              log_error("sending GET_ACTIVE_SCHES_MSG response");
+            } else {
+              log_response(client_ip_address, device_id, msg_type, rsp_len);
+            }
+
+            free(rsp);
+
+            n=set_schedules_sent(sches, device_id);
+            if(n){
+              log_error("db call set_schedules_sent");
+            }
+            break;
+          }
+          case CHECK_NEW_SCHEDULES_MSG:
+          {
+            vector<schedule> sches;
+            vector<bool> sents;
+            uint16_t rsp_len;
+            bool need_update=false;
+            char* rsp;
+
+            n=db_get_active_schedules(device_id, sches, sents);
+            if(n){
+              log_error("db fetch GET_ACTIVE_SCHES_MSG");
+              break;
+            }
+
+            for(auto itr=sents.begin();itr!=sents.end();itr++){
+              if(!(*itr)){
+                need_update=true;
+              }
+            }
+
+            if(need_update){
+              rsp_len=sizeof(schedule)*sches.size();
+              rsp=craft_active_schedules_rsp(sches);
+            } else {
+              rsp_len=0;
+              rsp=NULL;
+            }
+
+            n=send_rsp_msg(newsockfd, rsp, rsp_len);
+            if(n){
+              log_error("sending CHECK_NEW_SCHEDULES_MSG response");
+            } else {
+              log_response(client_ip_address, device_id, msg_type, rsp_len);
+            }
+
+            free(rsp);
+
+            n=set_schedules_sent(sches, device_id);
+            if(n){
+              log_error("db call set_schedules_sent");
+            }
             break;
           }
         }

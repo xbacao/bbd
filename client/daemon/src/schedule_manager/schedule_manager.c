@@ -79,6 +79,7 @@ void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
   }
   // memcpy(_ss, sches, ss_bytesize);
   _ss_len=schedules_len;
+  _schedules_set=true;
 
   pthread_mutex_unlock(&_schedules_mtx);
 

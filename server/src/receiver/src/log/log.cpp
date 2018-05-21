@@ -66,6 +66,7 @@ template<> void log_db_response<schedule>(std::vector<schedule> vec){
     fprintf(log_fd, "[%11u %11u %11u %11u]\n", itr->schedule_id, itr->valve_id,
       itr->start, itr->stop);
   }
+  fflush(log_fd);
 }
 
 template<> void log_db_response<uint16_t>(std::vector<uint16_t> vec){
@@ -74,8 +75,8 @@ template<> void log_db_response<uint16_t>(std::vector<uint16_t> vec){
   for(auto itr=vec.begin();itr!=vec.end();itr++){
     fprintf(log_fd, "[%11u]\n",*itr);
   }
+  fflush(log_fd);
 }
-
 
 void close_logs(){
   if(log_fd!=stdout){

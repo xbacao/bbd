@@ -18,7 +18,7 @@ static int _start(){
   }
 
   log_info("updating schedule info from server");
-  n=cc_update_active_schedules();
+  n=cc_set_active_schedules();
   if(n){
     return 3;
   }

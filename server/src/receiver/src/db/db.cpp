@@ -30,7 +30,8 @@ int db_get_device_valves(uint16_t device_id, std::vector<uint16_t> &valve_ids){
 	return 0;
 }
 
-int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
+int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches,
+vector<bool>& sents){
 	log_info("requesting get_active_schedules from db");
 
 	try{
@@ -44,6 +45,7 @@ int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
 		for (pqxx::result::const_iterator row=res.begin();row != res.end();++row){
 			sches.push_back({row[0].as<uint16_t>(), row[1].as<uint16_t>(),
 				row[2].as<uint16_t>(), row[3].as<uint16_t>()});
+			sents.push_back(row[4].as<bool>());
 	  }
 	}	catch(const std::exception &e) {
 			log_error(__func__, e.what());
@@ -55,30 +57,23 @@ int db_get_active_schedules(uint16_t device_id, vector<schedule>& sches){
 }
 
 
+int set_schedules_sent(vector<schedule> sches, uint16_t device_id){
+	log_info("requesting set_schedules_sent from db");
 
-/*TODO*/
-int set_schedule_sent(int scheduleID){
-	// MYSQL *conn;
-	// stringstream ss;
-	// char* temp_str;
-	//
-	// conn = mysql_init(NULL);
-	//
-	// /* Connect to database */
-	// if (!mysql_real_connect(conn, MYSQL_URL, MYSQL_USER, MYSQL_PASS, MYSQL_DB, 0, NULL, 0)) {
-	// 	log_file << time(nullptr) <<": DB:"<<mysql_error(conn)<<endl;
-	// 	return 1;
-	// }
-	//
-	// ss << "CALL set_schedule_sent("<<scheduleID<<")";
-	// temp_str=(char*)ss.str().c_str();
-	// /* send SQL query */
-	// if (mysql_query(conn, temp_str)) {
-	// 	mysql_close(conn);
-	// 	log_file << time(nullptr) <<": DB:"<<mysql_error(conn)<<endl;
-	// 	return 2;
-	// }
-	// /* close connection */
-	// mysql_close(conn);
-	return 1;
+	try{
+		pqxx::connection c(CONN_INFO);
+		pqxx::result res;
+		pqxx::work txn(c);
+
+		c.prepare("set_schedules_sent", "SELECT set_schedule_sent ($1)");
+
+		for(auto itr=sches.begin();itr!=sches.end();itr++){
+			res=txn.prepared("set_schedules_sent")(itr->schedule_id).exec();
+		}
+	}	catch(const std::exception &e) {
+			log_error(__func__, e.what());
+			return 1;
+	}
+
+	return 0;
 }

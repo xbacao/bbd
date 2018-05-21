@@ -6,8 +6,9 @@
 #include <stdint.h>
 
 enum request_type {
-  GET_DEVICE_VALVES_MSG =    0x1,
-  GET_ACTIVE_SCHES_MSG =      0x2
+  GET_DEVICE_VALVES_MSG =         0x1,
+  GET_ACTIVE_SCHES_MSG =           0x2,
+  CHECK_NEW_SCHEDULES_MSG= 0x3,
 };
 
 char* sd_req_type_to_str(enum request_type req_type);

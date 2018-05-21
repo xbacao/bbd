@@ -1,42 +1,9 @@
 # bbd
-#client packages
-arduino-avr-core
 
-#compiling
-make
-make upload
+## client
+??
 
-to read input from arduino using serial(arch linux)
-busybox microcom -s 9600 /dev/ttyACM0
-(install busybox)
+##server
+docker create network bbd_network
 
-mysql_config --cflags
-mysql_config --libs
-#server packages
-libmysqlclient
-libmysqlclient-dev
-python-pip
-pip install virtualenv
-python-dev
-libpcre3-dev
-apache2-dev
-#APACHE
-https://modwsgi.readthedocs.io/en/develop/user-guides/quick-installation-guide.html
-
-#Note
-IN ARCH LINUX CHANGE /usr/share/arduino/hardware/archlinux-arduino to /usr/share/arduino/hardware/arduino
-
-#TODO
-change N_VALVES from static in main.cpp
-
-
-
-BUGS
-
-.----. 1 byte a mais a ser enviado pelo server
-
-
-TODO:
--meter 1 proto a funcar
--cross-compiler docker
--migrar para diet-pi
+use sd_setup.sh
