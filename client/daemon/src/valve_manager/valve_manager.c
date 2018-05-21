@@ -12,7 +12,7 @@ struct valve_map_entry{
     enum valve_state v_state;
 };
 
-void vm_init_valve_manager(uint16_t* valve_ids, uint16_t n_valves){
+void vm_init_set_valves(uint16_t* valve_ids, uint16_t n_valves){
   _n_valves=n_valves;
   _valves_map=(struct valve_map_entry*) malloc(sizeof(struct valve_map_entry)*n_valves);
 
@@ -21,7 +21,7 @@ void vm_init_valve_manager(uint16_t* valve_ids, uint16_t n_valves){
   }
 
   log_set_valves(valve_ids, n_valves);
-  log_info("valve manager initialized");
+  log_info("valve manager initialized; new valves set");
 }
 
 int vm_set_valve_state(uint16_t valve_id, enum valve_state newstate){

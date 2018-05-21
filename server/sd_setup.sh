@@ -22,14 +22,12 @@ function usage {
 }
 
 function build {
-  #docker build -t bbd_$1:latest docker/$1 || (rm $S_PATH/docker/$1/src_tmp; exit_on_error "error building docker image!")
   docker build -f docker/$1/Dockerfile -t bbd_$1:latest . || (exit_on_error "error building docker image!")
 }
 
 function delete {
   docker kill bbd_$1
   docker rm bbd_$1 || exit_on_error || "error deleting docker container!"
-  #docker rmi -f bbd_server:latest || exit_on_error "error deleting docker images!"
 }
 
 function run {

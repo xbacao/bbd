@@ -15,14 +15,12 @@ struct schedule_status{
   bool is_active;
 };
 
-
-
 static struct schedule_status* _ss;
 static uint16_t _ss_len;
 static bool _schedules_set=false;
 
 static pthread_mutex_t _schedules_mtx;
-static pthread_t* _scheduler_thread;
+static pthread_t _scheduler_thread;
 
 static void* _sm_run_scheduler_thread();
 
@@ -98,7 +96,7 @@ int sm_init_scheduler(){
 }
 
 int sm_start_scheduler(){
-  if(pthread_create(_scheduler_thread, NULL, &_sm_run_scheduler_thread, NULL)!=0){
+  if(pthread_create(&_scheduler_thread, NULL, &_sm_run_scheduler_thread, NULL)!=0){
     return 1;
   }
 
@@ -106,5 +104,13 @@ int sm_start_scheduler(){
   return 0;
 }
 
-// pthread_join(tid[1], NULL);
-//    pthread_mutex_destroy(&lock);
+
+int sm_wait_on_thread(){
+  if(pthread_join(_scheduler_thread, NULL)!=0){
+    return 1;
+  }
+  if(pthread_mutex_destroy(&_schedules_mtx)!=0){
+    return 2;
+  }
+  return 0;
+}

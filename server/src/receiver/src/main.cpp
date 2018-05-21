@@ -54,11 +54,10 @@ static int _run_server(){
   char* client_ip_address;
   enum request_type msg_type;
 
-  // n=init_logs_file(LOG_FILE_PATH);
-  // if(n){
-  //   return 1;
-  // }
-  init_logs_stdout();
+  n=init_logs_file(LOG_FILE_PATH);
+  if(n){
+    return 1;
+  }
 
   do{
     n=_start_socket_server(&sockfd);

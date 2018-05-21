@@ -88,7 +88,7 @@ def create_new_schedule(request):
 	if start_time >=0 and start_time <= 1440 and stop_time >=0 \
 	and stop_time <= 1440:
 		schedule_obj=Schedule(valveid_f=valve_obj, description=description, \
-		start_time=start_time, stop_time=stop_time, active=False, deactivate_request=False)
+		start_time=start_time, stop_time=stop_time, active=True, deactivate_request=False)
 
 		schedule_obj.save()
 
