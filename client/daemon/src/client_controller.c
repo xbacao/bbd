@@ -93,7 +93,6 @@ int cc_set_active_schedules(){
 
   	free(rsp);
 
-    //do something with schedules
     sm_set_new_schedules(rsp_sches, sches_len);
     free(rsp_sches);
   } else {
@@ -142,7 +141,6 @@ int cc_check_new_schedules(){
 
     	free(rsp);
 
-      //do something with schedules
       sm_set_new_schedules(rsp_sches, sches_len);
       free(rsp_sches);
   } else {
