@@ -7,29 +7,70 @@
 
 <h1>Schedules</h1>
 {% if schedule_list %}
-<table class="table table-striped table-hover">
-  <thead>
-    <th>id</th>
-		<th>valve</th>
-    <th>description</th>
-    <th>active</th>
-    <th>schedule details</th>
-  </thead>
-  <tbody>
-    {% for schedule in schedule_list %}
-    <tr>
-      <td>{{schedule.0}}</td>
-      <td>{{schedule.1}}</td>
-      <td>{{schedule.2}}</td>
-			<td>{{schedule.9}}</td>
-      <td><button class="btn btn-default glyphicon glyphicon-arrow-right"></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="col-md-12">
+  <table class="table table-striped table-hover">
+    <thead>
+      <th>id</th>
+  		<th>valve</th>
+      <th>description</th>
+      <th>active</th>
+      <th>schedule details</th>
+    </thead>
+    <tbody>
+      {% for schedule in schedule_list %}
+      <tr>
+        <td>{{schedule.0}}</td>
+        <td>{{schedule.1}}</td>
+        <td>{{schedule.2}}</td>
+  			<td>{{schedule.9}}</td>
+        <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:schedule_clicked({{schedule.0}})"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endif %}
-<button class="btn btn-default" onclick="window.location.href='{% url 'add_schedule' %}'">add schedule</button>
-
+<div class="col-md-12">
+  <button class="btn btn-default" onclick="window.location.href='{% url 'add_schedule' %}'">add schedule</button>
+</div>
+<div class="col-md-12 hidden" id="sche_content">
+  <table class="table table-striped table-hover">
+    <tbody>
+      <tr>id</tr><tr id="schedule_id"></tr>
+      <tr>valve</tr><tr id="valve_id"></tr>
+      <tr>description</tr><tr id="description"></tr>
+      <tr>created_on</tr><tr id="created_on"></tr>
+      <tr>start_time</tr><tr id="start_time"></tr>
+      <tr>stoptime</tr><tr id="stop_time"></tr>
+      <tr>sent</tr><tr id="sent"></tr>
+      <tr>sent_on</tr><tr id="sent_on"></tr>
+      <tr>active</tr><tr id="active"></tr>
+      <tr>active_start</tr><tr id="active_start"></tr>
+      <tr>active_end</tr><tr id="active_end"></tr>
+    </tbody>
+  </table>
+</div>
+<script>
+    function schedule_clicked(schedule_id){
+      $.ajax({
+           type:"GET",
+           url:"/bbd/get_schedule/",
+           data: {'schedule_id': schedule_id},
+           success: function(data){
+             var json_rsp = $.parseJSON(data);
+             for(var key in json_rsp) {
+               $("#sche_content #"+key).html(json_rsp[key]);
+             }
+           },
+           error: function(XMLHttpRequest, textStatus, errorThrown) {
+              alert("Error fetching schedule!");
+              console.log("DBG XMLHttpRequest: "+XMLHttpRequest);
+              console.log("DBG textStatus:"+textStatus);
+              console.log("DBG errorThrown:"+errorThrown);
+           }
+      });
+    }
+</script>
 <!--
 <div class="col-md-1">
 	<h3>Valves</h3>

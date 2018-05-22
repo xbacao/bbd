@@ -68,3 +68,25 @@ def create_new_schedule(request):
 		return Response(status=status.HTTP_200_OK)
 	else:
 		return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_schedule(request):
+	schedule_id=request.GET.get('schedule_id')
+	if schedule_id:
+		cursor = connection.cursor()
+		cursor.execute('SELECT * FROM bbd.schedule WHERE scheduleID='+schedule_id)
+		schedule=cursor.fetchone()
+		data={'schedule_id':schedule[0], \
+					'valve_id':schedule[1], \
+					'description':schedule[2], \
+					'created_on':schedule[3], \
+					'start_time':schedule[4], \
+					'stop_time':schedule[5], \
+					'sent':schedule[6], \
+					'sent_on':schedule[7], \
+					'active':schedule[8], \
+					'active_start':schedule[9], \
+					'active_end':schedule[10]}
+		return Response(data, status=status.HTTP_200_OK)
+	else:
+		return Response(status=status.HTTP_400_BAD_REQUEST)
