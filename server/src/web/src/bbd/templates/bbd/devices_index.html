@@ -21,10 +21,17 @@
       <td>{{device.0}}</td>
       <td>{{device.1}}</td>
       <td>{{device.2}}</td>
-      <td><button class="btn btn-default glyphicon glyphicon-arrow-right"></td>
+      <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:device_click({{device.0}})"></td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+<script>
+    function device_click(device_id){
+      if(device_id){
+        window.location="{% url 'valves_index' %}?deviceid="+device_id;
+      }
+    }
+</script>
 {% endif %}
 {% endblock %}

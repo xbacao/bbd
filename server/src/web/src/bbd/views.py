@@ -21,20 +21,32 @@ def devices_index(request):
 
 def valves_index(request):
 	cursor = connection.cursor()
-	cursor.execute('SELECT * FROM bbd.web_get_valves()')
+	deviceid=request.GET.get('deviceid')
+	if deviceid:
+		cursor.execute('SELECT * FROM bbd.web_get_valves('+deviceid+')')
+	else:
+		cursor.execute('SELECT * FROM bbd.web_get_valves()')
 	valve_list = cursor.fetchall()
 	context = {'valve_list': valve_list}
 	return render(request, 'bbd/valves_index.html',context)
 
 def schedules_index(request):
+	valveid=request.GET.get('valveid')
 	cursor = connection.cursor()
-	cursor.execute('SELECT * FROM bbd.web_get_schedules()')
+	if valveid:
+		cursor.execute('SELECT * FROM bbd.web_get_schedules('+valveid+')')
+	else:
+		cursor.execute('SELECT * FROM bbd.web_get_schedules()')
 	schedule_list = cursor.fetchall()
 	context = {'schedule_list': schedule_list}
 	return render(request, 'bbd/schedules_index.html',context)
 
 def add_schedule(request):
-	context = {'valve_id':request.GET.get('valve_id')}
+	valveid=request.GET.get('valveid')
+	if valveid:
+		context = {'valveid':valveid}
+	else:
+		context={}
 	return render(request, 'bbd/add_schedule.html',context)
 
 @api_view(['POST'])

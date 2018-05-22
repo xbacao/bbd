@@ -77,9 +77,9 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-INSERT INTO bbd.device(deviceID,description) VALUES(1,'asdf');
-INSERT INTO bbd.valve(valveID, description, deviceID_f)VALUES(1,'test_valve1',1),(2,'test_valve2',1);
-
+INSERT INTO bbd.device(deviceID,description) VALUES(1,'device_teste_1');
+INSERT INTO bbd.device(deviceID,description) VALUES(2,'device_teste_2');
+INSERT INTO bbd.valve(valveID, description, deviceID_f)VALUES(1,'test_valve1',1),(2,'test_valve2',1),(3,'test_valve3',2);
 ----------------------web----------------------
 CREATE FUNCTION bbd.web_get_devices()
 RETURNS TABLE(
@@ -90,8 +90,9 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
   SELECT deviceID as id, device.description, count(valveID)
-  FROM bbd.device INNER JOIN bbd.valve ON device.deviceID=valve.deviceID_f
-  GROUP BY deviceID;
+  FROM bbd.device LEFT OUTER JOIN bbd.valve ON device.deviceID=valve.deviceID_f
+  GROUP BY deviceID
+  ORDER BY deviceID ASC;
 END
 $$ LANGUAGE plpgsql;
 
@@ -104,7 +105,8 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
   SELECT *
-  FROM bbd.valve;
+  FROM bbd.valve
+  ORDER BY id ASC;
 END
 $$ LANGUAGE plpgsql;
 
@@ -118,7 +120,8 @@ BEGIN
   RETURN QUERY
   SELECT *
   FROM bbd.valve
-  WHERE deviceID_f=device_id;
+  WHERE deviceID_f=device_id
+  ORDER BY id ASC;
 END
 $$ LANGUAGE plpgsql;
 
@@ -139,7 +142,8 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
   SELECT *
-  FROM bbd.schedule;
+  FROM bbd.schedule
+  ORDER BY scheduleID DESC;
 END
 $$ LANGUAGE plpgsql;
 
@@ -161,6 +165,7 @@ BEGIN
   RETURN QUERY
   SELECT *
   FROM bbd.schedule
-  WHERE valveID_f=valveid;
+  WHERE valveID_f=valveid
+  ORDER BY scheduleID DESC;
 END
 $$ LANGUAGE plpgsql;
