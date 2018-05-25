@@ -39,6 +39,8 @@ def schedules_index(request):
 		cursor.execute('SELECT * FROM bbd.web_get_schedules()')
 	schedule_list = cursor.fetchall()
 	context = {'schedule_list': schedule_list}
+	if valveid:
+		context.update({'valveid':valveid})
 	return render(request, 'bbd/schedules_index.html',context)
 
 def add_schedule(request):

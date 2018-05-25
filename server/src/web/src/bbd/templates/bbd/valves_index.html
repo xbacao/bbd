@@ -12,8 +12,6 @@
       <th>id</th>
       <th>description</th>
       <th>device</th>
-      <th>edit</th>
-      <th>remove</th>
       <th>schedules</th>
     </thead>
     <tbody>
@@ -22,8 +20,6 @@
         <td>{{valve.0}}</td>
         <td>{{valve.1}}</td>
         <td>{{valve.2}}</td>
-        <td><button name="edit_valve" class="btn btn-default glyphicon glyphicon-edit"/></td>
-        <td><button name="remove_valve" class="btn btn-default glyphicon glyphicon-remove"/></td>
         <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:valve_click({{valve.0}})"></td>
       </tr>
       {% endfor %}

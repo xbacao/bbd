@@ -29,4 +29,6 @@ ADD src/web/src /opt/bbd/web_server/src
 
 expose 80
 
-CMD supervisord -c /opt/bbd/supervisord.conf && tail -f /dev/null
+CMD /usr/bin/python /opt/bbd/web_server/src/manage.py makemigrations;\
+          /usr/bin/python /opt/bbd/web_server/src/manage.py migrate; \
+          supervisord -c /opt/bbd/supervisord.conf && tail -f /dev/null
