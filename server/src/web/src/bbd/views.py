@@ -2,11 +2,11 @@ from django.shortcuts import render, redirect
 from .models import Device, Valve, Schedule
 from django.forms.formsets import formset_factory
 from .forms import CicleForm, BaseCicleFormSet
-import datetime
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import connection
+import datetime
 
 def bbd_index(request):
 	context={}
@@ -83,8 +83,8 @@ def get_schedule(request):
 					'valve_id':schedule[1], \
 					'description':schedule[2], \
 					'created_on':schedule[3], \
-					'start_time':schedule[4], \
-					'stop_time':schedule[5], \
+					'start_time':'%02d:%02d' % (schedule[4]/60, schedule[4]%60), \
+					'stop_time':'%02d:%02d' % (schedule[5]/60, schedule[5]%60), \
 					'sent':str(schedule[6]), \
 					'sent_on':schedule[7], \
 					'active':str(schedule[8]), \
