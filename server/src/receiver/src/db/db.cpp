@@ -71,9 +71,33 @@ int set_schedules_sent(vector<schedule> sches, uint16_t device_id){
 			res=txn.prepared("set_schedule_sent")(itr->schedule_id).exec();
 			if(res.at(0).at(0).as<bool>()){
 				txn.commit();
-				log_db_response<uint16_t>(itr->schedule_id);
+				log_db_response("set schedule sent", itr->schedule_id);
 			}
 		}
+	}	catch(const std::exception &e) {
+			log_error(__func__, e.what());
+			return 1;
+	}
+
+	return 0;
+}
+
+int deactivation_requests_done(){
+	log_info("requesting deactivation_requests_done from db");
+
+	try{
+		pqxx::connection c(CONN_INFO);
+		pqxx::result res;
+		pqxx::work txn(c);
+
+		c.prepare("deactivation_requests_done", "SELECT * from bbd.deactivation_requests_done ()");
+		res=txn.prepared("deactivation_requests_done").exec();
+		txn.commit();
+
+		for (pqxx::result::const_iterator row=res.begin();row != res.end();++row){
+			log_db_response("schedule deactivated", row[0].as<bool>());
+	  }
+
 	}	catch(const std::exception &e) {
 			log_error(__func__, e.what());
 			return 1;

@@ -29,8 +29,7 @@ class Schedule(models.Model):
     sent = models.BooleanField(default=False)
     sent_on = models.DateTimeField(blank=True, null=True)
     active = models.BooleanField(default=True)
-    active_start = models.DateTimeField(blank=True, null=True)
-    active_end = models.DateTimeField(blank=True, null=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         managed = False

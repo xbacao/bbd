@@ -23,10 +23,9 @@ RUN service postgresql start && \
 
 #supervisord
 COPY docker/db/docker_assets/supervisord.conf /opt/bbd/supervisord.conf
-COPY docker/db/docker_assets/supervisor_confs/ /opt/bbd/supervisor.conf.d/
+COPY docker/db/docker_assets/supervisor.conf.d/ /opt/bbd/supervisor.conf.d/
 COPY docker/db/docker_assets/postgresql.conf /etc/postgresql/9.6/main/postgresql.conf
-COPY docker/db/docker_assets/postgresql.conf /etc/postgresql/9.6/main/postgresql.conf
-COPY docker/db/docker_assets/pg_hba.conf /etc/postgresql/9.6/main/pg_hba.conf 
+COPY docker/db/docker_assets/pg_hba.conf /etc/postgresql/9.6/main/pg_hba.conf
 
 expose 5432
 

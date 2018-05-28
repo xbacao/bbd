@@ -12,4 +12,6 @@ int db_get_active_schedules(uint16_t device_id, std::vector<schedule>& sches,
 
 int set_schedules_sent(std::vector<schedule> sches, uint16_t device_id);
 
+int deactivation_requests_done();
+
 #endif

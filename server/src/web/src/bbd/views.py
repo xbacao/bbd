@@ -62,11 +62,12 @@ def create_new_schedule(request):
 
 	if start_time >=0 and start_time <= 1440 and stop_time >=0 \
 	and stop_time <= 1440:
-		schedule_obj=Schedule(valveid_f=valve_obj, description=description, \
-		start_time=start_time, stop_time=stop_time, sent=False, active=True)
-
-		schedule_obj.save()
-
+		cursor = connection.cursor()
+		cursor.execute('SELECT FROM bbd.web_create_new_schedule('\
+								+str(valveID_f)+','\
+								+'\''+description+'\','\
+								+str(start_time)+'::smallint,'\
+								+str(stop_time)+'::smallint)')
 		return Response(status=status.HTTP_200_OK)
 	else:
 		return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -87,8 +88,17 @@ def get_schedule(request):
 					'sent':str(schedule[6]), \
 					'sent_on':schedule[7], \
 					'active':str(schedule[8]), \
-					'active_start':schedule[9], \
-					'active_end':schedule[10]}
+					'deactivated_on':schedule[9]}
 		return Response(data, status=status.HTTP_200_OK)
+	else:
+		return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def deactivate_schedule(request):
+	schedule_id=request.POST.get('schedule_id')
+	if schedule_id:
+		cursor = connection.cursor()
+		cursor.execute('SELECT web_deactivate_schedule_request('+schedule_id+')')
+		return Response(status=status.HTTP_200_OK)
 	else:
 		return Response(status=status.HTTP_400_BAD_REQUEST)

@@ -146,6 +146,11 @@ static int _run_server(){
             if(n){
               log_error("db call set_schedules_sent");
             }
+
+            n=deactivation_requests_done();
+            if(n){
+              log_error("db call deactivation_requests_done");
+            }
             break;
           }
           case CHECK_NEW_SCHEDULES_MSG:

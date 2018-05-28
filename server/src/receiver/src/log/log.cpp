@@ -69,9 +69,8 @@ template<> void log_db_response<schedule>(std::vector<schedule> vec){
   fflush(log_fd);
 }
 
-template<> void log_db_response<uint16_t>(uint16_t sche_id){
-  fprintf(log_fd, "[%lu] %sdb_update%s: schedule %u set as sent\n", time(NULL), PURPLE_C,
-    NC, sche_id);
+void log_db_response(const char* msg, uint16_t id){
+  fprintf(log_fd, "[%lu] %sdb_update%s:  %s  {id:%u}\n", time(NULL), PURPLE_C, NC, msg,id);
   fflush(log_fd);
 }
 
