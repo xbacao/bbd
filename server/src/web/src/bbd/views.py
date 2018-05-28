@@ -84,9 +84,9 @@ def get_schedule(request):
 					'created_on':schedule[3], \
 					'start_time':schedule[4], \
 					'stop_time':schedule[5], \
-					'sent':schedule[6], \
+					'sent':str(schedule[6]), \
 					'sent_on':schedule[7], \
-					'active':schedule[8], \
+					'active':str(schedule[8]), \
 					'active_start':schedule[9], \
 					'active_end':schedule[10]}
 		return Response(data, status=status.HTTP_200_OK)

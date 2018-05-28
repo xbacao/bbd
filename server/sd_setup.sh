@@ -13,9 +13,10 @@ function exit_on_error {
 function usage {
   printf "usage: sh $0 [option] [component]\n"
   printf "options:  -b   build bbd_server docker\n"
-  printf "          -r   run bbd_server docker\n"
-  printf "          -a   attach to bbd_server docker\n"
-  printf "          -d   delete bbd_server docker\n"
+  printf "          -r   run docker\n"
+  printf "          -a   attach to docker\n"
+  printf "          -d   delete  docker\n"
+  printf "          -x   delete/build/run docker \n"
   printf "components: receiver  c/c++ receiver daemon\n"
   printf "            db        postgresql database\n"
   printf "            web       python/django web server\n"
@@ -77,6 +78,11 @@ case $1 in
   ;;
   -a)
   attach $2
+  ;;
+  -x)
+  delete $2
+  build $2
+  run $2
   ;;
   *)
     usage

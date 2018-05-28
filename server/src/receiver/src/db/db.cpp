@@ -65,10 +65,14 @@ int set_schedules_sent(vector<schedule> sches, uint16_t device_id){
 		pqxx::result res;
 		pqxx::work txn(c);
 
-		c.prepare("set_schedules_sent", "SELECT bbd.rcv_set_schedule_sent ($1)");
+		c.prepare("set_schedule_sent", "SELECT * from bbd.rcv_set_schedule_sent ($1)");
 
 		for(auto itr=sches.begin();itr!=sches.end();itr++){
-			res=txn.prepared("set_schedules_sent")(itr->schedule_id).exec();
+			res=txn.prepared("set_schedule_sent")(itr->schedule_id).exec();
+			if(res.at(0).at(0).as<bool>()){
+				txn.commit();
+				log_db_response<uint16_t>(itr->schedule_id);
+			}
 		}
 	}	catch(const std::exception &e) {
 			log_error(__func__, e.what());

@@ -69,11 +69,15 @@ END
 $$ LANGUAGE plpgsql;
 
 CREATE FUNCTION bbd.rcv_set_schedule_sent(IN schedule_id INT)
-RETURNS VOID AS $$
+RETURNS BOOLEAN AS $$
+DECLARE
+  n INT;
 BEGIN
   UPDATE bbd.schedule
   SET sent=TRUE, sent_on=CURRENT_TIMESTAMP
   WHERE scheduleID=schedule_id and sent=FALSE;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  RETURN n > 0 IS TRUE;
 END
 $$ LANGUAGE plpgsql;
 

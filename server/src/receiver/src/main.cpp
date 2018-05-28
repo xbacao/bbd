@@ -15,7 +15,6 @@
 #define SERVER_PORT       7777
 #define MAGIC_NUMER     38017
 
-
 using namespace std;
 
 static int _start_socket_server(int* sockfd){
