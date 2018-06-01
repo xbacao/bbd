@@ -10,7 +10,7 @@ RUN apt-get install -y \
   libapache2-mod-wsgi \
   supervisor
 
-RUN mkdir /opt/bbd
+RUN pip install -U pip; mkdir /opt/bbd
 
 #web server
 RUN mkdir -p /opt/bbd/web_server/src /opt/bbd/web_server/venv \

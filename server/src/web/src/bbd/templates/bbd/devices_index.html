@@ -1,7 +1,5 @@
 {% extends 'bbd/base.html' %}
 
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 {% block content %}
 <ul>
 
@@ -21,7 +19,7 @@
       <td>{{device.0}}</td>
       <td>{{device.1}}</td>
       <td>{{device.2}}</td>
-      <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:device_click({{device.0}})"></td>
+      <td><button class="btn btn-secondary fas fa-arrow-right" onclick="javascript:device_click({{device.0}})"></button></td>
     </tr>
     {% endfor %}
   </tbody>

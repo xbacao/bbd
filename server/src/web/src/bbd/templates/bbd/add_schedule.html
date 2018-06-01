@@ -1,75 +1,41 @@
 {% extends 'bbd/base.html' %}
-{% load staticfiles %}
 
 {% block content %}
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 <ul>
 
 <h1>New schedule</h1>
 
-<form method="post" id="form_sche">
+<form method="post" action="{% url 'create_new_schedule' %}">
+  {% csrf_token %}
   <table class="table table-striped table-hover">
-
-    <tr><td class="col-md-4">ValveID</td>
-      <td class="col-md-8">
-        {% if valveid %}
-        {{valveid}}
-        <input type="hidden" id="valveid_f" value="{{valveid}}"/>
-        {% else %}
-        <input class="form-control" type="text" id="valveid_f">
-        {% endif %}
-    </td></tr>
-    <tr><td class="col-md-4">Description</td><td class="col-md-8"><input class="form-control" type="text" id="description"></td></tr>
+    <tr>
+      <td class="col-md-4">ValveID</td>
+      <td>
+        <select class="form-control" name="valveid_f">
+          <option disabled selected> -- select an option -- </option>
+          {% for valve_id_e in valve_id_list %}
+          <option value="{{valve_id_e}}">{{valve_id_e}}</option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    <tr><td class="col-md-4">Description</td><td class="col-md-8"><input class="form-control" type="text" name="description" autocomplete="off"></td></tr>
     <tr>
       <td class="col-md-4">Watering Schedule</td>
       <td class="col-md-8">
         <div class="input-group">
           <span class="input-group-addon">Starting at:</span>
-          <input class="form-control" size="2" type="text" id="start_h" placeholder="start hour">
+          <input class="form-control" size="2" type="text" name="start_h" placeholder="start hour" autocomplete="off">
           <span class="input-group-addon">:</span>
-          <input class="form-control" size="2" type="text" id="start_m" placeholder="start min">
+          <input class="form-control" size="2" type="text" name="start_m" placeholder="start min" autocomplete="off">
           <span class="input-group-addon"> Stoping at:</span>
-          <input class="form-control" size="2" type="text" id="stop_h" placeholder="stop hour">
+          <input class="form-control" size="2" type="text" name="stop_h" placeholder="stop hour" autocomplete="off">
           <span class="input-group-addon">:</span>
-          <input class="form-control" size="2" type="text" id="stop_m" placeholder="stop min">
+          <input class="form-control" size="2" type="text" name="stop_m" placeholder="stop min" autocomplete="off">
         </div>
       </td>
     </tr>
   </table>
   <button class="btn btn-default" type="submit">submit</button>
 </form>
-
-<script>
-$(document).ready(function() {
-       $("#form_sche").submit(function(event){
-            $.ajax({
-                 type:"POST",
-                 url:"/bbd/create_new_schedule/",
-                 data: {
-                        'valveID_f': $('#valveid_f').val(),
-                        'description': $('#description').val(),
-                        'start_h': $('#start_h').val(),
-                        'start_m': $('#start_m').val(),
-                        'stop_h': $('#stop_h').val(),
-                        'stop_m': $('#stop_m').val(),
-                        },
-                 success: function(){
-                    alert("New schedule succesfully added!");
-                    window.location.replace("/bbd/schedules/");
-                 },
-                 error: function(XMLHttpRequest, textStatus, errorThrown) {
-                    alert("Error adding schedule!");
-                    console.log("DBG XMLHttpRequest: "+XMLHttpRequest);
-                    console.log("DBG textStatus:"+textStatus);
-                    console.log("DBG errorThrown:"+errorThrown);
-                 }
-            });
-            return false;
-       });
-
-});
-</script>
 {% endblock %}

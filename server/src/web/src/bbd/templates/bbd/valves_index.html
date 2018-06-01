@@ -1,7 +1,4 @@
 {% extends 'bbd/base.html' %}
-
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
 {% block content %}
 <ul>
 
@@ -20,7 +17,7 @@
         <td>{{valve.0}}</td>
         <td>{{valve.1}}</td>
         <td>{{valve.2}}</td>
-        <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:valve_click({{valve.0}})"></td>
+        <td><button class="btn btn-secondary fas fa-arrow-right" onclick="javascript:valve_click({{valve.0}})"></td>
       </tr>
       {% endfor %}
     </tbody>

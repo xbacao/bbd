@@ -1,7 +1,5 @@
 {% extends 'bbd/base.html' %}
-
 {% block content %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <ul>
 
 <h1>Schedules</h1>
@@ -24,15 +22,25 @@
         <td>{{schedule.2}}</td>
   			<td>
           {% if schedule.8 %}
-            <a class="glyphicon glyphicon-ok"/>
+            <a class="fas fa-check"/>
           {% else %}
-            <a class="glyphicon glyphicon-remove"/>
+            <a class="fas fa-times"/>
           {% endif %}
         </td>
-        <td><button class="btn btn-default glyphicon glyphicon-arrow-right" onclick="javascript:schedule_clicked({{schedule.0}})"></td>
+        <td>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="sel_schedule_id" value="{{schedule.0}}"/>
+            <button type="submit" class="btn btn-secondary fas fa-arrow-right"/>
+          </form>
+        </td>
         <td>
           {% if schedule.8 %}
-          <button id="deact_{{schedule.0}}" class="btn btn-default glyphicon glyphicon-remove" onclick="javascript:deactivate_schedule({{schedule.0}})">
+          <form method="post" action="{% url 'deactivate_schedule' %}">
+            {% csrf_token %}
+            <input type="hidden" name="schedule_id" value="{{schedule.0}}"/>
+            <button type="subtmit" id="deact_{{schedule.0}}" class="btn btn-secondary fas fa-trash-alt"/>
+          </form>
           {% endif %}
           </td>
       </tr>
@@ -42,197 +50,44 @@
 </div>
 {% endif %}
 <div class="container col-md-12">
-  <button class="btn btn-default" onclick="window.location.href='{% url 'add_schedule' %}{% if valveid %}?valveid={{valveid}}{% endif %}'">add schedule</button>
+  <button class="btn btn-light" onclick="window.location.href='{% url 'add_schedule' %}{% if valveid %}?valveid={{valveid}}{% endif %}'">add schedule</button>
 </div>
+<br/>
+<br/>
+{% if selected_sche %}
 <div class="container col-md-12 hidden" id="sche_content">
   <table class="table table-striped table-hover">
     <tbody>
-      <tr><td>id</td><td id="schedule_id"></td></tr>
-      <tr><td>valve</td><td id="valve_id"></td></tr>
-      <tr><td>description</td><td id="description"></td></tr>
-      <tr><td>created_on</td><td id="created_on"></td></tr>
-      <tr><td>start_time</td><td id="start_time"></td></tr>
-      <tr><td>stoptime</td><td id="stop_time"></td></tr>
-      <tr><td>sent</td><td id="sent"></td></tr>
-      <tr><td>sent_on</td><td id="sent_on"></td></tr>
-      <tr><td>active</td><td id="active"></td></tr>
-      <tr><td>deactivated_on</td><td id="deactivated_on"></td></tr>
+      <tr><td>id</td><td>{{selected_sche.schedule_id}}</td></tr>
+      <tr><td>valve</td><td>{{selected_sche.valve_id}}</td></tr>
+      <tr><td>description</td><td>{{selected_sche.description}}</td></tr>
+      <tr><td>created_on</td><td>{{selected_sche.created_on}}</td></tr>
+      <tr><td>start_time</td><td>{{selected_sche.start_time}}</td></tr>
+      <tr><td>stoptime</td><td>{{selected_sche.stop_time}}</td></tr>
+      <tr>
+        <td>sent</td>
+        <td>
+          {%if selected_sche.sent %}
+            <a class="fas fa-check"/>
+          {% else %}
+            <a class="fas fa-times"/>
+          {% endif %}
+        </td>
+      </tr>
+      <tr><td>sent_on</td><td>{{selected_sche.sent_on}}</td></tr>
+      <tr>
+        <td>active</td>
+        <td>
+          {%if selected_sche.active %}
+            <a class="fas fa-check"/>
+          {% else %}
+            <a class="fas fa-times"/>
+          {% endif %}
+        </td>
+      </tr>
+      <tr><td>deactivated_on</td><td>{{selected_sche.deactivated_on}}</td></tr>
     </tbody>
   </table>
 </div>
-<script>
-    function schedule_clicked(schedule_id){
-      $.ajax({
-           type: "GET",
-           url: "/bbd/get_schedule/",
-           data: {'schedule_id': schedule_id},
-           success: function(data){
-             for(var key in data) {
-               $("#sche_content #"+key).html(data[key]);
-             }
-             $("#sche_content").removeClass("hidden");
-           },
-           error: function(XMLHttpRequest, textStatus, errorThrown) {
-              alert("Error fetching schedule!");
-              console.log("DBG XMLHttpRequest: "+XMLHttpRequest);
-              console.log("DBG textStatus:"+textStatus);
-              console.log("DBG errorThrown:"+errorThrown);
-           }
-      });
-    }
-    function deactivate_schedule(schedule_id){
-      $.ajax({
-           type: "POST",
-           url: "/bbd/deactivate_schedule/",
-           data: {'schedule_id': schedule_id},
-           success: function(data){
-             alert('deactivation request succesfull');
-             schedule_clicked(schedule_id);
-             $("#top_table #deact_"+schedule_id).addClass("hidden");
-           },
-           error: function(XMLHttpRequest, textStatus, errorThrown) {
-              alert("Error fetching schedule!");
-              console.log("DBG XMLHttpRequest: "+XMLHttpRequest);
-              console.log("DBG textStatus:"+textStatus);
-              console.log("DBG errorThrown:"+errorThrown);
-           }
-      });
-    }
-</script>
-<!--
-<div class="col-md-1">
-	<h3>Valves</h3>
-	{% if valve_list %}
-	<table border="0" class="table table-striped table-hover">
-	{% for valve in valve_list %}
-		<tr><td>
-			<form action="#" method="post">
-	        {% csrf_token %}
-	        	<input type="submit" class="btn btn-default" value="{{valve.valveid}}" name="select_valve">
-	    	</form>
-		</td></tr>
-	{% endfor %}
-	</table>
-	{% endif %}
-
-</div>
-<div class="col-md-11">
-	<h3>Schedules</h3>
-	{% if schedule_list %}
-	<table border="0" class="table table-striped table-hover">
-		<tr>
-			<td>ID</td>
-			<td>Description</td>
-			<td>Created on</td>
-			<td>Active</td>
-			<td>Deact. Request</td>
-			<td>View</td>
-		</tr>
-	{% for sche in schedule_list %}
-		<tr>
-			<td>{{sche.scheduleid}}</td>
-			<td>{{sche.description}}</td>
-			<td>{{sche.created_on}}</td>
-			<td>
-				{% if sche.active == 1 %}
-					<span class="glyphicon glyphicon-ok"></span>
-				{% else %}
-					<span class="glyphicon glyphicon-remove"></span>
-				{% endif %}
-			</td>
-			<td>
-				{% if sche.deactivate_request == 1 %}
-					<span class="glyphicon glyphicon-ok"></span>
-				{% else %}
-					<span class="glyphicon glyphicon-remove"></span>
-				{% endif %}
-			</td>
-			<td>
-				<form action="#" method="post">
-				{% csrf_token %}
-					<input type="hidden" value="{{sche.scheduleid}}" name="sche_id">
-					<button class="btn btn-default glyphicon glyphicon-arrow-right" name="view_sche_btn">
-				</form>
-			</td>
-		</tr>
-	{% endfor %}
-	</table>
-	{% endif %}
-	<div class="col-md-10"/>
-	<div class="col-md-2">
-		<form action="#" method="post">
-				{% csrf_token %}
-					<input type="submit" class="btn btn-default pull-right" value="add schedule" name="add_new">
-					<input type="hidden" value="{{valve_id}}" name="valve_id">
-		</form>
-	</div>
-
-</div>
-</ul>
-
-<ul>
-{% if sche %}
-<script>
-function pad(d) {
-	d=parseInt(d);
-	return (d < 10) ? '0' + d.toString() : d.toString();
-}
-window.onload = function() {
-	var start = document.getElementById("sche_start");
-	start.innerHTML=pad({{sche.start_time}}/60) + ':' + pad({{sche.start_time}}%60);
-	var stop = document.getElementById("sche_stop");
-	stop.innerHTML=pad({{sche.stop_time}}/60) + ':' + pad({{sche.stop_time}}%60);
-};
-</script>
-<p></p>
-<h1>Schedule Details</h1>
-<table border="0" class="table table-striped table-hover">
-  <tr>
-    <td>ID</td><td>{{sche.scheduleid}}</td>
-  </tr>
-  <tr>
-    <td>Valve</td><td>{{sche.valveid_f.valveid}}</td>
-  </tr>
-  <tr>
-    <td>Description</td><td>{{sche.description}}</td>
-  </tr>
-	<tr>
-		<td>Start watering at</td><td id="sche_start"></td>
-	</tr>
-	<tr>
-		<td>Stop watering at</td><td id="sche_stop"></td>
-	</tr>
-  <tr>
-    <td>Active</td>
-    <td>
-      {% if sche.active == 1 %}
-        <span class="glyphicon glyphicon-ok"></span>
-      {% else %}
-        <span class="glyphicon glyphicon-remove"></span>
-      {% endif %}
-    </td>
-  </tr>
-	<tr>
-		<td>Deactivate Request</td>
-		<td>
-			{% if sche.deactivate_request == 1 %}
-        <span class="glyphicon glyphicon-ok"></span>
-      {% else %}
-        <span class="glyphicon glyphicon-remove"></span>
-      {% endif %}
-		</td>
-	</tr>
-  <tr>
-    <td>Created On</td><td>{{sche.created_on}}</td>
-  </tr>
-  <tr>
-    <td>Schedule activated on</td><td id="sche_start">{{sche.active_start}}</td>
-  </tr>
-  <tr>
-    <td>Schedule deactivated on</td><td id="sche_stop">{{sche.deactivated_on}}</td>
-  </tr>
-</table>
-</ul>
-{% endif %} -->
-
+{% endif %}
 {% endblock %}

@@ -64,8 +64,6 @@ static void* _sm_run_scheduler_thread(){
 void sm_set_new_schedules(struct schedule* sches, uint16_t schedules_len){
   uint16_t ss_bytesize=sizeof(struct schedule_status)*schedules_len;
 
-  //TODO ADD CHECK IF SCHEDULES ARE VALID
-
   pthread_mutex_lock(&_schedules_mtx);
 
   if(_schedules_set){
