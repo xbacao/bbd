@@ -54,9 +54,9 @@ def schedules_index(request):
 						'created_on':schedule_sel[3], \
 						'start_time':'%02d:%02d' % (schedule_sel[4]/60, schedule_sel[4]%60), \
 						'stop_time':'%02d:%02d' % (schedule_sel[5]/60, schedule_sel[5]%60), \
-						'sent':str(schedule_sel[6]), \
+						'sent':schedule_sel[6], \
 						'sent_on':schedule_sel[7], \
-						'active':str(schedule_sel[8]), \
+						'active':schedule_sel[8], \
 						'deactivated_on':schedule_sel[9]}})
 	return render(request, 'bbd/schedules_index.html',context)
 
